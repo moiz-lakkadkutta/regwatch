@@ -1,0 +1,13 @@
+{
+  "doc_id": "bmuv-eudr",
+  "url": "https://www.bmuv.de/themen/wald/entwaldungsfreie-lieferketten-eudr",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"Regulation (EU) 2023/1115 — BMUV page\",\n  \"jurisdiction\": \"DE\",\n  \"summary\": \"Prüfen Sie, ob Sie Holz, Leder, Möbel oder Papier in Verkehr bringen: die Pflichten gelten ab dem 30. Dezember 2025, für Kleinst- und Kleinunternehmen ab dem 30. Juni 2026. Die BMUV-Seite erläutert die EU-Verordnung über entwaldungsfreie Lieferketten für Unternehmen in Deutschland.\",\n  \"effective_dates\": [\n    \"2025-12-30\",\n    \"2026-06-30\"\n  ],\n  \"obligations\": []\n}",
+      "usage": {
+        "prompt_tokens": 610,
+        "completion_tokens": 140
+      }
+    }
+  ]
+}

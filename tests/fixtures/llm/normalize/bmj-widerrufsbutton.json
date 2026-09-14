@@ -1,0 +1,13 @@
+{
+  "doc_id": "bmj-widerrufsbutton",
+  "url": "https://www.bmj.de/DE/themen/verbraucherschutz/widerrufsbutton/widerrufsbutton_node.html",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"§ 356a BGB — BMJ page on the Widerrufsbutton\",\n  \"jurisdiction\": \"DE\",\n  \"summary\": \"Bieten Sie ab dem 19. Juni 2026 einen Widerrufsbutton an, mit dem Verbraucher in zwei Schritten widerrufen können. Die BMJ-Seite erläutert § 356a BGB, der die Richtlinie (EU) 2023/2673 für Online-Händler umsetzt.\",\n  \"effective_dates\": [\n    \"2026-06-19\"\n  ],\n  \"obligations\": [\n    {\n      \"text\": \"Bieten Sie Verbrauchern eine Widerrufsfunktion in zwei Schritten an.\",\n      \"quote\": \"Ab dem 19. Juni 2026 müssen Online-Händler Verbraucherinnen und Verbrauchern eine Widerrufsfunktion („Widerrufsbutton\\\") anbieten, mit der ein Fernabsatzvertrag in zwei Schritten widerrufen werden kann.\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 560,
+        "completion_tokens": 150
+      }
+    }
+  ]
+}

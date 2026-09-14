@@ -1,0 +1,13 @@
+{
+  "doc_id": "shopify-help-eu-withdrawal",
+  "url": "https://help.shopify.com/en/manual/checkout-settings/eu-withdrawal-function",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"Directive (EU) 2023/2673 — Shopify Help Center\",\n  \"jurisdiction\": \"EU\",\n  \"summary\": \"Enable the two-step withdrawal function in your checkout settings before 19 June 2026 if you sell to EU customers. This Shopify help page describes the EU withdrawal function required by the amended Consumer Rights Directive.\",\n  \"effective_dates\": [\n    \"2026-06-19\"\n  ],\n  \"obligations\": [\n    {\n      \"text\": \"Offer a withdrawal function so customers can cancel in two steps.\",\n      \"quote\": \"stores that sell to customers in the European Union need to offer a withdrawal function so customers can cancel a contract in two steps\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 570,
+        "completion_tokens": 150
+      }
+    }
+  ]
+}

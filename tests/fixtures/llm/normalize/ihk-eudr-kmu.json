@@ -1,0 +1,20 @@
+{
+  "doc_id": "ihk-eudr-kmu",
+  "url": "https://www.ihk.de/themen/umwelt-energie/eudr-kleinstunternehmen-fristen",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"Regulation (EU) 2023/1115 — IHK guidance on deadlines for micro and small enterprises\",\n  \"jurisdiction\": \"EU\",\n  \"summary\": \"Work out your size class from turnover, balance sheet and headcount now: micro and small enterprises must meet the EUDR duties from 30 June 2026, all other traders from 30 December 2025. This IHK page explains the deadlines of Regulation (EU) 2023/1115 for companies placing covered products on the EU market.\",\n  \"effective_dates\": [\n    \"2025-12-30\",\n    \"2026-06-30\"\n  ],\n  \"obligations\": [\n    {\n      \"text\": \"Meet the EUDR duties from 30 June 2026 if you are a micro or small enterprise.\",\n      \"quote\": \"Kleinst- und Kleinunternehmen müssen die Pflichten erst ab dem 30. Juni 2026 erfüllen.\"\n    },\n    {\n      \"text\": \"Submit due diligence statements from 30 December 2025 if you are not an SME.\",\n      \"quote\": \"Händler, die keine KMU sind, müssen ab dem 30. Dezember 2025 Sorgfaltserklärungen abgeben.\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 1100,
+        "completion_tokens": 300
+      }
+    },
+    {
+      "text": "{\n  \"instrument\": \"Regulation (EU) 2023/1115 — IHK guidance on deadlines for micro and small enterprises\",\n  \"jurisdiction\": \"EU\",\n  \"summary\": \"Work out your size class from turnover, balance sheet and headcount now: micro and small enterprises must meet the EUDR duties from 30 June 2026, all other traders from 30 December 2025. This IHK page explains the deadlines of Regulation (EU) 2023/1115 for companies placing covered products on the EU market.\",\n  \"effective_dates\": [\n    \"2025-12-30\",\n    \"2026-06-30\"\n  ],\n  \"obligations\": [\n    {\n      \"text\": \"Meet the EUDR duties from 30 June 2026 if you are a micro or small enterprise.\",\n      \"quote\": \"Kleinst- und Kleinunternehmen müssen die Pflichten erst ab dem 30. Juni 2026 erfüllen.\"\n    },\n    {\n      \"text\": \"Submit due diligence statements from 30 December 2025 if you are not an SME.\",\n      \"quote\": \"Händler, die keine KMU sind, müssen bereits ab dem 30. Dezember 2025 Sorgfaltserklärungen abgeben oder auf die Erklärungen ihrer Lieferanten verweisen.\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 1500,
+        "completion_tokens": 310
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "doc_id": "gii-356a-bgb",
+  "url": "https://www.gesetze-im-internet.de/bgb/__356a.html",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"§ 356a BGB\",\n  \"jurisdiction\": \"DE\",\n  \"summary\": \"Bieten Sie ab dem 19. Juni 2026 eine gut sichtbare Widerrufsfunktion mit Bestätigungsschritt an und bestätigen Sie jeden Widerruf unverzüglich auf einem dauerhaften Datenträger. § 356a BGB gilt für Unternehmer bei im elektronischen Geschäftsverkehr geschlossenen Verbraucherverträgen.\",\n  \"effective_dates\": [\n    \"2026-06-19\"\n  ],\n  \"obligations\": [\n    {\n      \"text\": \"Stellen Sie sicher, dass Verbraucher das Widerrufsrecht über eine Widerrufsfunktion ausüben können.\",\n      \"quote\": \"hat der Unternehmer sicherzustellen, dass der Verbraucher das Widerrufsrecht auch durch eine Widerrufsfunktion ausüben kann\"\n    },\n    {\n      \"text\": \"Kennzeichnen Sie die Widerrufsfunktion gut lesbar mit „Vertrag hier widerrufen“.\",\n      \"quote\": \"Die Widerrufsfunktion ist mit den Worten „Vertrag hier widerrufen\\\" oder mit einer entsprechenden eindeutigen Formulierung in gut lesbarer Form zu kennzeichnen.\"\n    },\n    {\n      \"text\": \"Ermöglichen Sie das Absenden der Widerrufserklärung über eine Bestätigungsfunktion.\",\n      \"quote\": \"hat der Unternehmer dem Verbraucher zu ermöglichen, die Widerrufserklärung über eine Bestätigungsfunktion abzusenden.\"\n    },\n    {\n      \"text\": \"Bestätigen Sie den Eingang des Widerrufs unverzüglich auf einem dauerhaften Datenträger.\",\n      \"quote\": \"hat der Unternehmer dem Verbraucher unverzüglich auf einem dauerhaften Datenträger den Eingang der Widerrufserklärung zu bestätigen\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 1750,
+        "completion_tokens": 450
+      }
+    }
+  ]
+}

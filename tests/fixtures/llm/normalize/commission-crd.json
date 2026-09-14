@@ -1,0 +1,13 @@
+{
+  "doc_id": "commission-crd",
+  "url": "https://commission.europa.eu/law/law-topic/consumer-protection-law/consumer-contract-law/consumer-rights-directive_en",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"Directive 2011/83/EU — Commission topic page\",\n  \"jurisdiction\": \"EU\",\n  \"summary\": \"Prepare for the online withdrawal function that Member States apply from 19 June 2026. This Commission page summarises the Consumer Rights Directive for traders selling to EU consumers.\",\n  \"effective_dates\": [\n    \"2026-06-19\"\n  ],\n  \"obligations\": []\n}",
+      "usage": {
+        "prompt_tokens": 600,
+        "completion_tokens": 110
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "doc_id": "eurlex-2023-1115",
+  "url": "https://eur-lex.europa.eu/eli/reg/2023/1115/oj",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"Regulation (EU) 2023/1115\",\n  \"jurisdiction\": \"EU\",\n  \"summary\": \"Place wood, leather or other covered products on the EU market only with a due diligence statement, plot geolocation and five years of records, from 30 December 2025 or from 30 June 2026 for micro and small enterprises. Regulation (EU) 2023/1115 (the Deforestation Regulation) applies to operators and traders of cattle, cocoa, coffee, oil palm, rubber, soya and wood products.\",\n  \"effective_dates\": [\n    \"2025-12-30\",\n    \"2026-06-30\"\n  ],\n  \"obligations\": [\n    {\n      \"text\": \"Do not sell covered products unless they are deforestation-free and legally produced.\",\n      \"quote\": \"Relevant commodities and relevant products shall not be placed or made available on the market or exported, unless all the following conditions are fulfilled: (a) they are deforestation-free\"\n    },\n    {\n      \"text\": \"Submit a due diligence statement before placing products on the market.\",\n      \"quote\": \"Operators shall, prior to placing the relevant products on the market or exporting them, make available to the competent authorities via the information system referred to in Article 33 a due diligence statement confirming that due diligence was exercised and that no or only a negligible risk was found.\"\n    },\n    {\n      \"text\": \"Collect geolocation of the plots of land where the commodity was produced.\",\n      \"quote\": \"the geolocation of all plots of land where the relevant commodities that the relevant product contains, or has been made using, were produced\"\n    },\n    {\n      \"text\": \"Keep due-diligence records for five years.\",\n      \"quote\": \"Operators shall keep for at least 5 years from the date of the placing on the market or export of the relevant products all documentation related to due diligence\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 2100,
+        "completion_tokens": 430
+      }
+    }
+  ]
+}

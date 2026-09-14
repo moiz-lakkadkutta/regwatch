@@ -1,0 +1,13 @@
+{
+  "doc_id": "eurlex-2023-2673",
+  "url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"Directive (EU) 2023/2673\",\n  \"jurisdiction\": \"EU\",\n  \"summary\": \"Offer a clearly labelled, two-step withdrawal function on your online shop and confirm each withdrawal on a durable medium, for contracts concluded from 19 June 2026. Directive (EU) 2023/2673 inserts Article 11a into the Consumer Rights Directive for traders that conclude contracts through an online interface.\",\n  \"effective_dates\": [\n    \"2026-06-19\"\n  ],\n  \"obligations\": [\n    {\n      \"text\": \"Provide a withdrawal function on the online interface.\",\n      \"quote\": \"the trader shall ensure that the consumer can also exercise the right of withdrawal by means of a withdrawal function\"\n    },\n    {\n      \"text\": \"Label it clearly and make it two-step (fill in, then confirm).\",\n      \"quote\": \"The withdrawal function shall be labelled with the words 'withdraw contract here' or a corresponding unambiguous formulation in an easily legible manner\"\n    },\n    {\n      \"text\": \"Keep the withdrawal function available throughout the withdrawal period.\",\n      \"quote\": \"The withdrawal function shall be continuously available during the withdrawal period.\"\n    },\n    {\n      \"text\": \"Send an acknowledgement on a durable medium.\",\n      \"quote\": \"the trader shall communicate to the consumer without undue delay an acknowledgement of receipt of the withdrawal on a durable medium\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 1900,
+        "completion_tokens": 410
+      }
+    }
+  ]
+}
