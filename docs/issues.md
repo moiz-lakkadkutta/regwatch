@@ -20,8 +20,11 @@
 - [ ] (oct20-verifier) "exactly one retry" is only guarded by the stub-backend test; the gii fixture test passes a conditional-3rd-call mutation — keep the stub test load-bearing.
 - [ ] (oct20-verifier) tests/test_classify.py has a `# type: ignore[union-attr]` that should be an `assert … is not None`.
 - [ ] (oct20-verifier) The two seed changes are hand-recorded applicabilities; Ultra grounding for change-001/002 is only proven by tests/test_classify_live.py once NEBIUS_API_KEY exists (Oct 23 live run).
-- [ ] (oct21-verifier) feed.html profile subline prints raw category keys (`furniture_wood`) — show CATEGORIES plain names.
-- [ ] (oct21-verifier) feed group subline and item h3 both show the full instrument; with one item per group the legal name appears twice within 4 lines at 390px — drop `.law` when the group has one item.
+- [x] (oct21-verifier) feed.html profile subline prints raw category keys (`furniture_wood`) — show CATEGORIES plain names. (Oct 22: `category_names` via `dict(CATEGORIES)`.)
+- [x] (oct21-verifier) feed group subline and item h3 both show the full instrument; with one item per group the legal name appears twice within 4 lines at 390px — drop `.law` when the group has one item. (Oct 22: `.law` only when the group has more than one item.)
 - [ ] (oct21-verifier) `wrong_call_mailto` subject uses the raw enum (`does_not`) — map to "doesn't apply" wording (Oct 24 polish).
 - [ ] (oct21-verifier) Dates render English only; UX §3.4 wants the owner's locale — deferred, no babel.
 - [ ] (oct21-verifier) Detail page h1 is the legal name; the first verb phrase appears under "What to do" — consider a one-line "Do this by <date>" lead under the h1 (Oct 24 polish).
+- [ ] (oct22-impl) `_todo_key = sha1(url|quote)[:16]`: two to-dos of one change that cite the same obligation quote share a key, so one check-off marks both. Seed has none; classify prompt asks for distinct quotes. Include the to-do text in the key when the schema is next touched (would orphan stored TodoStateRows — do it with the Oct 23 DB reset).
+- [ ] (oct22-impl) Month view dates are English only (`MONTHS` in app.py, "19 June 2026"); UX §3.4 wants the owner's locale — same deferral as the feed, no babel.
+- [ ] (oct22-impl) Month view "this month" is the calendar month of `_today()`; a to-do due on the 1st of next month shows under "Coming up" on the 30th. Fine for the demo; revisit if a 30-day window reads better.

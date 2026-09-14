@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -55,6 +55,8 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
 # Feed order inside a regulation group: what applies first, then what needs one answer.
 DECISION_RANK: dict[str, int] = {"applies": 0, "unclear": 1, "does_not": 2}
+# Plain names for the feed's profile subline ("Leather goods", not "leather").
+CATEGORY_NAMES: dict[str, str] = dict(CATEGORIES)
 
 
 @dataclass(frozen=True)
@@ -259,29 +261,6 @@ def _footer(s: Session, rows: list[FeedRow]) -> Footer:
     )
 
 
-def _feed_items(profile_id: int) -> list[dict[str, Any]]:
-    """Dict shape kept for month(); built on feed_rows() + _item()."""
-    today = _today()
-    with session(engine) as s:
-        rows = feed_rows(s, profile_id)
-        done_keys = _done_keys(s, profile_id)
-    items: list[dict[str, Any]] = []
-    for row in rows:
-        it = _item(row, done_keys, today)
-        items.append(
-            {
-                "id": it.id,
-                "change": it.change,
-                "decision": it.decision,
-                "reasons": it.reasons,
-                "todos": [asdict(t) for t in it.todos],
-                "created_at": it.created_at,
-                "credits": row.tavily_credits,
-            }
-        )
-    return items
-
-
 Bucket = Literal["in_force", "this_month", "coming_up", "no_date"]
 
 
@@ -467,6 +446,7 @@ def feed(request: Request) -> Any:
         unchecked = unchecked_changes(s, prof.id)
         footer = _footer(s, rows)
     groups = _group([_item(r, done_keys, today) for r in rows])
+    profile = prof.to_schema()
     return templates.TemplateResponse(
         request,
         "feed.html",
@@ -474,8 +454,9 @@ def feed(request: Request) -> Any:
             "groups": groups,
             "unchecked": unchecked,
             "f": footer,
-            "profile": prof.to_schema(),
+            "profile": profile,
             "establishment": country_name(prof.establishment_country),
+            "category_names": [CATEGORY_NAMES.get(c, c) for c in profile.categories],
         },
     )
 
