@@ -1,0 +1,146 @@
+[
+  {
+    "id": "eurlex-2023-2673",
+    "url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj",
+    "source_domain": "eur-lex.europa.eu",
+    "regulation_tags": ["withdrawal"],
+    "kind": "core",
+    "expected_decision": "applies",
+    "why": "Distance contracts with EU consumers: the profile sells to 10 EU countries. Contains the 3 obligation quotes of examples/seed-run/change-001-withdrawal.json verbatim."
+  },
+  {
+    "id": "gii-356a-bgb",
+    "url": "https://www.gesetze-im-internet.de/bgb/__356a.html",
+    "source_domain": "gesetze-im-internet.de",
+    "regulation_tags": ["withdrawal"],
+    "kind": "core",
+    "expected_decision": "applies",
+    "why": "Profile is established in DE, so the German transposition (§ 356a BGB, German text) is the operative rule."
+  },
+  {
+    "id": "eurlex-2023-1115",
+    "url": "https://eur-lex.europa.eu/eli/reg/2023/1115/oj",
+    "source_domain": "eur-lex.europa.eu",
+    "regulation_tags": ["eudr"],
+    "kind": "core",
+    "expected_decision": "applies",
+    "why": "Wood (furniture_wood) and cattle/leather are relevant commodities. Contains the 3 obligation quotes of examples/seed-run/change-002-eudr.json verbatim."
+  },
+  {
+    "id": "commission-eudr-coffee-cocoa",
+    "url": "https://commission.europa.eu/business-economy-euro/doing-business-eu/sustainability-due-diligence-responsible-business/eudr-guidance-coffee-cocoa-operators_en",
+    "source_domain": "commission.europa.eu",
+    "regulation_tags": ["eudr"],
+    "kind": "core",
+    "expected_decision": "does_not",
+    "why": "Guidance addressed only to coffee and cocoa importers; the profile sells neither category."
+  },
+  {
+    "id": "shopify-help-us-returns",
+    "url": "https://help.shopify.com/en/manual/checkout-settings/refund-return-policy/us-return-refund-rules",
+    "source_domain": "help.shopify.com",
+    "regulation_tags": ["withdrawal"],
+    "kind": "core",
+    "expected_decision": "does_not",
+    "why": "US FTC return/refund rules caught by the withdrawal query; no EU obligation for a DE store shipping inside the EU."
+  },
+  {
+    "id": "ihk-eudr-kmu",
+    "url": "https://www.ihk.de/themen/umwelt-energie/eudr-kleinstunternehmen-fristen",
+    "source_domain": "ihk.de",
+    "regulation_tags": ["eudr"],
+    "kind": "core",
+    "expected_decision": "unclear",
+    "why": "The SME/micro application date depends on turnover and headcount, which the store profile does not collect. German text."
+  },
+  {
+    "id": "eurlex-2011-83",
+    "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32011L0083",
+    "source_domain": "eur-lex.europa.eu",
+    "regulation_tags": ["withdrawal"],
+    "kind": "filler",
+    "expected_decision": null,
+    "why": "Consolidated Consumer Rights Directive 2011/83/EU landing page (short excerpt)."
+  },
+  {
+    "id": "eurlex-2024-3234",
+    "url": "https://eur-lex.europa.eu/eli/reg/2024/3234/oj",
+    "source_domain": "eur-lex.europa.eu",
+    "regulation_tags": ["eudr"],
+    "kind": "filler",
+    "expected_decision": null,
+    "why": "Regulation (EU) 2024/3234 postponing the EUDR application dates (short excerpt)."
+  },
+  {
+    "id": "commission-crd",
+    "url": "https://commission.europa.eu/law/law-topic/consumer-protection-law/consumer-contract-law/consumer-rights-directive_en",
+    "source_domain": "commission.europa.eu",
+    "regulation_tags": ["withdrawal"],
+    "kind": "filler",
+    "expected_decision": null,
+    "why": "Commission topic page for the Consumer Rights Directive (short excerpt)."
+  },
+  {
+    "id": "green-forum-eudr",
+    "url": "https://green-forum.ec.europa.eu/deforestation-regulation-implementation_en",
+    "source_domain": "green-forum.ec.europa.eu",
+    "regulation_tags": ["eudr"],
+    "kind": "filler",
+    "expected_decision": null,
+    "why": "Green Forum EUDR implementation page (short excerpt)."
+  },
+  {
+    "id": "bmj-widerrufsbutton",
+    "url": "https://www.bmj.de/DE/themen/verbraucherschutz/widerrufsbutton/widerrufsbutton_node.html",
+    "source_domain": "bmj.de",
+    "regulation_tags": ["withdrawal"],
+    "kind": "filler",
+    "expected_decision": null,
+    "why": "Federal Ministry of Justice page on the Widerrufsbutton (short German excerpt)."
+  },
+  {
+    "id": "bmuv-eudr",
+    "url": "https://www.bmuv.de/themen/wald/entwaldungsfreie-lieferketten-eudr",
+    "source_domain": "bmuv.de",
+    "regulation_tags": ["eudr"],
+    "kind": "filler",
+    "expected_decision": null,
+    "why": "Federal environment ministry page on the EUDR (short German excerpt)."
+  },
+  {
+    "id": "ihk-widerrufsbutton",
+    "url": "https://www.ihk.de/themen/recht/widerrufsbutton-onlinehandel",
+    "source_domain": "ihk.de",
+    "regulation_tags": ["withdrawal"],
+    "kind": "filler",
+    "expected_decision": null,
+    "why": "IHK explainer on the Widerrufsbutton for online shops (short German excerpt)."
+  },
+  {
+    "id": "shopify-help-eu-withdrawal",
+    "url": "https://help.shopify.com/en/manual/checkout-settings/eu-withdrawal-function",
+    "source_domain": "help.shopify.com",
+    "regulation_tags": ["eudr", "withdrawal"],
+    "kind": "filler",
+    "expected_decision": null,
+    "why": "Shopify help page on the EU withdrawal function. Also returned (low score) by the EUDR query on help.shopify.com, so it carries both tags; exercises tag merging in dedupe."
+  },
+  {
+    "id": "shopify-blog-eu-withdrawal-button",
+    "url": "https://www.shopify.com/blog/eu-withdrawal-button",
+    "source_domain": "shopify.com",
+    "regulation_tags": ["withdrawal"],
+    "kind": "filler",
+    "expected_decision": null,
+    "why": "Shopify blog post on the EU withdrawal button (short excerpt)."
+  },
+  {
+    "id": "shopify-blog-eudr",
+    "url": "https://www.shopify.com/blog/eudr-compliance",
+    "source_domain": "shopify.com",
+    "regulation_tags": ["eudr"],
+    "kind": "filler",
+    "expected_decision": null,
+    "why": "Shopify blog post on EUDR compliance for merchants (short excerpt)."
+  }
+]

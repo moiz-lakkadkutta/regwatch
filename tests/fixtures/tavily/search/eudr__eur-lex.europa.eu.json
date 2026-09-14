@@ -1,0 +1,23 @@
+{
+  "query": "EUDR Regulation 2023/1115 application date small micro enterprises due diligence statement wood leather furniture",
+  "results": [
+    {
+      "title": "Regulation (EU) 2023/1115 on the making available on the Union market of certain commodities and products associated with deforestation",
+      "url": "https://eur-lex.europa.eu/eli/reg/2023/1115/oj",
+      "content": "Relevant commodities and relevant products shall not be placed or made available on the market or exported, unless they are deforestation-free, produced in accordance with the relevant legislation and covered by a due diligence statement.",
+      "score": 0.95,
+      "published_date": "2023-06-09"
+    },
+    {
+      "title": "Regulation (EU) 2024/3234 amending Regulation (EU) 2023/1115 as regards the date of application",
+      "url": "https://eur-lex.europa.eu/eli/reg/2024/3234/oj",
+      "content": "Postpones the application of Regulation (EU) 2023/1115: 30 December 2025 for operators and traders, 30 June 2026 for micro and small enterprises.",
+      "score": 0.82,
+      "published_date": "2024-12-23"
+    }
+  ],
+  "response_time": 0.9,
+  "usage": {
+    "credits": 2
+  }
+}

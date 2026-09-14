@@ -1,0 +1,23 @@
+{
+  "query": "Directive 2023/2673 withdrawal function button distance contracts 19 June 2026 § 356a BGB Widerrufsbutton",
+  "results": [
+    {
+      "title": "EU withdrawal function · Shopify Help Center",
+      "url": "https://help.shopify.com/en/manual/checkout-settings/eu-withdrawal-function",
+      "content": "Add the EU withdrawal function to your online store so customers can withdraw from a contract in two steps.",
+      "score": 0.66,
+      "published_date": "2026-03-02"
+    },
+    {
+      "title": "US return and refund rules · Shopify Help Center",
+      "url": "https://help.shopify.com/en/manual/checkout-settings/refund-return-policy/us-return-refund-rules",
+      "content": "Learn about the FTC rules for returns and refunds when you sell to customers in the United States.",
+      "score": 0.41,
+      "published_date": "2025-05-14"
+    }
+  ],
+  "response_time": 0.9,
+  "usage": {
+    "credits": 2
+  }
+}

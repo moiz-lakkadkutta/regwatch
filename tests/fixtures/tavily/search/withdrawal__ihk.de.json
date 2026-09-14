@@ -1,0 +1,23 @@
+{
+  "query": "Directive 2023/2673 withdrawal function button distance contracts 19 June 2026 § 356a BGB Widerrufsbutton",
+  "results": [
+    {
+      "title": "Widerrufsbutton: Was Online-Händler ab Juni 2026 beachten müssen - IHK",
+      "url": "https://www.ihk.de/themen/recht/widerrufsbutton-onlinehandel",
+      "content": "Die IHK erklärt, wie der Widerrufsbutton nach § 356a BGB gestaltet sein muss.",
+      "score": 0.68,
+      "published_date": "2025-11-03"
+    },
+    {
+      "title": "Widerrufsbutton: Ratgeber für Online-Händler - Trusted Shops",
+      "url": "https://www.trustedshops.de/ratgeber/widerrufsbutton/",
+      "content": "Simulated include_domains filter leak: this host is not in config.SOURCE_DOMAINS and must be dropped and logged.",
+      "score": 0.52,
+      "published_date": "2026-01-20"
+    }
+  ],
+  "response_time": 0.9,
+  "usage": {
+    "credits": 2
+  }
+}
