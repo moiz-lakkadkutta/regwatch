@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import shutil
 from pathlib import Path
 
 import pytest
@@ -171,6 +172,23 @@ def test_seed_then_crawl_all_leaves_seed_changes_alone(
         seed_rows = [r for r in rows if r.cost_usd in (0.06, 0.07)]
         assert len(seed_rows) == 2  # untouched, still carrying the recorded seed cost
     assert seed(tmp_settings) == 0
+
+
+def test_seed_honours_seed_dir_setting(tmp_path: Path) -> None:
+    """`seed()` reads Settings.seed_dir (REGWATCH_SEED_DIR), not a path relative to the package."""
+    custom = tmp_path / "s"
+    shutil.copytree(SEED_DIR, custom)
+    (custom / "change-002-eudr.json").unlink()
+    settings = Settings(
+        REGWATCH_DB_URL=f"sqlite:///{tmp_path / 'seed.db'}", REGWATCH_SEED_DIR=str(custom)
+    )
+    assert settings.seed_dir == custom
+    assert seed(settings) == 1
+    assert seed(settings) == 0
+    with Session(make_engine(settings)) as s:
+        assert len(s.exec(select(RegChangeRow)).all()) == 1
+        assert len(s.exec(select(DocumentRow)).all()) == 2  # documents.jsonl still has both
+    assert Settings(REGWATCH_DB_URL="sqlite://").seed_dir == SEED_DIR
 
 
 def test_main_cli_prints_summary(
