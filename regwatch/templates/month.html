@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block title %}This month · RegWatch{% endblock %}
+{% block body %}
+<h1>What to do this month</h1>
+{% if not todos %}<div class="card">Nothing due this month. New changes appear here as soon as they apply to you.</div>{% endif %}
+<div class="card">
+{% for t in todos %}
+<div class="todo {% if t.done %}done{% endif %}">
+  <form method="post" action="/todo/{{t.key}}/toggle"><button aria-label="mark done">{% if t.done %}✓{% endif %}</button></form>
+  <div>
+    <div class="text">{{t.text}}</div>
+    <div class="muted">{% if t.due %}{% if t.overdue %}<span class="pill overdue">in force since {{t.due}}</span>{% else %}due {{t.due}}{% endif %}{% else %}no fixed date{% endif %} · <a href="/change/{{t.change_id}}">{{t.instrument}}</a></div>
+  </div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

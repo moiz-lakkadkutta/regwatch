@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block title %}{{item.change.instrument}} · RegWatch{% endblock %}
+{% block body %}
+<p><a href="/feed">← All changes</a></p>
+<span class="pill {{item.decision}}">{% if item.decision=="applies" %}Applies to you{% elif item.decision=="does_not" %}Doesn't apply{% else %}Unclear{% endif %}</span>
+<h1>{{item.change.instrument}}</h1>
+<p>{{item.change.summary}}</p>
+<h2>Why this {% if item.decision=="applies" %}applies to you{% elif item.decision=="does_not" %}doesn't apply to you{% else %}is unclear{% endif %}</h2>
+<ul>{% for r in item.reasons %}<li>{{r}}</li>{% endfor %}</ul>
+{% if item.todos %}<h2>What to do</h2><div class="card">
+{% for t in item.todos %}<div class="todo {% if t.done %}done{% endif %}"><div><div class="text">{{t.text}}</div>
+<div class="muted">{% if t.due %}by {{t.due}}{% endif %}</div>
+<blockquote>“{{t.quote}}”<cite><a href="{{t.citation_url}}" rel="noopener">source</a></cite></blockquote></div></div>{% endfor %}
+</div>{% endif %}
+<h2>Obligations in the text</h2>
+{% for o in item.change.obligations %}<div class="card"><div>{{o.text}}</div><blockquote>“{{o.quote}}”<cite><a href="{{item.change.document_url}}" rel="noopener">{{item.change.document_url}}</a></cite></blockquote></div>{% endfor %}
+<p class="muted">Jurisdiction: {{item.change.jurisdiction}}{% if item.change.effective_dates %} · dates: {{item.change.effective_dates|join(", ")}}{% endif %} · <a href="mailto:?subject=RegWatch%20wrong%20call%20{{item.id}}">report a wrong call</a></p>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% block title %}Your store · RegWatch{% endblock %}
+{% block body %}
+<h1>Tell us about your store</h1>
+<p class="muted">Two minutes, once. We use this to decide which rules apply to you — nothing is stored beyond these four answers.</p>
+<form method="post" action="/profile" class="card">
+  <label for="establishment_country">Where is your business established?</label>
+  <select id="establishment_country" name="establishment_country" required>
+    {% for c in countries %}<option value="{{c}}" {% if profile and profile.establishment_country==c %}selected{% endif %}>{{c}}</option>{% endfor %}
+  </select>
+  <p class="help">Decides which national law (e.g. German § 356a BGB) implements an EU rule for you.</p>
+
+  <label for="ship_to">Where do you ship to?</label>
+  <select id="ship_to" name="ship_to" multiple size="8">
+    <option value="ALL_EU">All EU countries</option>
+    {% for c in countries %}<option value="{{c}}" {% if profile and c in profile.ship_to %}selected{% endif %}>{{c}}</option>{% endfor %}
+  </select>
+  <p class="help">Consumer-rights rules follow where your customers are.</p>
+
+  <label for="categories">What do you sell?</label>
+  <select id="categories" name="categories" multiple size="9">
+    {% for key,name in categories %}<option value="{{key}}" {% if profile and key in profile.categories %}selected{% endif %}>{{name}}</option>{% endfor %}
+  </select>
+  <p class="help">Product rules (like the deforestation regulation) depend on materials: wood, leather, coffee, rubber.</p>
+
+  <label for="platform">Platform</label>
+  <select id="platform" name="platform"><option value="shopify">Shopify</option><option value="woocommerce">WooCommerce</option><option value="other">Other</option></select>
+
+  <button class="primary" type="submit">Save and show my changes</button>
+</form>
+{% endblock %}

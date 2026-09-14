@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block title %}Changes · RegWatch{% endblock %}
+{% block body %}
+<h1>Regulation changes for your store</h1>
+<p class="muted">Established in {{profile.establishment_country}} · ships to {{profile.ship_to|length}} countries · {{profile.categories|join(", ")}}</p>
+{% if not items %}<div class="card">No changes yet. The first crawl runs on deploy; run <code>regwatch crawl</code> to fetch now.</div>{% endif %}
+{% for it in items %}
+<div class="card">
+  <span class="pill {{it.decision}}">{% if it.decision=="applies" %}Applies to you{% elif it.decision=="does_not" %}Doesn't apply{% else %}Unclear — one question{% endif %}</span>
+  <span class="muted"> · {{it.created_at.strftime("%d %b %Y")}}</span>
+  <h2><a href="/change/{{it.id}}">{{it.change.instrument}}</a></h2>
+  <p>{{it.change.summary}}</p>
+  <p class="muted">{{it.todos|length}} to-do{% if it.todos|length!=1 %}s{% endif %}{% if it.change.effective_dates %} · in force from {{it.change.effective_dates[0]}}{% endif %}</p>
+</div>
+{% endfor %}
+{% endblock %}
+{% block footer %}Sources are limited to official EU/German bodies and platform help pages. Search and extraction by Tavily · {{credits}} credits used · classification by NVIDIA Nemotron 3 Ultra on Nebius Token Factory.{% endblock %}

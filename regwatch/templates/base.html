@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}RegWatch{% endblock %}</title>
+<style>
+:root{--bg:#F4F6F8;--paper:#fff;--ink:#17222E;--ink2:#4B5764;--ink3:#7B8794;--line:#D9DFE5;--accent:#2E6E8E;--applies:#2E7D4F;--applies-bg:#E3F2E8;--no:#6B7683;--no-bg:#EEF1F4;--unclear:#9A6B00;--unclear-bg:#FBF3DC;--over:#A33A3A;--over-bg:#F8E5E5}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,Segoe UI,sans-serif;padding:0 16px 64px}
+header{max-width:760px;margin:0 auto;padding:20px 0 8px;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+header a{color:var(--ink2);text-decoration:none;margin-left:14px;font-size:15px}header a.brand{font-weight:700;color:var(--ink);margin:0}
+main{max-width:760px;margin:0 auto}h1{font-size:1.5rem;margin:16px 0 8px}h2{font-size:1.1rem;margin:24px 0 8px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:16px 18px;margin:12px 0}
+.pill{display:inline-block;font-size:12px;font-weight:600;letter-spacing:.03em;padding:2px 8px;border-radius:999px}
+.applies{background:var(--applies-bg);color:var(--applies)}.does_not{background:var(--no-bg);color:var(--no)}.unclear{background:var(--unclear-bg);color:var(--unclear)}.overdue{background:var(--over-bg);color:var(--over)}
+.muted{color:var(--ink3);font-size:14px}blockquote{margin:8px 0;padding:8px 14px;border-left:3px solid var(--line);font-family:Georgia,serif;color:var(--ink2)}
+blockquote cite{display:block;font:13px system-ui,sans-serif;color:var(--ink3);margin-top:4px}
+.todo{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}.todo:first-child{border-top:0}
+.todo form{margin:0}.todo button{border:1px solid var(--line);background:var(--paper);border-radius:4px;width:26px;height:26px;cursor:pointer}
+.todo.done .text{text-decoration:line-through;color:var(--ink3)}
+label{display:block;margin:14px 0 4px;font-weight:600}select,input{font:inherit;padding:8px;border:1px solid var(--line);border-radius:4px;width:100%;background:var(--paper)}
+.help{font-size:14px;color:var(--ink3);margin-top:4px}button.primary{margin-top:18px;background:var(--accent);color:#fff;border:0;padding:10px 16px;border-radius:4px;font:inherit;cursor:pointer}
+footer{max-width:760px;margin:32px auto 0;color:var(--ink3);font-size:13px}a{color:var(--accent)}
+</style>
+</head>
+<body>
+<header><a class="brand" href="/feed">RegWatch</a><nav><a href="/month">This month</a><a href="/feed">Changes</a><a href="/profile">Store profile</a></nav></header>
+<main>{% block body %}{% endblock %}</main>
+<footer>{% block footer %}{% endblock %}</footer>
+</body></html>
