@@ -6,7 +6,7 @@ extract over official sources only); understanding by **NVIDIA Nemotron 3 Ultra*
 Lightning** on **Nebius Token Factory**; hosted as a **Nebius Serverless Endpoint** with a daily
 **Serverless Job** crawl.
 
-> Status: scaffold — the web app runs on a recorded seed run; live crawl lands Oct 18–20 (see `docs/regwatch-plan.md`).
+> Status: ingest stage done (Oct 18) — `regwatch crawl --stage ingest` searches + extracts the allow-list via Tavily and diffs by hash; offline: `--backend fixtures`. Normalise/classify land Oct 19–20 (see `docs/regwatch-plan.md`). Schema changed on Oct 18: delete a pre-existing local `regwatch.db` before running.
 
 ```bash
 uv sync --dev

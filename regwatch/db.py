@@ -37,8 +37,10 @@ class DocumentRow(SQLModel, table=True):
     published_date: str | None = None
     fetched_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     markdown: str
+    regulation_tags: str = "[]"  # JSON list
 
     def to_schema(self) -> Document:
+        tags: list[str] = json.loads(self.regulation_tags)
         return Document(
             url=self.url,
             content_hash=self.content_hash,
@@ -46,6 +48,7 @@ class DocumentRow(SQLModel, table=True):
             fetched_at=self.fetched_at,
             markdown=self.markdown,
             source_domain=self.source_domain,
+            regulation_tags=tags,
         )
 
 
@@ -94,6 +97,22 @@ class ApplicabilityRow(SQLModel, table=True):
         )
 
 
+class CrawlRunRow(SQLModel, table=True):
+    """One crawl job run; `tavily_credits` is what the feed footer shows as credits per crawl."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    started_at: datetime
+    finished_at: datetime | None = None
+    stage: str
+    tavily_credits: int = 0
+    model_cost_usd: float = 0.0
+    n_search_calls: int = 0
+    n_extract_calls: int = 0
+    n_docs_new: int = 0
+    n_docs_changed: int = 0
+    n_docs_unchanged: int = 0
+
+
 class TodoStateRow(SQLModel, table=True):
     """Per-profile 'done' marks for to-dos, keyed by the to-do's quote hash."""
 
@@ -118,3 +137,7 @@ def session(engine) -> Iterator[Session]:  # type: ignore[no-untyped-def]
 
 def current_profile(s: Session) -> ProfileRow | None:
     return s.exec(select(ProfileRow).order_by(col(ProfileRow.id).desc())).first()
+
+
+def last_crawl(s: Session) -> CrawlRunRow | None:
+    return s.exec(select(CrawlRunRow).order_by(col(CrawlRunRow.id).desc())).first()

@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import sys
-from typing import Annotated
+from pathlib import Path
+from typing import Annotated, Literal, cast
 
 import typer
+
+from regwatch.jobs.crawl import DEFAULT_OUT
 
 app = typer.Typer(
     name="regwatch", no_args_is_help=True, add_completion=False, rich_markup_mode=None
@@ -22,11 +26,29 @@ def seed() -> None:
 
 
 @app.command()
-def crawl() -> None:
-    """Search → extract → normalise → classify (the Serverless Job entrypoint)."""
+def crawl(
+    stage: Annotated[str, typer.Option(help="ingest | all")] = "all",
+    backend: Annotated[str, typer.Option(help="live | fixtures")] = "live",
+    fixtures_dir: Annotated[Path | None, typer.Option()] = None,
+    time_range: Annotated[str, typer.Option()] = "year",
+    out: Annotated[Path, typer.Option(help="documents.jsonl path")] = DEFAULT_OUT,
+) -> None:
+    """Search → extract → diff (normalise → classify from Oct 19); the Serverless Job entrypoint."""
+    from regwatch.config import Settings
+    from regwatch.ingest.tavily_backend import make_backend
     from regwatch.jobs.crawl import crawl as _crawl
 
-    print(f"added {_crawl()} change(s)", file=sys.stderr)
+    if backend not in ("live", "fixtures"):
+        raise typer.BadParameter("backend must be 'live' or 'fixtures'")
+    logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+    settings = Settings()
+    tavily = make_backend(settings, cast(Literal["live", "fixtures"], backend), fixtures_dir)
+    try:
+        summary = _crawl(settings, stage=stage, backend=tavily, time_range=time_range, out=out)
+    except NotImplementedError as e:
+        print(f"crawl: {e}", file=sys.stderr)
+        raise typer.Exit(code=2) from e
+    print(summary.line(), file=sys.stderr)
 
 
 @app.command()

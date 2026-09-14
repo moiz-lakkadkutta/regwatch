@@ -1,0 +1,30 @@
+{
+  "query": "Directive 2023/2673 withdrawal function button distance contracts 19 June 2026 § 356a BGB Widerrufsbutton",
+  "results": [
+    {
+      "title": "Directive (EU) 2023/2673 amending Directive 2011/83/EU as regards financial services contracts concluded at a distance",
+      "url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj",
+      "content": "Article 11a Exercise of the right of withdrawal for contracts concluded by means of an online interface: the trader shall ensure that the consumer can also exercise the right of withdrawal by means of a withdrawal function.",
+      "score": 0.93,
+      "published_date": "2023-11-22"
+    },
+    {
+      "title": "Directive (EU) 2023/2673 - Article 11a (withdrawal function)",
+      "url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/?utm_source=tavily#art11a",
+      "content": "Duplicate of the directive landing page with a tracking parameter and an article anchor; normalize_url must collapse it.",
+      "score": 0.88,
+      "published_date": "2023-11-22"
+    },
+    {
+      "title": "Directive 2011/83/EU on consumer rights (consolidated text)",
+      "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32011L0083",
+      "content": "Consolidated text of the Consumer Rights Directive including the amendments introduced by Directive (EU) 2023/2673 on the withdrawal function.",
+      "score": 0.71,
+      "published_date": "2011-11-22"
+    }
+  ],
+  "response_time": 0.9,
+  "usage": {
+    "credits": 2
+  }
+}
