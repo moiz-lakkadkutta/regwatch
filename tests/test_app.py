@@ -1,8 +1,16 @@
+import json
 import os
 from pathlib import Path
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+
+from regwatch.config import EU_COUNTRIES
+from regwatch.db import current_profile, session
+from regwatch.schemas import Profile
+
+SEED_DIR = Path(__file__).resolve().parent.parent / "examples" / "seed-run"
 
 
 @pytest.fixture()
@@ -18,6 +26,31 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     assert seed() == 2
     assert seed() == 0  # idempotent
     return TestClient(appmod.app)
+
+
+@pytest.fixture()
+def empty_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
+    monkeypatch.setenv("REGWATCH_DB_URL", f"sqlite:///{tmp_path / 'empty.db'}")
+    import importlib
+
+    import regwatch.app as appmod
+
+    importlib.reload(appmod)
+    return TestClient(appmod.app)
+
+
+def _demo_profile() -> dict[str, Any]:
+    demo: dict[str, Any] = json.loads((SEED_DIR / "profile.json").read_text(encoding="utf-8"))
+    return demo
+
+
+def _stored_profile(client: TestClient) -> Profile:
+    import regwatch.app as appmod
+
+    with session(appmod.engine) as s:
+        row = current_profile(s)
+    assert row is not None
+    return row.to_schema()
 
 
 def test_feed_shows_both_seed_changes(client: TestClient) -> None:
@@ -51,3 +84,59 @@ def test_profile_redirect_when_empty(tmp_path: Path, monkeypatch: pytest.MonkeyP
     c = TestClient(appmod.app)
     assert c.get("/", follow_redirects=False).headers["location"] == "/profile"
     os.environ.pop("REGWATCH_DB_URL", None)
+
+
+def test_post_profile_stores_demo_profile(empty_client: TestClient) -> None:
+    demo = _demo_profile()
+    r = empty_client.post("/profile", data=demo, follow_redirects=False)
+    assert r.status_code == 303
+    assert r.headers["location"] == "/feed"
+    assert _stored_profile(empty_client) == Profile(**demo)
+
+
+def test_get_profile_renders_saved_profile_back(empty_client: TestClient) -> None:
+    demo = _demo_profile()
+    demo["platform"] = "woocommerce"
+    empty_client.post("/profile", data=demo, follow_redirects=False)
+    r = empty_client.get("/profile")
+    assert r.status_code == 200
+    assert '<option value="DE" selected>' in r.text
+    for c in demo["ship_to"]:
+        assert f'<option value="{c}" selected>' in r.text
+    for key in demo["categories"]:
+        assert f'<option value="{key}" selected>' in r.text
+    assert 'value="woocommerce" selected' in r.text
+    assert 'value="shopify" selected' not in r.text
+
+
+def test_all_eu_expands_to_every_eu_country(empty_client: TestClient) -> None:
+    empty_client.post(
+        "/profile",
+        data={"establishment_country": "DE", "ship_to": ["ALL_EU"], "categories": ["leather"]},
+        follow_redirects=False,
+    )
+    stored = _stored_profile(empty_client)
+    assert stored.ship_to == sorted(EU_COUNTRIES)
+    assert "ALL_EU" not in stored.ship_to
+
+
+def test_profile_normalises_country_case_and_dedupes_lists(empty_client: TestClient) -> None:
+    empty_client.post(
+        "/profile",
+        data={
+            "establishment_country": "de",
+            "ship_to": ["FR", "AT", "FR"],
+            "categories": ["leather", "leather"],
+        },
+        follow_redirects=False,
+    )
+    stored = _stored_profile(empty_client)
+    assert stored.establishment_country == "DE"
+    assert stored.ship_to == ["AT", "FR"]
+    assert stored.categories == ["leather"]
+
+
+def test_profile_form_renders_when_empty(empty_client: TestClient) -> None:
+    r = empty_client.get("/profile")
+    assert r.status_code == 200
+    assert "selected" not in r.text
