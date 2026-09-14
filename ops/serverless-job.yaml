@@ -1,0 +1,30 @@
+# Nebius Serverless AI has no declarative YAML apply as of 2026-09; these are the values to enter in console (Serverless AI → Jobs → Create) or the flags for the CLI line at the bottom.
+# Job = the same image as the Endpoint, `crawl` mode: `regwatch seed` then
+# `regwatch crawl --stage all --backend live --llm-backend live` on its own ephemeral SQLite.
+# Without both keys the entrypoint exits 2 (status FAILED) — it never falls back to recorded data.
+name: regwatch-crawl
+image: cr.eu-north1.nebius.cloud/<REGISTRY_ID>/regwatch:<GIT_SHA>
+platform: cpu-d3
+preset: 4vcpu-16gb          # same as the Endpoint
+disk_size: 32Gi             # default 250Gi costs ~$17.75/month
+timeout: 1h
+restart_policy: never
+container_command: ""       # image ENTRYPOINT /app/entrypoint.sh; fallback if --args alone is refused
+args: "crawl"
+env:                        # every non-secret variable from .env.example
+  TOKENFACTORY_BASE_URL: https://api.tokenfactory.nebius.com/v1
+  REGWATCH_CLASSIFIER_MODEL: nvidia/Nemotron-3-Ultra-550b-a55b
+  REGWATCH_EXTRACTOR_MODEL: nvidia/Nemotron-3_5-Lightning
+  REGWATCH_DB_URL: sqlite:////data/regwatch.db
+  REGWATCH_EXTRACTOR_PRICE_IN_PER_MTOK: "0.20"     # PLACEHOLDER — confirm on Token Factory pricing
+  REGWATCH_EXTRACTOR_PRICE_OUT_PER_MTOK: "0.60"    # PLACEHOLDER
+  REGWATCH_CLASSIFIER_PRICE_IN_PER_MTOK: "1.00"    # PLACEHOLDER
+  REGWATCH_CLASSIFIER_PRICE_OUT_PER_MTOK: "3.00"   # PLACEHOLDER
+  REGWATCH_NORMALIZE_MAX_CHARS: "60000"
+  REGWATCH_REPORT_EMAIL: ""
+  REGWATCH_TIME_RANGE: year                        # first run: year; the daily workflow passes month
+env_secret:                 # SecretStash secret `regwatch-keys` (runbook step 4)
+  NEBIUS_API_KEY: regwatch-keys
+  TAVILY_API_KEY: regwatch-keys
+schedule: "see .github/workflows/daily-crawl.yml — Nebius Jobs have no cron field"
+# cli: nebius ai job create --name regwatch-crawl-$(date +%F) --image $IMAGE --platform cpu-d3 --preset 4vcpu-16gb --args crawl --timeout 1h --env REGWATCH_TIME_RANGE=month --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys

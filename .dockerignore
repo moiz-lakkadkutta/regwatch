@@ -1,0 +1,16 @@
+.git
+.venv
+.env
+.env.*
+*.db
+*.db-journal
+tests/
+docs/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+__pycache__/
+dist/
+.github/
+FEEDBACK.md
+.DS_Store

@@ -1,0 +1,53 @@
+name: daily-crawl
+# Nebius Serverless Jobs have no schedule/cron field (docs read 2026-09-14), so the daily crawl is a
+# GitHub Actions schedule that creates one Job via the nebius CLI with a service-account profile.
+# Without the four repository secrets this workflow fails fast and creates nothing — the Job needs
+# live keys (SecretStash `regwatch-keys`) and there is no fallback of any kind.
+on:
+  schedule:
+    - cron: "0 5 * * *"
+  workflow_dispatch: {}
+jobs:
+  create-job:
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ${{ vars.REGWATCH_IMAGE }}
+    steps:
+      - name: Guard — refuse to run without the Nebius service-account secrets
+        env:
+          NEBIUS_SA_ID: ${{ secrets.NEBIUS_SA_ID }}
+          NEBIUS_SA_PUBLIC_KEY_ID: ${{ secrets.NEBIUS_SA_PUBLIC_KEY_ID }}
+          NEBIUS_SA_PRIVATE_KEY: ${{ secrets.NEBIUS_SA_PRIVATE_KEY }}
+          NEBIUS_PROJECT_ID: ${{ secrets.NEBIUS_PROJECT_ID }}
+        run: |
+          missing=()
+          for name in NEBIUS_SA_ID NEBIUS_SA_PUBLIC_KEY_ID NEBIUS_SA_PRIVATE_KEY NEBIUS_PROJECT_ID; do
+            [ -n "${!name}" ] || missing+=("$name")
+          done
+          [ -n "$IMAGE" ] || missing+=(REGWATCH_IMAGE)
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::daily-crawl: not configured — missing ${missing[*]} (repository secrets NEBIUS_SA_ID, NEBIUS_SA_PUBLIC_KEY_ID, NEBIUS_SA_PRIVATE_KEY, NEBIUS_PROJECT_ID and variable REGWATCH_IMAGE; see docs/runbook-nebius.md step 10). No Job created."
+            exit 1
+          fi
+          echo "daily-crawl: creating a Job from $IMAGE (REGWATCH_TIME_RANGE=month, daily cap)"
+      - name: Install the nebius CLI
+        run: |
+          curl -sSL https://storage.eu-north1.nebius.cloud/cli/install.sh | bash
+          echo "$HOME/.nebius/bin" >> "$GITHUB_PATH"
+      - name: Create the service-account profile
+        env:
+          NEBIUS_SA_PRIVATE_KEY: ${{ secrets.NEBIUS_SA_PRIVATE_KEY }}
+        run: |
+          umask 077
+          printf '%s\n' "$NEBIUS_SA_PRIVATE_KEY" > key.pem
+          nebius profile create --endpoint api.nebius.cloud \
+            --service-account-id ${{ secrets.NEBIUS_SA_ID }} \
+            --public-key-id ${{ secrets.NEBIUS_SA_PUBLIC_KEY_ID }} \
+            --private-key-file key.pem --profile ci \
+            --parent-id ${{ secrets.NEBIUS_PROJECT_ID }}
+      - name: Create today's crawl Job (ops/serverless-job.yaml values)
+        run: |
+          nebius ai job create --name regwatch-crawl-$(date +%F) --image $IMAGE --platform cpu-d3 --preset 4vcpu-16gb --disk-size 32Gi --args crawl --timeout 1h --env REGWATCH_TIME_RANGE=month --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys
+      - name: Remove the key file
+        if: always()
+        run: rm -f key.pem

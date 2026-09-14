@@ -12,3 +12,9 @@ jobs:
       - run: uv run ruff format --check .
       - run: uv run mypy regwatch
       - run: uv run pytest -q
+      # Ops smoke (runner has a Docker daemon): the image builds, and the Job mode refuses to run
+      # without live keys (exit 2) instead of falling back to anything.
+      - run: docker build --platform linux/amd64 -f ops/Dockerfile -t regwatch:ci .
+      - run: |
+          set +e   # GitHub's default shell is `bash -e`; we want the exit code, not an abort
+          docker run --rm -e NEBIUS_API_KEY= -e TAVILY_API_KEY= regwatch:ci crawl; test $? -eq 2
