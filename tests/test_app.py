@@ -62,7 +62,8 @@ def test_feed_shows_both_seed_changes(client: TestClient) -> None:
 
 def test_month_view_marks_overdue_and_toggles(client: TestClient) -> None:
     r = client.get("/month")
-    assert "in force since 2026-06-19" in r.text
+    # spelled-out date in a calm, factual label (docs/ux-brief.md §3.3)
+    assert 'in force since <time datetime="2026-06-19">19 June 2026</time>' in r.text
     key = r.text.split('action="/todo/')[1].split("/")[0]
     r2 = client.post(f"/todo/{key}/toggle", follow_redirects=True)
     assert 'class="todo done"' in r2.text

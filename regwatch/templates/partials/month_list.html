@@ -1,0 +1,20 @@
+{% macro todo(t) %}
+<div class="todo{% if t.view.done %} done{% endif %}">
+  <form method="post" action="/todo/{{t.view.key}}/toggle" hx-post="/todo/{{t.view.key}}/toggle"><button type="submit" aria-pressed="{{'true' if t.view.done else 'false'}}" aria-label="{{'Mark as not done' if t.view.done else 'Mark as done'}}">{% if t.view.done %}✓{% endif %}</button></form>
+  <div class="body"><div class="text">{{t.view.text}}</div>
+  <div class="meta">{% if t.bucket=="in_force" %}<span class="pill overdue">in force since <time datetime="{{t.view.due.isoformat()}}">{{t.view.due|dlong}}</time></span>{% elif t.view.due %}due <time datetime="{{t.view.due.isoformat()}}">{{t.view.due|dlong}}</time>{% else %}no fixed date — see the obligation{% endif %}
+  · <a href="/change/{{t.change_id}}">{{t.label}}</a> · <a href="{{t.view.citation_url}}" rel="noopener">source</a></div></div>
+</div>
+{% endmacro -%}
+<section id="month-list" hx-target="#month-list" hx-swap="outerHTML">
+<p class="muted">{{m.month_name}} · {{m.n_open}} open · {{m.n_done}} done · {{m.n_unclear}} unclear</p>
+{% if m.nothing_due %}<div class="card empty"><strong>Nothing due this month.</strong>
+{% if m.next_hint %}Next: {{m.next_hint[0]}}, <time datetime="{{m.next_hint[1].isoformat()}}">{{m.next_hint[1]|dlong}}</time>.{% else %}Nothing scheduled yet. New changes appear here after the next crawl.{% endif %}</div>{% endif %}
+{% for heading, hint, todos in [("Already in force","The rule already applies — do these now.",m.in_force),("Due this month","",m.this_month),("Coming up","",m.coming_up),("No fixed date","",m.no_date)] if todos %}
+<h2>{{heading}}</h2>{% if hint %}<p class="hint">{{hint}}</p>{% endif %}<div class="card">
+{% for t in todos %}{{ todo(t) }}{% endfor %}</div>{% endfor %}
+{% if m.unclear %}<h2>One question decides these</h2><div class="card">
+{% for u in m.unclear %}<div class="question"><div class="text">{{u.label}}</div><div class="muted">{{u.question}}</div>
+<div class="meta"><a href="/profile">Update your profile</a> · <a href="/change/{{u.change_id}}">Details</a></div></div>{% endfor %}</div>{% endif %}
+{% if m.done %}<h2>Done ({{m.done|length}})</h2><div class="card">{% for t in m.done %}{{ todo(t) }}{% endfor %}</div>{% endif %}
+</section>

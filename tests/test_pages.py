@@ -579,3 +579,26 @@ def test_detail_unchecked_change_without_document_row(pages_client: TestClient) 
     assert "<dt>Content hash</dt>" not in html
     feed = pages_client.get("/feed").text
     assert "Commission notice" in _section(feed, "unchecked")
+
+
+# ---------- Oct 22 (R4): two subline fixes from the Oct 21 verifier ----------
+
+
+def test_feed_subline_shows_category_plain_names(seed_client: TestClient) -> None:
+    html = seed_client.get("/feed").text
+    assert "Furniture and wooden goods, Leather goods" in html
+    assert "furniture_wood" not in html
+
+
+def test_feed_single_item_group_omits_instrument_subline(seed_client: TestClient) -> None:
+    # seed only: one item per group → the legal name appears once (in the item h3), not twice
+    html = seed_client.get("/feed").text
+    assert '<p class="law">' not in html
+    for r in SEED_REGULATIONS:
+        assert html.count(escape(r["instrument"])) == 1
+
+
+def test_feed_multi_item_group_keeps_instrument_subline(pages_client: TestClient) -> None:
+    html = pages_client.get("/feed").text
+    assert _section(html, "withdrawal").count('<p class="law">') == 1
+    assert _section(html, "eudr").count('<p class="law">') == 1

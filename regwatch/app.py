@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -55,6 +55,8 @@ templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
 # Feed order inside a regulation group: what applies first, then what needs one answer.
 DECISION_RANK: dict[str, int] = {"applies": 0, "unclear": 1, "does_not": 2}
+# Plain names for the feed's profile subline ("Leather goods", not "leather").
+CATEGORY_NAMES: dict[str, str] = dict(CATEGORIES)
 
 
 @dataclass(frozen=True)
@@ -121,13 +123,39 @@ def fmt_stamp(d: datetime | None) -> str:
     return f"{d.day} {d:%b %Y %H:%M} UTC"
 
 
+MONTHS = (
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+)
+
+
+def fmt_date_long(d: date) -> str:
+    """'19 June 2026' — the calm, spelled-out form the month view uses (ux-brief §3.3)."""
+    return f"{d.day} {MONTHS[d.month - 1]} {d.year}"
+
+
+def _today() -> date:
+    """The only place app.py asks for today's date; tests monkeypatch `appmod._today`."""
+    return date.today()
+
+
 def wrong_call_mailto(change_id: int, decision: str, to: str = "") -> str:
     return f"mailto:{to}?subject=" + quote(
         f"RegWatch wrong call: change #{change_id} is marked {decision}"
     )
 
 
-templates.env.filters.update(d=fmt_date, stamp=fmt_stamp)
+templates.env.filters.update(d=fmt_date, stamp=fmt_stamp, dlong=fmt_date_long)
 
 
 def _todo_key(quote: str, url: str) -> str:
@@ -233,27 +261,130 @@ def _footer(s: Session, rows: list[FeedRow]) -> Footer:
     )
 
 
-def _feed_items(profile_id: int) -> list[dict[str, Any]]:
-    """Dict shape kept for month(); built on feed_rows() + _item()."""
-    today = date.today()
+Bucket = Literal["in_force", "this_month", "coming_up", "no_date"]
+
+
+def _bucket(due: date | None, today: date) -> Bucket:
+    if due is None:
+        return "no_date"
+    if due < today:
+        return "in_force"
+    if (due.year, due.month) == (today.year, today.month):
+        return "this_month"
+    return "coming_up"
+
+
+@dataclass(frozen=True)
+class MonthTodo:
+    view: TodoView
+    change_id: int
+    instrument: str
+    label: str
+    bucket: Bucket
+
+
+@dataclass(frozen=True)
+class UnclearItem:
+    change_id: int
+    instrument: str
+    label: str
+    question: str  # reasons[0]
+
+
+@dataclass(frozen=True)
+class MonthView:
+    today: date
+    month_name: str  # "September 2026"
+    in_force: list[MonthTodo]
+    this_month: list[MonthTodo]
+    coming_up: list[MonthTodo]
+    no_date: list[MonthTodo]
+    done: list[MonthTodo]
+    unclear: list[UnclearItem]
+    n_open: int
+    n_done: int
+    n_unclear: int
+    nothing_due: bool  # no open item in force or due this month
+    next_hint: tuple[str, date] | None  # (label, date): earliest date >= today
+
+
+UNCLEAR_FALLBACK = "We couldn't tell from your profile."
+
+
+def _month_view(items: list[FeedItem], today: date) -> MonthView:
+    """Pure: bucket the open to-dos of `applies` items by due date; done to-dos go to `done`
+    whatever their bucket; `unclear` items become one-question entries. Nothing is invented:
+    the next hint is the earliest stored due date or effective date on or after `today`."""
+    buckets: dict[Bucket, list[MonthTodo]] = {
+        "in_force": [],
+        "this_month": [],
+        "coming_up": [],
+        "no_date": [],
+    }
+    done: list[MonthTodo] = []
+    unclear: list[UnclearItem] = []
+    candidates: list[tuple[date, str]] = []
+    for it in items:
+        label = REGULATION_LABELS.get(it.tag or "", it.change.instrument)
+        if it.decision == "unclear":
+            unclear.append(
+                UnclearItem(
+                    change_id=it.id,
+                    instrument=it.change.instrument,
+                    label=label,
+                    question=it.reasons[0] if it.reasons else UNCLEAR_FALLBACK,
+                )
+            )
+            continue
+        if it.decision != "applies":
+            continue
+        candidates.extend((d, label) for d in it.change.effective_dates if d >= today)
+        for t in it.todos:
+            mt = MonthTodo(
+                view=t,
+                change_id=it.id,
+                instrument=it.change.instrument,
+                label=label,
+                bucket=_bucket(t.due, today),
+            )
+            if t.done:
+                done.append(mt)
+                continue
+            buckets[mt.bucket].append(mt)
+            if t.due is not None and t.due >= today:
+                candidates.append((t.due, label))
+
+    def order(m: MonthTodo) -> tuple[date, str, str]:
+        return (m.view.due or date.max, m.instrument, m.view.text)
+
+    for lst in buckets.values():
+        lst.sort(key=order)
+    done.sort(key=order)
+    unclear.sort(key=lambda u: u.instrument)
+    n_open = sum(len(lst) for lst in buckets.values())
+    nearest = min(candidates) if candidates else None
+    return MonthView(
+        today=today,
+        month_name=f"{MONTHS[today.month - 1]} {today.year}",
+        in_force=buckets["in_force"],
+        this_month=buckets["this_month"],
+        coming_up=buckets["coming_up"],
+        no_date=buckets["no_date"],
+        done=done,
+        unclear=unclear,
+        n_open=n_open,
+        n_done=len(done),
+        n_unclear=len(unclear),
+        nothing_due=not buckets["in_force"] and not buckets["this_month"],
+        next_hint=(nearest[1], nearest[0]) if nearest else None,
+    )
+
+
+def _load_month(profile_id: int, today: date) -> MonthView:
     with session(engine) as s:
         rows = feed_rows(s, profile_id)
         done_keys = _done_keys(s, profile_id)
-    items: list[dict[str, Any]] = []
-    for row in rows:
-        it = _item(row, done_keys, today)
-        items.append(
-            {
-                "id": it.id,
-                "change": it.change,
-                "decision": it.decision,
-                "reasons": it.reasons,
-                "todos": [asdict(t) for t in it.todos],
-                "created_at": it.created_at,
-                "credits": row.tavily_credits,
-            }
-        )
-    return items
+    return _month_view([_item(r, done_keys, today) for r in rows], today)
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -262,7 +393,7 @@ def home(request: Request) -> Any:
         prof = current_profile(s)
     if prof is None:
         return RedirectResponse("/profile", status_code=303)
-    return RedirectResponse("/feed", status_code=303)
+    return RedirectResponse("/month", status_code=303)
 
 
 @app.get("/profile", response_class=HTMLResponse)
@@ -305,7 +436,7 @@ def profile_save(
 
 @app.get("/feed", response_class=HTMLResponse)
 def feed(request: Request) -> Any:
-    today = date.today()
+    today = _today()
     with session(engine) as s:
         prof = current_profile(s)
         if prof is None or prof.id is None:
@@ -315,6 +446,7 @@ def feed(request: Request) -> Any:
         unchecked = unchecked_changes(s, prof.id)
         footer = _footer(s, rows)
     groups = _group([_item(r, done_keys, today) for r in rows])
+    profile = prof.to_schema()
     return templates.TemplateResponse(
         request,
         "feed.html",
@@ -322,8 +454,9 @@ def feed(request: Request) -> Any:
             "groups": groups,
             "unchecked": unchecked,
             "f": footer,
-            "profile": prof.to_schema(),
+            "profile": profile,
             "establishment": country_name(prof.establishment_country),
+            "category_names": [CATEGORY_NAMES.get(c, c) for c in profile.categories],
         },
     )
 
@@ -334,28 +467,14 @@ def month(request: Request) -> Any:
         prof = current_profile(s)
     if prof is None or prof.id is None:
         return RedirectResponse("/profile", status_code=303)
-    today = date.today()
-    todos: list[dict[str, Any]] = []
-    for item in _feed_items(prof.id):
-        if item["decision"] != "applies":
-            continue
-        for t in item["todos"]:
-            due = date.fromisoformat(t["due"]) if isinstance(t["due"], str) else t["due"]
-            todos.append(
-                {
-                    **t,
-                    "due": due,
-                    "instrument": item["change"].instrument,
-                    "change_id": item["id"],
-                    "overdue": bool(due and due < today),
-                }
-            )
-    todos.sort(key=lambda t: (t["done"], t["due"] or date.max))
-    return templates.TemplateResponse(request, "month.html", {"todos": todos, "today": today})
+    m = _load_month(prof.id, _today())
+    return templates.TemplateResponse(request, "month.html", {"m": m})
 
 
 @app.post("/todo/{key}/toggle")
-def toggle_todo(key: str) -> Any:
+def toggle_todo(request: Request, key: str) -> Any:
+    """Flip one to-do's done mark. htmx callers (HX-Request: true) get the refreshed
+    #month-list fragment; a plain form post is redirected back to /month."""
     with session(engine) as s:
         prof = current_profile(s)
         if prof is None or prof.id is None:
@@ -371,13 +490,18 @@ def toggle_todo(key: str) -> Any:
             row.done = not row.done
             s.add(row)
         s.commit()
+        profile_id = prof.id
+    if request.headers.get("HX-Request") == "true":
+        return templates.TemplateResponse(
+            request, "partials/month_list.html", {"m": _load_month(profile_id, _today())}
+        )
     return RedirectResponse("/month", status_code=303)
 
 
 @app.get("/change/{change_id}", response_class=HTMLResponse)
 def change_detail(request: Request, change_id: int) -> Any:
     """Stored rows only: nothing is classified from a web route."""
-    today = date.today()
+    today = _today()
     with session(engine) as s:
         prof = current_profile(s)
         if prof is None or prof.id is None:
