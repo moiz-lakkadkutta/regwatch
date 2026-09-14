@@ -12,6 +12,11 @@ SEED_DIR = Path(__file__).resolve().parent.parent / "examples" / "seed-run"
 CHANGE_FILES = sorted(SEED_DIR.glob("change-*.json"))
 
 
+def test_seed_change_files_present() -> None:
+    """Guard for the parametrised grounding test: it must never pass vacuously."""
+    assert len(CHANGE_FILES) >= 2
+
+
 def test_demo_profile_matches_config() -> None:
     profile = Profile.model_validate_json((SEED_DIR / "profile.json").read_text(encoding="utf-8"))
     assert profile.establishment_country in EU_COUNTRIES

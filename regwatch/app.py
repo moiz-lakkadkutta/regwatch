@@ -149,9 +149,13 @@ def _today() -> date:
     return date.today()
 
 
+DECISION_WORDS = {"applies": "applies", "does_not": "doesn't apply", "unclear": "unclear"}
+
+
 def wrong_call_mailto(change_id: int, decision: str, to: str = "") -> str:
+    word = DECISION_WORDS.get(decision, decision)
     return f"mailto:{to}?subject=" + quote(
-        f"RegWatch wrong call: change #{change_id} is marked {decision}"
+        f"RegWatch wrong call: change #{change_id} is marked {word}"
     )
 
 

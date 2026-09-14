@@ -204,6 +204,7 @@ def test_helpers() -> None:
         == "mailto:?subject=RegWatch%20wrong%20call%3A%20change%20%231%20is%20marked%20applies"
     )
     assert wrong_call_mailto(2, "unclear", "ops@example.org").startswith("mailto:ops@example.org?")
+    assert wrong_call_mailto(3, "does_not").endswith("is%20marked%20doesn%27t%20apply")
 
     doc = DocumentRow(
         url="https://x",
@@ -493,7 +494,7 @@ def test_detail_applies_zero_todos_and_does_not(pages_client: TestClient) -> Non
     assert "What to do" not in html
     assert "No to-dos yet" not in html
     assert escape("This page covers US returns; you sell to EU consumers only.") in html
-    assert "is%20marked%20does_not" in html
+    assert "is%20marked%20doesn%27t%20apply" in html
 
 
 def test_detail_source_metadata_and_mailto(seed_client: TestClient) -> None:
