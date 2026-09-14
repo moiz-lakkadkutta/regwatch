@@ -13,4 +13,4 @@
 </div>
 {% endfor %}
 {% endblock %}
-{% block footer %}Sources are limited to official EU/German bodies and platform help pages. Search and extraction by Tavily · {{credits}} credits used · classification by NVIDIA Nemotron 3 Ultra on Nebius Token Factory.{% endblock %}
+{% block footer %}Sources are limited to official EU/German bodies and platform help pages ({{n_sources}} sources). Last crawl: {% if last_crawl and last_crawl.finished_at %}{{last_crawl.finished_at.strftime("%d %b %Y %H:%M")}} UTC{% else %}none yet — showing the recorded seed run{% endif %} · search and extraction by Tavily · {{credits}} Tavily credits used · classification by NVIDIA Nemotron 3 Ultra on Nebius Token Factory.{% endblock %}

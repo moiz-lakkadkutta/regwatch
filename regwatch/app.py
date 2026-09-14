@@ -17,13 +17,15 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import col, select
 
-from regwatch.config import CATEGORIES, EU_COUNTRIES, PLATFORMS, Settings
+from regwatch.config import CATEGORIES, EU_COUNTRIES, PLATFORMS, SOURCE_DOMAINS, Settings
 from regwatch.db import (
     ApplicabilityRow,
+    DocumentRow,
     ProfileRow,
     RegChangeRow,
     TodoStateRow,
     current_profile,
+    last_crawl,
     make_engine,
     session,
 )
@@ -131,10 +133,21 @@ def feed(request: Request) -> Any:
     if prof is None or prof.id is None:
         return RedirectResponse("/profile", status_code=303)
     items = _feed_items(prof.id)
+    with session(engine) as s:
+        run = last_crawl(s)
+        domains = s.exec(select(DocumentRow.source_domain).distinct()).all()
+    n_sources = len(domains) or len(SOURCE_DOMAINS)
+    credits = run.tavily_credits if run is not None else sum(i["credits"] for i in items)
     return templates.TemplateResponse(
         request,
         "feed.html",
-        {"items": items, "profile": prof.to_schema(), "credits": sum(i["credits"] for i in items)},
+        {
+            "items": items,
+            "profile": prof.to_schema(),
+            "credits": credits,
+            "last_crawl": run,
+            "n_sources": n_sources,
+        },
     )
 
 
