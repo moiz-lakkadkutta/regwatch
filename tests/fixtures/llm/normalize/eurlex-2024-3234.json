@@ -1,0 +1,13 @@
+{
+  "doc_id": "eurlex-2024-3234",
+  "url": "https://eur-lex.europa.eu/eli/reg/2024/3234/oj",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"Regulation (EU) 2024/3234\",\n  \"jurisdiction\": \"EU\",\n  \"summary\": \"Note the new EUDR dates: obligations apply from 30 December 2025, and from 30 June 2026 for micro and small enterprises. Regulation (EU) 2024/3234 amends the application date of Regulation (EU) 2023/1115 for operators and traders.\",\n  \"effective_dates\": [\n    \"2025-12-30\",\n    \"2026-06-30\"\n  ],\n  \"obligations\": []\n}",
+      "usage": {
+        "prompt_tokens": 610,
+        "completion_tokens": 130
+      }
+    }
+  ]
+}

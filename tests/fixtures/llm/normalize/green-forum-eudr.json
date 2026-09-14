@@ -1,0 +1,13 @@
+{
+  "doc_id": "green-forum-eudr",
+  "url": "https://green-forum.ec.europa.eu/deforestation-regulation-implementation_en",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"Regulation (EU) 2023/1115 — Green Forum implementation page\",\n  \"jurisdiction\": \"EU\",\n  \"summary\": \"Check whether you are a large or a micro/small operator: the EUDR applies from 30 December 2025 or 30 June 2026 respectively. This Green Forum page links the guidance, FAQ and Information System for operators and traders.\",\n  \"effective_dates\": [\n    \"2025-12-30\",\n    \"2026-06-30\"\n  ],\n  \"obligations\": []\n}",
+      "usage": {
+        "prompt_tokens": 600,
+        "completion_tokens": 120
+      }
+    }
+  ]
+}

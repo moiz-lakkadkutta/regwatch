@@ -1,0 +1,13 @@
+{
+  "doc_id": "eurlex-2011-83",
+  "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32011L0083",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"Directive 2011/83/EU\",\n  \"jurisdiction\": \"EU\",\n  \"summary\": \"Nothing new to do from this page: it is the consolidated text of the Consumer Rights Directive, whose withdrawal-function rule applies from 19 June 2026. Directive 2011/83/EU covers traders selling to consumers at a distance or off-premises.\",\n  \"effective_dates\": [\n    \"2026-06-19\"\n  ],\n  \"obligations\": []\n}",
+      "usage": {
+        "prompt_tokens": 620,
+        "completion_tokens": 120
+      }
+    }
+  ]
+}

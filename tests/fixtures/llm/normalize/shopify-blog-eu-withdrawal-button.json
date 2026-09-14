@@ -1,0 +1,13 @@
+{
+  "doc_id": "shopify-blog-eu-withdrawal-button",
+  "url": "https://www.shopify.com/blog/eu-withdrawal-button",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"Directive (EU) 2023/2673 — Shopify blog\",\n  \"jurisdiction\": \"EU\",\n  \"summary\": \"Add a clearly labelled withdrawal button with a confirmation step and a receipt on a durable medium before 19 June 2026. This Shopify blog post explains the amended Consumer Rights Directive for online stores selling to EU consumers.\",\n  \"effective_dates\": [\n    \"2026-06-19\"\n  ],\n  \"obligations\": [\n    {\n      \"text\": \"Add a labelled withdrawal button with a confirmation step and a receipt.\",\n      \"quote\": \"The amended Consumer Rights Directive requires every online store selling to EU consumers to add a clearly labelled withdrawal button, followed by a confirmation step and a receipt on a durable medium.\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 570,
+        "completion_tokens": 150
+      }
+    }
+  ]
+}

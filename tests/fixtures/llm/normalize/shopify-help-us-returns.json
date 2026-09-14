@@ -1,0 +1,20 @@
+{
+  "doc_id": "shopify-help-us-returns",
+  "url": "https://help.shopify.com/en/manual/checkout-settings/refund-return-policy/us-return-refund-rules",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"FTC Mail, Internet, or Telephone Order Merchandise Rule — Shopify Help Center\",\n  \"jurisdiction\": \"unclear\",\n  \"summary\": \"Display your return and refund policy at checkout if you sell to US customers. This Shopify help page summarises US federal and state return rules; it does not cover EU consumers.\",\n  \"effective_dates\": [],\n  \"obligations\": [\n    {\n      \"text\": \"Display your return policy at checkout for US customers.\",\n      \"quote\": \"Merchants must display their return policy at checkout for all customers in the United States.\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 950,
+        "completion_tokens": 180
+      }
+    },
+    {
+      "text": "{\n  \"instrument\": \"FTC Mail, Internet, or Telephone Order Merchandise Rule — Shopify Help Center\",\n  \"jurisdiction\": \"unclear\",\n  \"summary\": \"Display your return and refund policy at checkout if you sell to US customers. This Shopify help page summarises US federal and state return rules; it does not cover EU consumers.\",\n  \"effective_dates\": [],\n  \"obligations\": [\n    {\n      \"text\": \"Display your return policy at checkout for US customers.\",\n      \"quote\": \"Merchants must display their return policy at checkout for all customers in the United States.\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 1250,
+        "completion_tokens": 180
+      }
+    }
+  ]
+}

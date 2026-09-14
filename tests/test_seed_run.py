@@ -30,3 +30,15 @@ def test_seed_changes_are_grounded(path: Path) -> None:
     assert all(t.citation_url == change.document_url for t in appl.todos)
     assert urlparse(change.document_url).hostname in SOURCE_DOMAINS
     assert all(t.due is not None for t in appl.todos)
+
+
+def test_seed_run_documents_are_seed_change_sources() -> None:
+    """R1: every recorded document is the real source of a seed change (never a fixture body)."""
+    assert len(CHANGE_FILES) >= 2
+    sources = {
+        json.loads(p.read_text(encoding="utf-8"))["change"]["document_url"] for p in CHANGE_FILES
+    }
+    lines = (SEED_DIR / "documents.jsonl").read_text(encoding="utf-8").splitlines()
+    urls = [json.loads(line)["url"] for line in lines if line.strip()]
+    assert urls and urls == sorted(urls)
+    assert set(urls) == sources

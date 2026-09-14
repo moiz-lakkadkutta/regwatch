@@ -1,0 +1,13 @@
+{
+  "doc_id": "commission-eudr-coffee-cocoa",
+  "url": "https://commission.europa.eu/business-economy-euro/doing-business-eu/sustainability-due-diligence-responsible-business/eudr-guidance-coffee-cocoa-operators_en",
+  "responses": [
+    {
+      "text": "Here is the JSON:\n```json\n{\n  \"instrument\": \"Regulation (EU) 2023/1115 — Commission guidance for coffee and cocoa operators\",\n  \"jurisdiction\": \"EU\",\n  \"summary\": \"Submit a due diligence statement in the EUDR Information System before customs release of each coffee or cocoa consignment, and collect farm geolocation where beans come from smallholders. This Commission guidance under Regulation (EU) 2023/1115 covers operators and traders that import coffee and cocoa into the Union.\",\n  \"effective_dates\": [],\n  \"obligations\": [\n    {\n      \"text\": \"Submit a due diligence statement before customs release of each consignment.\",\n      \"quote\": \"Coffee and cocoa importers shall submit a due diligence statement in the EUDR Information System before customs release of each consignment.\"\n    },\n    {\n      \"text\": \"Obtain the geolocation of every farm when sourcing from smallholder cooperatives.\",\n      \"quote\": \"importers shall obtain the geolocation of every farm, either as a point for farms below four hectares or as a polygon for larger plots\"\n    }\n  ]\n}\n```",
+      "usage": {
+        "prompt_tokens": 900,
+        "completion_tokens": 260
+      }
+    }
+  ]
+}

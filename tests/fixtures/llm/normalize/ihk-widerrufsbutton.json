@@ -1,0 +1,13 @@
+{
+  "doc_id": "ihk-widerrufsbutton",
+  "url": "https://www.ihk.de/themen/recht/widerrufsbutton-onlinehandel",
+  "responses": [
+    {
+      "text": "{\n  \"instrument\": \"§ 356a BGB — IHK explainer on the Widerrufsbutton\",\n  \"jurisdiction\": \"DE\",\n  \"summary\": \"Richten Sie bis zum 19. Juni 2026 eine Widerrufsfunktion mit Bestätigungsseite ein und senden Sie nach jedem Widerruf unverzüglich eine Eingangsbestätigung. Die IHK-Seite fasst § 356a BGB für Online-Shops zusammen.\",\n  \"effective_dates\": [\n    \"2026-06-19\"\n  ],\n  \"obligations\": [\n    {\n      \"text\": \"Senden Sie nach dem Widerruf unverzüglich eine Eingangsbestätigung, etwa per E-Mail.\",\n      \"quote\": \"Nach dem Widerruf ist dem Kunden unverzüglich eine Eingangsbestätigung auf einem dauerhaften Datenträger, etwa per E-Mail, zu übermitteln.\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 580,
+        "completion_tokens": 160
+      }
+    }
+  ]
+}

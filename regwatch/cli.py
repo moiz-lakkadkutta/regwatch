@@ -2,14 +2,11 @@
 
 from __future__ import annotations
 
-import logging
 import sys
 from pathlib import Path
-from typing import Annotated, Literal, cast
+from typing import Annotated
 
 import typer
-
-from regwatch.jobs.crawl import DEFAULT_OUT
 
 app = typer.Typer(
     name="regwatch", no_args_is_help=True, add_completion=False, rich_markup_mode=None
@@ -27,28 +24,39 @@ def seed() -> None:
 
 @app.command()
 def crawl(
-    stage: Annotated[str, typer.Option(help="ingest | all")] = "all",
-    backend: Annotated[str, typer.Option(help="live | fixtures")] = "live",
+    stage: Annotated[str, typer.Option(help="all | ingest | normalize")] = "all",
+    backend: Annotated[str, typer.Option(help="Tavily: live | fixtures")] = "live",
     fixtures_dir: Annotated[Path | None, typer.Option()] = None,
+    llm_backend: Annotated[str, typer.Option(help="Token Factory: live | fixtures")] = "live",
+    llm_fixtures_dir: Annotated[Path | None, typer.Option()] = None,
     time_range: Annotated[str, typer.Option()] = "year",
-    out: Annotated[Path, typer.Option(help="documents.jsonl path")] = DEFAULT_OUT,
+    out: Annotated[
+        Path | None,
+        typer.Option(help="documents.jsonl path (default: examples/seed-run for --backend live)"),
+    ] = None,
+    no_out: Annotated[bool, typer.Option("--no-out", help="do not write documents.jsonl")] = False,
 ) -> None:
-    """Search → extract → diff (normalise → classify from Oct 19); the Serverless Job entrypoint."""
-    from regwatch.config import Settings
-    from regwatch.ingest.tavily_backend import make_backend
-    from regwatch.jobs.crawl import crawl as _crawl
+    """Search → extract → diff → normalise (classify from Oct 20); the Serverless Job entrypoint."""
+    from regwatch.jobs.crawl import STAGES, main
 
-    if backend not in ("live", "fixtures"):
-        raise typer.BadParameter("backend must be 'live' or 'fixtures'")
-    logging.basicConfig(level=logging.INFO, stream=sys.stderr)
-    settings = Settings()
-    tavily = make_backend(settings, cast(Literal["live", "fixtures"], backend), fixtures_dir)
-    try:
-        summary = _crawl(settings, stage=stage, backend=tavily, time_range=time_range, out=out)
-    except NotImplementedError as e:
-        print(f"crawl: {e}", file=sys.stderr)
-        raise typer.Exit(code=2) from e
-    print(summary.line(), file=sys.stderr)
+    if stage not in STAGES:
+        raise typer.BadParameter(f"stage must be one of {', '.join(STAGES)}")
+    for name, value in (("backend", backend), ("llm-backend", llm_backend)):
+        if value not in ("live", "fixtures"):
+            raise typer.BadParameter(f"{name} must be 'live' or 'fixtures'")
+    argv = ["--stage", stage, "--backend", backend, "--llm-backend", llm_backend]
+    argv += ["--time-range", time_range]
+    if fixtures_dir is not None:
+        argv += ["--fixtures-dir", str(fixtures_dir)]
+    if llm_fixtures_dir is not None:
+        argv += ["--llm-fixtures-dir", str(llm_fixtures_dir)]
+    if out is not None:
+        argv += ["--out", str(out)]
+    if no_out:
+        argv.append("--no-out")
+    rc = main(argv)
+    if rc != 0:
+        raise typer.Exit(code=rc)
 
 
 @app.command()

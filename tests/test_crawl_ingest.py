@@ -17,6 +17,7 @@ from regwatch.jobs.crawl import (
     run_ingest,
     seed,
 )
+from regwatch.understand.llm_backend import FixtureLLMBackend
 from tests.fakes import RecordingBackend
 
 
@@ -75,8 +76,10 @@ def test_documents_jsonl_deterministic(
         == {"url", "content_hash", "published_date", "markdown", "source_domain", "regulation_tags"}
         for p in payloads
     )
-    # the committed file is the fixture run, byte for byte
-    assert out1.read_bytes() == DEFAULT_OUT.read_bytes()
+    # the committed file (R1: only the two official eur-lex texts) is a subset of the fixture run
+    seed_lines = DEFAULT_OUT.read_text(encoding="utf-8").splitlines()
+    assert len(seed_lines) == 2
+    assert all(line in lines for line in seed_lines)
     docs = read_documents_jsonl(out1)
     assert [d.url for d in docs] == urls
 
@@ -112,22 +115,38 @@ def test_main_stage_ingest_cli(
     assert re.search(r"^ingest: 16 documents \(0 new, 0 changed, 16 unchanged\)", err, re.M)
     assert "wrote" not in err.splitlines()[-1]
 
+    # R1: a fixture run never writes examples/seed-run/documents.jsonl unless --out is explicit
+    before = DEFAULT_OUT.read_bytes()
+    rc = main(["--stage", "ingest", "--backend", "fixtures"])
+    assert rc == 0
+    assert "wrote" not in capsys.readouterr().err.splitlines()[-1]
+    assert DEFAULT_OUT.read_bytes() == before
+
 
 def test_stage_all_raises_not_implemented(
-    tmp_settings: Settings, fake_backend: RecordingBackend, tmp_path: Path
+    tmp_settings: Settings,
+    fake_backend: RecordingBackend,
+    fixture_llm: FixtureLLMBackend,
+    tmp_path: Path,
 ) -> None:
-    with pytest.raises(NotImplementedError):
-        crawl(tmp_settings, stage="all", backend=fake_backend, out=tmp_path / "docs.jsonl")
-    # ingest ran before the stop
+    with pytest.raises(NotImplementedError, match="Oct 20"):
+        crawl(
+            tmp_settings,
+            stage="all",
+            backend=fake_backend,
+            llm_backend=fixture_llm,
+            out=tmp_path / "docs.jsonl",
+        )
+    # ingest and normalize ran before the stop, on one run row
     assert _count(tmp_settings, CrawlRunRow) == 1
     assert _count(tmp_settings, DocumentRow) == 16
     with pytest.raises(ValueError):
-        crawl(tmp_settings, stage="bogus", backend=fake_backend, out=None)
+        crawl(tmp_settings, stage="bogus", backend=fake_backend, out=None)  # type: ignore[arg-type]
 
 
 def test_seed_loads_documents_jsonl_idempotently(tmp_settings: Settings) -> None:
     n_lines = len(DEFAULT_OUT.read_text(encoding="utf-8").splitlines())
-    assert n_lines >= 15
+    assert n_lines == 2  # R1: only the official eur-lex texts ship with the demo
     assert seed(tmp_settings) == 2
     assert _count(tmp_settings, DocumentRow) == n_lines
     with Session(make_engine(tmp_settings)) as s:

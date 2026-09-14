@@ -53,8 +53,12 @@ class DocumentRow(SQLModel, table=True):
 
 
 class RegChangeRow(SQLModel, table=True):
+    """Normalisation idempotency key: (document_url, content_hash) of the source DocumentRow."""
+
     id: int | None = Field(default=None, primary_key=True)
     document_url: str = Field(index=True)
+    content_hash: str = Field(default="", index=True)
+    model: str = ""
     instrument: str
     jurisdiction: str
     summary: str
@@ -111,6 +115,9 @@ class CrawlRunRow(SQLModel, table=True):
     n_docs_new: int = 0
     n_docs_changed: int = 0
     n_docs_unchanged: int = 0
+    n_changes_new: int = 0
+    n_normalize_retried: int = 0
+    n_normalize_failed: int = 0
 
 
 class TodoStateRow(SQLModel, table=True):
@@ -141,3 +148,32 @@ def current_profile(s: Session) -> ProfileRow | None:
 
 def last_crawl(s: Session) -> CrawlRunRow | None:
     return s.exec(select(CrawlRunRow).order_by(col(CrawlRunRow.id).desc())).first()
+
+
+def documents_needing_normalize(s: Session) -> list[DocumentRow]:
+    """DocumentRows with no RegChangeRow for their (url, content_hash), sorted by url."""
+    done = select(RegChangeRow.id).where(
+        RegChangeRow.document_url == DocumentRow.url,
+        RegChangeRow.content_hash == DocumentRow.content_hash,
+    )
+    return list(s.exec(select(DocumentRow).where(~done.exists()).order_by(DocumentRow.url)).all())
+
+
+def store_regchange(
+    s: Session, change: RegChange, *, content_hash: str, model: str
+) -> RegChangeRow:
+    """Persist a grounded change. Callers must have checked `change.validate_quotes()` == []."""
+    row = RegChangeRow(
+        document_url=change.document_url,
+        content_hash=content_hash,
+        model=model,
+        instrument=change.instrument,
+        jurisdiction=change.jurisdiction,
+        summary=change.summary,
+        effective_dates=json.dumps([d.isoformat() for d in change.effective_dates]),
+        obligations=json.dumps([o.model_dump() for o in change.obligations]),
+    )
+    s.add(row)
+    s.commit()
+    s.refresh(row)
+    return row

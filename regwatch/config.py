@@ -21,6 +21,15 @@ class Settings(BaseSettings):
         default="nvidia/Nemotron-3_5-Lightning", alias="REGWATCH_EXTRACTOR_MODEL"
     )
     db_url: str = Field(default="sqlite:///regwatch.db", alias="REGWATCH_DB_URL")
+    # USD per million tokens for the extractor model. PLACEHOLDERS — confirm against Token Factory pricing.
+    extractor_price_in_per_mtok: float = Field(
+        default=0.20, alias="REGWATCH_EXTRACTOR_PRICE_IN_PER_MTOK"
+    )
+    extractor_price_out_per_mtok: float = Field(
+        default=0.60, alias="REGWATCH_EXTRACTOR_PRICE_OUT_PER_MTOK"
+    )
+    # Characters of markdown sent to the extractor; quotes are still validated on the full text.
+    normalize_max_chars: int = Field(default=60_000, alias="REGWATCH_NORMALIZE_MAX_CHARS")
 
 
 # Only these domains are ever searched or extracted. Official sources first, platform guidance last.

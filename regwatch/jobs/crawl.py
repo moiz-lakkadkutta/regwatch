@@ -1,9 +1,10 @@
 """The scheduled job (Nebius Serverless Job): search → extract → diff → normalize → classify → store.
 
-Today `--stage ingest` works end to end (search + extract + diff, with a `CrawlRunRow` per run and
-`examples/seed-run/documents.jsonl` as the recorded output); `--stage all` runs ingest and then
-stops with NotImplementedError until Oct 19–20. `seed` loads examples/seed-run/*.json and, if
-present, documents.jsonl so the demo URL is never empty.
+Today `--stage ingest` (search + extract + diff) and `--stage normalize` (Lightning → grounded
+RegChange per new document) work end to end, each with a `CrawlRunRow`; `--stage all` runs both and
+then stops with NotImplementedError until Oct 20 (classify). `seed` loads examples/seed-run/*.json
+and documents.jsonl so the demo URL is never empty. `examples/seed-run/documents.jsonl` is only
+written by a LIVE ingest by default; fixture runs write nothing unless `--out` is given.
 """
 
 from __future__ import annotations
@@ -24,6 +25,7 @@ from regwatch.config import Settings
 from regwatch.db import (
     ApplicabilityRow,
     CrawlRunRow,
+    DocumentRow,
     ProfileRow,
     RegChangeRow,
     make_engine,
@@ -34,11 +36,15 @@ from regwatch.ingest.extract import extract_documents
 from regwatch.ingest.search import search_all
 from regwatch.ingest.tavily_backend import CreditLedger, TavilyBackend, make_backend
 from regwatch.schemas import Applicability, Document, Profile, RegChange
+from regwatch.understand.llm_backend import LLMBackend, ModelLedger, make_llm_backend
+from regwatch.understand.normalize import NormalizeSummary, normalize_all
 
 log = logging.getLogger(__name__)
 
 SEED_DIR = Path(__file__).resolve().parents[2] / "examples" / "seed-run"
 DEFAULT_OUT = SEED_DIR / "documents.jsonl"
+Stage = Literal["all", "ingest", "normalize"]
+STAGES: tuple[Stage, ...] = ("all", "ingest", "normalize")
 
 
 @dataclass
@@ -51,6 +57,7 @@ class IngestSummary:
     n_search_calls: int
     n_extract_calls: int
     out: Path | None
+    run_id: int | None = None
 
     def line(self) -> str:
         parts = [
@@ -64,12 +71,31 @@ class IngestSummary:
             parts.append(f"wrote {_display_path(self.out)}")
         return " · ".join(parts)
 
+    @classmethod
+    def from_run(cls, run: CrawlRunRow, out: Path | None) -> IngestSummary:
+        return cls(
+            n_docs=run.n_docs_new + run.n_docs_changed + run.n_docs_unchanged,
+            new=run.n_docs_new,
+            changed=run.n_docs_changed,
+            unchanged=run.n_docs_unchanged,
+            credits=run.tavily_credits,
+            n_search_calls=run.n_search_calls,
+            n_extract_calls=run.n_extract_calls,
+            out=out,
+            run_id=run.id,
+        )
+
 
 def _display_path(path: Path) -> str:
     try:
         return str(path.resolve().relative_to(Path.cwd().resolve()))
     except ValueError:
         return str(path)
+
+
+def default_out(backend: str) -> Path | None:
+    """Only a LIVE ingest records examples/seed-run/documents.jsonl by default (R1, demo safety)."""
+    return DEFAULT_OUT if backend == "live" else None
 
 
 def write_documents_jsonl(docs: Sequence[Document], out: Path) -> None:
@@ -102,6 +128,7 @@ def run_ingest(
     backend: TavilyBackend | None = None,
     time_range: str = "year",
     out: Path | None = DEFAULT_OUT,
+    stage: Stage = "ingest",
 ) -> IngestSummary:
     """Search → extract → diff. Persists a `CrawlRunRow` with the Tavily credits used."""
     settings = settings or Settings()
@@ -114,20 +141,21 @@ def run_ingest(
     docs.sort(key=lambda d: d.url)
     with session(engine) as s:
         diff = upsert_documents(s, docs)
-        s.add(
-            CrawlRunRow(
-                started_at=started,
-                finished_at=datetime.now(UTC),
-                stage="ingest",
-                tavily_credits=ledger.credits,
-                n_search_calls=ledger.n_search_calls,
-                n_extract_calls=ledger.n_extract_calls,
-                n_docs_new=len(diff.new),
-                n_docs_changed=len(diff.changed),
-                n_docs_unchanged=len(diff.unchanged),
-            )
+        run = CrawlRunRow(
+            started_at=started,
+            finished_at=datetime.now(UTC),
+            stage=stage,
+            tavily_credits=ledger.credits,
+            n_search_calls=ledger.n_search_calls,
+            n_extract_calls=ledger.n_extract_calls,
+            n_docs_new=len(diff.new),
+            n_docs_changed=len(diff.changed),
+            n_docs_unchanged=len(diff.unchanged),
         )
+        s.add(run)
         s.commit()
+        s.refresh(run)
+        run_id = run.id
     if out is not None:
         write_documents_jsonl(docs, out)
     return IngestSummary(
@@ -139,13 +167,49 @@ def run_ingest(
         n_search_calls=ledger.n_search_calls,
         n_extract_calls=ledger.n_extract_calls,
         out=out,
+        run_id=run_id,
     )
+
+
+def run_normalize(
+    settings: Settings | None = None,
+    *,
+    llm_backend: LLMBackend,
+    run_id: int | None = None,
+) -> tuple[NormalizeSummary, CrawlRunRow]:
+    """Normalise every document without a stored change for its content hash.
+
+    Updates the `CrawlRunRow` `run_id` (the ingest of a `--stage all` run) or creates a
+    stage="normalize" row; model cost and the normalize counters are persisted on it.
+    """
+    settings = settings or Settings()
+    engine = make_engine(settings)
+    ledger = ModelLedger.for_extractor(settings)
+    with session(engine) as s:
+        run = s.get(CrawlRunRow, run_id) if run_id is not None else None
+        if run is None:
+            run = CrawlRunRow(started_at=datetime.now(UTC), stage="normalize")
+            s.add(run)
+            s.commit()
+            s.refresh(run)
+        summary = normalize_all(s, backend=llm_backend, settings=settings, ledger=ledger)
+        run.model_cost_usd += ledger.cost_usd
+        run.n_changes_new = summary.n_changes_new
+        run.n_normalize_retried = summary.n_retried
+        run.n_normalize_failed = summary.n_failed
+        run.finished_at = datetime.now(UTC)
+        s.add(run)
+        s.commit()
+        s.refresh(run)
+        s.expunge(run)
+    return summary, run
 
 
 def seed(settings: Settings | None = None) -> int:
     """Load the recorded seed run. Idempotent: skips changes whose document_url already exists.
 
-    Also upserts examples/seed-run/documents.jsonl (by url + content hash) when present.
+    Upserts examples/seed-run/documents.jsonl first (by url + content hash) so each seed change
+    carries the content_hash of its source document and `--stage normalize` leaves it alone.
     Returns the number of changes added.
     """
     settings = settings or Settings()
@@ -153,6 +217,14 @@ def seed(settings: Settings | None = None) -> int:
     profile = Profile.model_validate_json((SEED_DIR / "profile.json").read_text(encoding="utf-8"))
     added = 0
     with session(engine) as s:
+        if DEFAULT_OUT.exists():
+            diff = upsert_documents(s, read_documents_jsonl(DEFAULT_OUT))
+            log.info(
+                "seed documents: %d new, %d changed, %d unchanged",
+                len(diff.new),
+                len(diff.changed),
+                len(diff.unchanged),
+            )
         prof = s.exec(select(ProfileRow).order_by(col(ProfileRow.id).desc())).first()
         if prof is None:
             prof = ProfileRow(
@@ -169,14 +241,23 @@ def seed(settings: Settings | None = None) -> int:
             payload = json.loads(path.read_text(encoding="utf-8"))
             change = RegChange.model_validate(payload["change"])
             appl = Applicability.model_validate(payload["applicability"])
-            if s.exec(
+            doc = s.get(DocumentRow, change.document_url)
+            content_hash = doc.content_hash if doc is not None else ""
+            existing = s.exec(
                 select(RegChangeRow).where(RegChangeRow.document_url == change.document_url)
-            ).first():
+            ).first()
+            if existing is not None:
+                if not existing.content_hash and content_hash:
+                    existing.content_hash = content_hash
+                    s.add(existing)
+                    s.commit()
                 continue
             if appl.ungrounded_todos(change):
                 raise ValueError(f"{path.name}: to-do quote not grounded in obligations")
             row = RegChangeRow(
                 document_url=change.document_url,
+                content_hash=content_hash,
+                model="seed",
                 instrument=change.instrument,
                 jurisdiction=change.jurisdiction,
                 summary=change.summary,
@@ -204,56 +285,122 @@ def seed(settings: Settings | None = None) -> int:
             )
             s.commit()
             added += 1
-        if DEFAULT_OUT.exists():
-            diff = upsert_documents(s, read_documents_jsonl(DEFAULT_OUT))
-            log.info(
-                "seed documents: %d new, %d changed, %d unchanged",
-                len(diff.new),
-                len(diff.changed),
-                len(diff.unchanged),
-            )
     return added
+
+
+def _load_run(settings: Settings, run_id: int | None) -> CrawlRunRow:
+    assert run_id is not None
+    with session(make_engine(settings)) as s:
+        run = s.get(CrawlRunRow, run_id)
+        assert run is not None
+        s.expunge(run)
+    return run
 
 
 def crawl(
     settings: Settings | None = None,
     *,
-    stage: str = "all",
+    stage: Stage = "all",
     backend: TavilyBackend | None = None,
+    llm_backend: LLMBackend | None = None,
+    llm_fixtures_dir: Path | None = None,
     time_range: str = "year",
     out: Path | None = DEFAULT_OUT,
-) -> IngestSummary:
-    if stage not in ("ingest", "all"):
-        raise ValueError(f"unknown stage {stage!r}; expected 'ingest' or 'all'")
-    summary = run_ingest(settings, backend=backend, time_range=time_range, out=out)
-    if stage == "all":
-        log.info("%s", summary.line())
-        raise NotImplementedError("Oct 19–20 — normalize → classify → store")
-    return summary
+) -> CrawlRunRow:
+    """Run one stage (or all) and return its `CrawlRunRow`.
+
+    "ingest": search → extract → diff. "normalize": no ingest; Lightning over the DB.
+    "all": ingest → normalize (one row), prints both summary lines to stderr, then raises
+    NotImplementedError until classify lands on Oct 20.
+    """
+    if stage not in STAGES:
+        raise ValueError(f"unknown stage {stage!r}; expected one of {STAGES}")
+    settings = settings or Settings()
+    if stage == "ingest":
+        ingest = run_ingest(settings, backend=backend, time_range=time_range, out=out)
+        return _load_run(settings, ingest.run_id)
+    llm = llm_backend or make_llm_backend("live", settings, llm_fixtures_dir)
+    if stage == "normalize":
+        _, run = run_normalize(settings, llm_backend=llm)
+        return run
+    ingest = run_ingest(settings, backend=backend, time_range=time_range, out=out, stage="all")
+    summary, _ = run_normalize(settings, llm_backend=llm, run_id=ingest.run_id)
+    print(ingest.line(), file=sys.stderr)
+    print(summary.line(), file=sys.stderr)
+    raise NotImplementedError("Oct 20 — classify")
+
+
+def summary_lines(run: CrawlRunRow, out: Path | None) -> list[str]:
+    """The stderr lines for a finished ingest or normalize run, rebuilt from its row."""
+    lines: list[str] = []
+    if run.stage in ("ingest", "all"):
+        lines.append(IngestSummary.from_run(run, out).line())
+    if run.stage in ("normalize", "all"):
+        n_ok = run.n_changes_new
+        lines.append(
+            NormalizeSummary(
+                n_docs=n_ok + run.n_normalize_failed,
+                n_ok=n_ok,
+                n_ok_first_try=n_ok - run.n_normalize_retried,
+                n_retried=run.n_normalize_retried,
+                n_failed=run.n_normalize_failed,
+                n_changes_new=run.n_changes_new,
+                cost_usd=run.model_cost_usd,
+                prompt_tokens=0,
+                completion_tokens=0,
+            ).line()
+        )
+    return lines
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m regwatch.jobs.crawl")
-    parser.add_argument("--stage", choices=["ingest", "all"], default="all")
+    parser.add_argument("--stage", choices=list(STAGES), default="all")
     parser.add_argument("--backend", choices=["live", "fixtures"], default="live")
     parser.add_argument("--fixtures-dir", type=Path, default=None)
+    parser.add_argument("--llm-backend", choices=["live", "fixtures"], default="live")
+    parser.add_argument("--llm-fixtures-dir", type=Path, default=None)
     parser.add_argument("--time-range", default="year")
-    parser.add_argument("--out", type=Path, default=DEFAULT_OUT)
+    parser.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="documents.jsonl path (default: examples/seed-run/documents.jsonl for --backend live)",
+    )
     parser.add_argument("--no-out", action="store_true", help="do not write documents.jsonl")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, stream=sys.stderr)
     settings = Settings()
-    kind = cast(Literal["live", "fixtures"], args.backend)
-    backend = make_backend(settings, kind, args.fixtures_dir)
-    out = None if args.no_out else args.out
+    stage = cast(Stage, args.stage)
+    backend: TavilyBackend | None = None
+    if stage != "normalize":
+        kind = cast(Literal["live", "fixtures"], args.backend)
+        backend = make_backend(settings, kind, args.fixtures_dir)
+    llm: LLMBackend | None = None
+    if stage != "ingest":
+        llm_kind = cast(Literal["live", "fixtures"], args.llm_backend)
+        llm = make_llm_backend(llm_kind, settings, args.llm_fixtures_dir)
+    out: Path | None
+    if args.no_out:
+        out = None
+    elif args.out is not None:
+        out = args.out
+    else:
+        out = default_out(args.backend)
     try:
-        summary = crawl(
-            settings, stage=args.stage, backend=backend, time_range=args.time_range, out=out
+        run = crawl(
+            settings,
+            stage=stage,
+            backend=backend,
+            llm_backend=llm,
+            time_range=args.time_range,
+            out=out,
         )
-    except NotImplementedError as e:
-        print(f"crawl: {e}", file=sys.stderr)
+    except NotImplementedError:
+        print("crawl: classify lands Oct 20", file=sys.stderr)
         return 2
-    print(summary.line(), file=sys.stderr)
+    for line in summary_lines(run, out):
+        print(line, file=sys.stderr)
     return 0
 
 
