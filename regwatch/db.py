@@ -109,7 +109,8 @@ class CrawlRunRow(SQLModel, table=True):
     finished_at: datetime | None = None
     stage: str
     tavily_credits: int = 0
-    model_cost_usd: float = 0.0
+    model_cost_usd: float = 0.0  # every model call of the run (normalize + classify)
+    classify_cost_usd: float = 0.0  # the classify share, so per-stage lines can be rebuilt
     n_search_calls: int = 0
     n_extract_calls: int = 0
     n_docs_new: int = 0

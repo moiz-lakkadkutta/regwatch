@@ -18,6 +18,7 @@ from regwatch.jobs.crawl import (
     seed,
 )
 from regwatch.understand.llm_backend import FixtureLLMBackend
+from tests.conftest import LLM_FIXTURES_ROOT
 from tests.fakes import RecordingBackend
 
 
@@ -123,23 +124,26 @@ def test_main_stage_ingest_cli(
     assert DEFAULT_OUT.read_bytes() == before
 
 
-def test_stage_all_raises_not_implemented(
+def test_stage_all_runs_end_to_end(
     tmp_settings: Settings,
     fake_backend: RecordingBackend,
     fixture_llm: FixtureLLMBackend,
     tmp_path: Path,
 ) -> None:
-    with pytest.raises(NotImplementedError, match="Oct 20"):
-        crawl(
-            tmp_settings,
-            stage="all",
-            backend=fake_backend,
-            llm_backend=fixture_llm,
-            out=tmp_path / "docs.jsonl",
-        )
-    # ingest and normalize ran before the stop, on one run row
+    run = crawl(
+        tmp_settings,
+        stage="all",
+        backend=fake_backend,
+        llm_backend=fixture_llm,
+        classify_backend=FixtureLLMBackend(LLM_FIXTURES_ROOT / "classify"),
+        out=tmp_path / "docs.jsonl",
+    )
+    # ingest, normalize and classify ran on one run row; no profile yet → nothing classified
+    assert run.stage == "all" and run.finished_at is not None
     assert _count(tmp_settings, CrawlRunRow) == 1
     assert _count(tmp_settings, DocumentRow) == 16
+    assert run.n_docs_new == 16 and run.n_changes_new == 15 and run.tavily_credits == 36
+    assert run.n_classified == 0 and run.model_cost_usd > 0 and run.classify_cost_usd == 0.0
     with pytest.raises(ValueError):
         crawl(tmp_settings, stage="bogus", backend=fake_backend, out=None)  # type: ignore[arg-type]
 
