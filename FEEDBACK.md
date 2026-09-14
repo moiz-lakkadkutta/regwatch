@@ -26,4 +26,12 @@ Dated entries with numbers; this feeds the hackathon's mandatory feedback field.
   (`Applicability.ungrounded_todos` at the store boundary, `citation_url` and `due` set by us) — the prompt cannot loosen it.
   Live accuracy, response_format strict acceptance (anyOf on `due`), reasoning-trace size and latency: pending
   NEBIUS_API_KEY (`uv run pytest -m live -s tests/test_classify_live.py` prints usage and cost).
-- (Oct 23) Nebius Serverless Endpoint + Job: deploy steps, cold start, scheduling.
+- (Oct 23) Nebius Serverless AI: Endpoint created in __ console steps (__ min from Create to RUNNING; IMAGE_PULLING __ s;
+  first /healthz at __ s). Job: __ steps, __ min run, exit __, Tavily __ credits, model $__. Idempotency: run 2 printed
+  "__ (0 new, 0 changed, N unchanged)". Friction (found offline 2026-09-14): (1) Jobs have no schedule/cron field — daily
+  run needs GitHub Actions + a service-account profile (`.github/workflows/daily-crawl.yml`); (2) no persistent volume
+  documented for Endpoints, so the Job cannot write the Endpoint's SQLite (design note in README); (3) no
+  scale-to-zero/replicas — always-on ~$__/day; default 250Gi disk = $17.75/month unless lowered (we set 32Gi);
+  (4) __ (registry/CLI); (5) local: the image cannot be built or smoke-tested without a running Docker daemon
+  (`docker info` failed on the dev Mac, arm64 → `--platform linux/amd64`), so the exit-2 smoke runs in CI and
+  `uv run pytest -m live tests/test_ops.py` skips locally.
