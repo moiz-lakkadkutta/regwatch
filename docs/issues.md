@@ -15,3 +15,8 @@
 - [ ] (oct19-verifier) llm_backend.py imports `normalize_url` from ingest.tavily_backend (understand→ingest dependency); move `normalize_url` to a small `regwatch/urls.py` when next touched.
 - [ ] (oct19-verifier) normalize.py MIN_QUOTE_WORDS = 6 vs prompt "at least 8 words" — align the prompt to 6 or the code to 8 (code stays ≥ as strict).
 - [ ] (oct20-plan) App does not re-classify after `POST /profile`; the next `crawl --stage classify` does. Oct 21/22: show 'profile changed — re-check pending' in the feed.
+- [ ] (oct20-verifier) prompts/classify.md says `"unclear" → an empty list` while `enforce()` keeps up to one grounded to-do for unclear — align the prompt to "at most one" (prompt-only change; Oct 24 polish).
+- [ ] (oct20-verifier) classify_all's final `ungrounded_todos == []` re-check before store is a second barrier no test catches when removed — add a test that monkeypatches `enforce` to leak an ungrounded todo and asserts nothing is stored.
+- [ ] (oct20-verifier) "exactly one retry" is only guarded by the stub-backend test; the gii fixture test passes a conditional-3rd-call mutation — keep the stub test load-bearing.
+- [ ] (oct20-verifier) tests/test_classify.py has a `# type: ignore[union-attr]` that should be an `assert … is not None`.
+- [ ] (oct20-verifier) The two seed changes are hand-recorded applicabilities; Ultra grounding for change-001/002 is only proven by tests/test_classify_live.py once NEBIUS_API_KEY exists (Oct 23 live run).
