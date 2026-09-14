@@ -1,0 +1,13 @@
+{
+  "doc_id": "shopify-help-eu-withdrawal",
+  "url": "https://help.shopify.com/en/manual/checkout-settings/eu-withdrawal-function",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"unclear\",\n  \"reasons\": [\n    \"We couldn't tell from your profile: whether Shopify's built-in withdrawal function covers your store depends on which checkout version you run, which your profile doesn't include.\"\n  ],\n  \"todos\": []\n}",
+      "usage": {
+        "prompt_tokens": 1450,
+        "completion_tokens": 140
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "doc_id": "commission-crd",
+  "url": "https://commission.europa.eu/law/law-topic/consumer-protection-law/consumer-contract-law/consumer-rights-directive_en",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"does_not\",\n  \"reasons\": [\n    \"This page is a Commission overview of the Consumer Rights Directive and creates no obligation for your shop.\"\n  ],\n  \"todos\": []\n}",
+      "usage": {
+        "prompt_tokens": 1400,
+        "completion_tokens": 120
+      }
+    }
+  ]
+}

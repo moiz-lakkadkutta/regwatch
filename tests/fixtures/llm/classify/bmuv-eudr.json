@@ -1,0 +1,13 @@
+{
+  "doc_id": "bmuv-eudr",
+  "url": "https://www.bmuv.de/themen/wald/entwaldungsfreie-lieferketten-eudr",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"does_not\",\n  \"reasons\": [\n    \"This page is a ministry overview of the EU deforestation rules and creates no obligation for your shop.\"\n  ],\n  \"todos\": []\n}",
+      "usage": {
+        "prompt_tokens": 1400,
+        "completion_tokens": 120
+      }
+    }
+  ]
+}

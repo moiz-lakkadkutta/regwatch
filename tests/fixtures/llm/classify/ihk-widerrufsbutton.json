@@ -1,0 +1,13 @@
+{
+  "doc_id": "ihk-widerrufsbutton",
+  "url": "https://www.ihk.de/themen/recht/widerrufsbutton-onlinehandel",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"unclear\",\n  \"reasons\": [\n    \"We couldn't tell from your profile: whether this chamber-of-commerce explainer changes anything for you depends on how your checkout confirms withdrawals today, which your profile doesn't include.\"\n  ],\n  \"todos\": []\n}",
+      "usage": {
+        "prompt_tokens": 1450,
+        "completion_tokens": 140
+      }
+    }
+  ]
+}

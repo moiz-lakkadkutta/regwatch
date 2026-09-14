@@ -1,0 +1,13 @@
+{
+  "doc_id": "eurlex-2011-83",
+  "url": "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32011L0083",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"does_not\",\n  \"reasons\": [\n    \"This page is the consolidated text of the Consumer Rights Directive with no new obligation of its own and creates no obligation for your shop.\"\n  ],\n  \"todos\": []\n}",
+      "usage": {
+        "prompt_tokens": 1400,
+        "completion_tokens": 120
+      }
+    }
+  ]
+}

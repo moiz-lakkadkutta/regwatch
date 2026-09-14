@@ -1,0 +1,13 @@
+{
+  "doc_id": "shopify-blog-eudr",
+  "url": "https://www.shopify.com/blog/eudr-compliance",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"does_not\",\n  \"reasons\": [\n    \"This page is a blog post summarising the EU Deforestation Regulation and creates no obligation for your shop.\"\n  ],\n  \"todos\": []\n}",
+      "usage": {
+        "prompt_tokens": 1400,
+        "completion_tokens": 120
+      }
+    }
+  ]
+}

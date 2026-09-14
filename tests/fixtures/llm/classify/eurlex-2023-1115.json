@@ -1,0 +1,13 @@
+{
+  "doc_id": "eurlex-2023-1115",
+  "url": "https://eur-lex.europa.eu/eli/reg/2023/1115/oj",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"applies\",\n  \"reasons\": [\n    \"Applies because you sell furniture and wooden goods and leather goods — wood and cattle leather are both covered commodities.\",\n    \"You place these products on the EU market from Germany, so you count as an operator or trader from 30 June 2026.\"\n  ],\n  \"todos\": [\n    {\n      \"text\": \"Ask each furniture and leather supplier for plot geolocation and origin evidence\",\n      \"due\": \"2026-01-01\",\n      \"quote\": \"the geolocation of all plots of land where the relevant commodities that the relevant product contains, or has been made using, were produced\"\n    },\n    {\n      \"text\": \"Set up a folder per product line and keep due-diligence documents for five years\",\n      \"due\": \"2026-06-30\",\n      \"quote\": \"Operators shall keep for at least 5 years from the date of the placing on the market or export of the relevant products all documentation related to due diligence\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 2100,
+        "completion_tokens": 440
+      }
+    }
+  ]
+}

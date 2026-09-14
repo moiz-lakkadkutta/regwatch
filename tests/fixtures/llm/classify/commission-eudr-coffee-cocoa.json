@@ -1,0 +1,13 @@
+{
+  "doc_id": "commission-eudr-coffee-cocoa",
+  "url": "https://commission.europa.eu/business-economy-euro/doing-business-eu/sustainability-due-diligence-responsible-business/eudr-guidance-coffee-cocoa-operators_en",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"does_not\",\n  \"reasons\": [\n    \"This guidance is written for importers of coffee and cocoa only.\",\n    \"You sell furniture and wooden goods and leather goods, so nothing on this page asks anything of your shop — your wood and leather products are covered by the EUDR itself, listed separately.\"\n  ],\n  \"todos\": []\n}",
+      "usage": {
+        "prompt_tokens": 1800,
+        "completion_tokens": 210
+      }
+    }
+  ]
+}

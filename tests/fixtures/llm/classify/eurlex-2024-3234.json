@@ -1,0 +1,13 @@
+{
+  "doc_id": "eurlex-2024-3234",
+  "url": "https://eur-lex.europa.eu/eli/reg/2024/3234/oj",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"unclear\",\n  \"reasons\": [\n    \"We couldn't tell from your profile: which of the two EUDR dates applies to you depends on your turnover and headcount, which your profile doesn't include.\"\n  ],\n  \"todos\": []\n}",
+      "usage": {
+        "prompt_tokens": 1450,
+        "completion_tokens": 140
+      }
+    }
+  ]
+}

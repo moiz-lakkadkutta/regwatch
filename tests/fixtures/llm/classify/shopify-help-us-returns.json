@@ -1,0 +1,13 @@
+{
+  "doc_id": "shopify-help-us-returns",
+  "url": "https://help.shopify.com/en/manual/checkout-settings/refund-return-policy/us-return-refund-rules",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"does_not\",\n  \"reasons\": [\n    \"This page explains US return and refund rules for orders from US customers.\",\n    \"You are established in Germany and ship only to 10 EU countries, so these rules do not reach your store.\"\n  ],\n  \"todos\": []\n}",
+      "usage": {
+        "prompt_tokens": 1700,
+        "completion_tokens": 190
+      }
+    }
+  ]
+}
