@@ -6,6 +6,7 @@ daily-crawl workflow. Everything but `test_docker_build_and_healthz` runs offlin
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import socket
 import subprocess
@@ -196,6 +197,92 @@ def test_entrypoint_creates_db_directory(tmp_path: Path) -> None:
     )
     assert proc.returncode == 0, proc.stderr
     assert db_dir.is_dir()
+
+
+# --- Serverless value files + workflows ---------------------------------------------------------
+
+
+def _env_example_keys() -> list[str]:
+    keys: list[str] = []
+    for line in ENV_EXAMPLE.read_text(encoding="utf-8").splitlines():
+        m = re.match(r"^([A-Z][A-Z0-9_]*)=", line)
+        if m:
+            keys.append(m.group(1))
+    return keys
+
+
+def _yaml_sections(path: Path) -> dict[str, dict[str, str]]:
+    """Minimal reader for the block-style value files: top-level key → {child key: value}.
+
+    `key: {}` yields an empty mapping; comments and the `# cli:` line are ignored.
+    """
+    sections: dict[str, dict[str, str]] = {}
+    current: str | None = None
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.split("#", 1)[0].rstrip() if not raw.lstrip().startswith("#") else ""
+        if not line.strip():
+            continue
+        if not line.startswith(" "):
+            key, _, value = line.partition(":")
+            current = key.strip()
+            sections[current] = {}
+            if value.strip() and value.strip() != "{}":
+                sections[current] = {"": value.strip()}
+            continue
+        assert current is not None
+        key, _, value = line.strip().partition(":")
+        sections[current][key.strip()] = value.strip().strip('"')
+    return sections
+
+
+def test_ops_yaml_mirror_env_example() -> None:
+    job = _yaml_sections(JOB_YAML)
+    endpoint = _yaml_sections(ENDPOINT_YAML)
+    mirrored = [k for k in _env_example_keys() if k.startswith(("REGWATCH_", "TOKENFACTORY_"))]
+    assert mirrored, ".env.example must list the REGWATCH_/TOKENFACTORY_ variables"
+    for key in mirrored:
+        assert key in job["env"], f"{key} from .env.example missing in ops/serverless-job.yaml env"
+    for secret in ("NEBIUS_API_KEY", "TAVILY_API_KEY"):
+        assert secret in job["env_secret"]
+        assert secret not in job["env"]
+        assert secret not in endpoint["env"]
+    assert endpoint["env_secret"] == {}, "the public Endpoint carries no keys"
+    assert job["env"]["REGWATCH_TIME_RANGE"] == "year"
+    assert job["args"] == {"": '"crawl"'} or job["args"] == {"": "crawl"}
+    assert endpoint["args"] == {"": '"serve"'} or endpoint["args"] == {"": "serve"}
+    job_text = JOB_YAML.read_text(encoding="utf-8")
+    assert not re.search(r"--env (NEBIUS|TAVILY)_API_KEY", job_text)
+    assert "--env-secret NEBIUS_API_KEY=" in job_text
+    assert "--env-secret TAVILY_API_KEY=" in job_text
+    for path in (JOB_YAML, ENDPOINT_YAML):
+        assert "fixtures" not in path.read_text(encoding="utf-8")
+        assert "disk_size: 32Gi" in path.read_text(encoding="utf-8")
+
+
+def test_daily_workflow_guards_secrets() -> None:
+    text = DAILY_WORKFLOW.read_text(encoding="utf-8")
+    assert "schedule:" in text
+    assert re.search(r"cron:\s*['\"]\d+ \d+ \* \* \*['\"]", text)
+    assert "workflow_dispatch" in text
+    guard_pos = text.find("secrets.NEBIUS_SA_ID")
+    assert guard_pos != -1, "the first step must check secrets.NEBIUS_SA_ID"
+    assert "::error::" in text
+    assert text.find("::error::") < text.find("nebius ai job create")
+    assert "exit 1" in text
+    for secret in ("NEBIUS_SA_PUBLIC_KEY_ID", "NEBIUS_SA_PRIVATE_KEY", "NEBIUS_PROJECT_ID"):
+        assert f"secrets.{secret}" in text
+    assert "vars.REGWATCH_IMAGE" in text
+    assert "--args crawl" in text
+    assert "REGWATCH_TIME_RANGE=month" in text
+    assert "fixtures" not in text
+
+
+def test_ci_workflow_builds_image_and_checks_exit_2() -> None:
+    text = CI_WORKFLOW.read_text(encoding="utf-8")
+    assert "docker build --platform linux/amd64 -f ops/Dockerfile -t regwatch:ci ." in text
+    assert "docker run --rm -e NEBIUS_API_KEY= -e TAVILY_API_KEY= regwatch:ci crawl" in text
+    assert "test $? -eq 2" in text
+    assert text.find("uv run pytest") < text.find("docker build")
 
 
 # --- live: real docker build + serve ------------------------------------------------------------

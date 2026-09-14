@@ -1,0 +1,18 @@
+# Nebius Serverless AI has no declarative YAML apply as of 2026-09; these are the values to enter in console (Serverless AI → Endpoints → Create) or the flags for the CLI line at the bottom.
+# Endpoint = the same image as the Job, `serve` mode: `regwatch seed && regwatch serve` on its own
+# ephemeral SQLite. No keys on the public VM (env_secret stays empty).
+name: regwatch-web
+image: cr.eu-north1.nebius.cloud/<REGISTRY_ID>/regwatch:<GIT_SHA>
+platform: cpu-d3
+preset: 4vcpu-16gb          # pick the smallest listed
+container_port: 8000/http
+auth: none
+public_ip: false
+disk_size: 32Gi             # default 250Gi costs ~$17.75/month
+container_command: ""       # image ENTRYPOINT /app/entrypoint.sh; fallback if --args alone is refused
+args: "serve"
+env:
+  PORT: "8000"
+  REGWATCH_DB_URL: sqlite:////data/regwatch.db
+env_secret: {}
+# cli: nebius ai endpoint create --name regwatch-web --image $IMAGE --platform cpu-d3 --preset 4vcpu-16gb --container-port 8000/http --auth none --disk-size 32Gi --args serve --env PORT=8000
