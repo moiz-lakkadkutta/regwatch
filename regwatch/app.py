@@ -27,10 +27,10 @@ from regwatch.config import (
     SEED_REGULATIONS,
     SOURCE_DOMAINS,
     Settings,
+    country_name,
     regulation_instrument,
 )
 from regwatch.db import (
-    DocumentRow,
     FeedRow,
     ProfileRow,
     TodoStateRow,
@@ -40,6 +40,7 @@ from regwatch.db import (
     last_crawl,
     make_engine,
     session,
+    unchecked_changes,
 )
 from regwatch.schemas import Decision, RegChange
 
@@ -300,25 +301,25 @@ def profile_save(
 
 @app.get("/feed", response_class=HTMLResponse)
 def feed(request: Request) -> Any:
+    today = date.today()
     with session(engine) as s:
         prof = current_profile(s)
-    if prof is None or prof.id is None:
-        return RedirectResponse("/profile", status_code=303)
-    items = _feed_items(prof.id)
-    with session(engine) as s:
-        run = last_crawl(s)
-        domains = s.exec(select(DocumentRow.source_domain).distinct()).all()
-    n_sources = len(domains) or len(SOURCE_DOMAINS)
-    credits = run.tavily_credits if run is not None else sum(i["credits"] for i in items)
+        if prof is None or prof.id is None:
+            return RedirectResponse("/profile", status_code=303)
+        rows = feed_rows(s, prof.id)
+        done_keys = _done_keys(s, prof.id)
+        unchecked = unchecked_changes(s, prof.id)
+        footer = _footer(s, rows)
+    groups = _group([_item(r, done_keys, today) for r in rows])
     return templates.TemplateResponse(
         request,
         "feed.html",
         {
-            "items": items,
+            "groups": groups,
+            "unchecked": unchecked,
+            "f": footer,
             "profile": prof.to_schema(),
-            "credits": credits,
-            "last_crawl": run,
-            "n_sources": n_sources,
+            "establishment": country_name(prof.establishment_country),
         },
     )
 

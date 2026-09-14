@@ -1,16 +1,16 @@
 {% extends "base.html" %}{% block title %}Changes · RegWatch{% endblock %}
 {% block body %}
 <h1>Regulation changes for your store</h1>
-<p class="muted">Established in {{profile.establishment_country}} · ships to {{profile.ship_to|length}} countries · {{profile.categories|join(", ")}}</p>
-{% if not items %}<div class="card">No changes yet. The first crawl runs on deploy; run <code>regwatch crawl</code> to fetch now.</div>{% endif %}
-{% for it in items %}
-<div class="card">
-  <span class="pill {{it.decision}}">{% if it.decision=="applies" %}Applies to you{% elif it.decision=="does_not" %}Doesn't apply{% else %}Unclear — one question{% endif %}</span>
-  <span class="muted"> · {{it.created_at.strftime("%d %b %Y")}}</span>
-  <h2><a href="/change/{{it.id}}">{{it.change.instrument}}</a></h2>
-  <p>{{it.change.summary}}</p>
-  <p class="muted">{{it.todos|length}} to-do{% if it.todos|length!=1 %}s{% endif %}{% if it.change.effective_dates %} · in force from {{it.change.effective_dates[0]}}{% endif %}</p>
-</div>
-{% endfor %}
+<p class="muted">Established in {{establishment}} · ships to {{profile.ship_to|length}} countr{% if profile.ship_to|length == 1 %}y{% else %}ies{% endif %} · {{profile.categories|join(", ")}}</p>
+{% if not groups and not unchecked %}<div class="card"><p>No changes on file yet.</p><p class="muted">Run <code>regwatch seed</code> for the recorded run, or <code>regwatch crawl</code> to fetch from the official sources.</p></div>{% endif %}
+{% for g in groups %}<section class="group" id="{{g.key}}"><h2>{{g.label}}</h2>{% if g.instrument %}<p class="law">{{g.instrument}}</p>{% endif %}
+  {% for it in g.items %}<article class="card item">
+    <span class="pill {{it.decision}}">{% if it.decision == "applies" %}Applies to you{% elif it.decision == "does_not" %}Doesn't apply to you{% else %}Unclear — one question{% endif %}</span> <span class="muted">· {{it.created_at|d}}</span>
+    <h3><a href="/change/{{it.id}}">{{it.change.instrument}}</a></h3>
+    <p>{{it.change.summary}}</p>
+    <div class="meta">{% if it.decision == "applies" and it.todos %}<span>{{it.todos|length}} to-do{% if it.todos|length != 1 %}s{% endif %}{% if it.next_due %} · {% if it.in_force %}in force since {{it.next_due|d}}{% else %}next due {{it.next_due|d}}{% endif %}{% endif %}</span>{% elif it.decision == "applies" %}<span>No to-dos yet — see the obligations</span>{% elif it.decision == "unclear" %}<span>Answer one question to find out</span>{% endif %}<span class="chip">{{it.source_domain}}</span></div>
+  </article>{% endfor %}</section>{% endfor %}
+{% if unchecked %}<section class="group" id="unchecked"><h2>Not checked against your profile yet</h2><p class="law">Your profile changed. The next crawl re-checks every change; to do it now run <code>regwatch crawl --stage classify</code>.</p>
+  {% for ch in unchecked %}<article class="card item"><span class="muted">{{ch.created_at|d}}</span><h3><a href="/change/{{ch.id}}">{{ch.instrument}}</a></h3><p>{{ch.summary}}</p></article>{% endfor %}</section>{% endif %}
 {% endblock %}
-{% block footer %}Sources are limited to official EU/German bodies and platform help pages ({{n_sources}} sources). Last crawl: {% if last_crawl and last_crawl.finished_at %}{{last_crawl.finished_at.strftime("%d %b %Y %H:%M")}} UTC{% else %}none yet — showing the recorded seed run{% endif %} · search and extraction by Tavily · {{credits}} Tavily credits used · classification by NVIDIA Nemotron 3 Ultra on Nebius Token Factory.{% endblock %}
+{% block footer %}{% if f.kind == "crawl" %}Last crawl {{f.finished_at|stamp}} · {{f.n_docs}} document{% if f.n_docs != 1 %}s{% endif %} from {{f.n_sources}} source{% if f.n_sources != 1 %}s{% endif %} · {{f.tavily_credits}} Tavily credits used this crawl · ${{"%.4f"|format(f.model_cost_usd)}} Nemotron on Nebius Token Factory. Sources are limited to an allow-list of {{f.n_allowlist}} official and platform domains.{% else %}Showing the recorded seed run · {{f.n_docs}} document{% if f.n_docs != 1 %}s{% endif %} from {{f.n_sources}} source{% if f.n_sources != 1 %}s{% endif %} · {{f.tavily_credits}} Tavily credits used when it was recorded · no live crawl yet — run <code>regwatch crawl</code>. Sources are limited to an allow-list of {{f.n_allowlist}} official and platform domains.{% endif %}{% endblock %}

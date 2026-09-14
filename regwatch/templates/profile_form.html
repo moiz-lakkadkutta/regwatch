@@ -24,6 +24,7 @@
 
   <label for="platform">Platform</label>
   <select id="platform" name="platform">{% for key,name in platforms %}<option value="{{key}}" {% if profile and profile.platform==key %}selected{% endif %}>{{name}}</option>{% endfor %}</select>
+  <p class="help">Platform guidance pages (e.g. Shopify Help) are searched too, so to-dos can point at the setting to change.</p>
 
   <button class="primary" type="submit">Save and show my changes</button>
 </form>

@@ -10,11 +10,13 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from markupsafe import escape
 from sqlmodel import select
 
 from regwatch.config import REGULATION_LABELS, SEED_REGULATIONS
 from regwatch.db import (
     ApplicabilityRow,
+    CrawlRunRow,
     DocumentRow,
     RegChangeRow,
     regulation_tag_for,
@@ -286,3 +288,125 @@ def test_feed_rows_and_unchecked_from_db(pages_client: TestClient) -> None:
         assert feed_row(s, prof.id, _change_id(BMJ_URL)) is None
         assert [c.document_url for c in unchecked_changes(s, prof.id)] == [BMJ_URL]
         assert corpus_counts(s) == (6, 5)
+
+
+# ---------- feed (plan §5 tests 1–7) ----------
+
+
+def test_feed_groups_by_regulation_with_label_and_instrument(pages_client: TestClient) -> None:
+    html = pages_client.get("/feed").text
+    for label in REGULATION_LABELS.values():
+        assert label in html
+    assert html.index('id="withdrawal"') < html.index('id="eudr"')
+    for r in SEED_REGULATIONS:
+        assert r["instrument"] in html
+    assert "IHK guidance" in _section(html, "eudr")
+    assert "Shopify Help" in _section(html, "withdrawal")
+
+
+def test_feed_orders_applies_before_unclear_before_does_not(pages_client: TestClient) -> None:
+    html = pages_client.get("/feed").text
+    withdrawal = _section(html, "withdrawal")
+    pills = [p.split("<")[0] for p in withdrawal.split('<span class="pill ')[1:]]
+    assert [p.split('"')[0] for p in pills] == ["applies", "applies", "does_not"]
+    # newest first inside a decision: § 356a (1 Jul) before the seed directive (1 Jun)
+    titles = [h.split("</a>")[0].split(">")[-1] for h in withdrawal.split("<h3>")[1:]]
+    assert titles[0].startswith("§ 356a BGB") and titles[1].startswith("Directive (EU) 2023/2673")
+    assert titles[2].startswith("Shopify Help")
+    eudr = _section(html, "eudr")
+    assert eudr.index("pill applies") < eudr.index("pill unclear")
+    assert "Doesn't apply to you" not in eudr
+
+
+def test_feed_pills_all_three_states(pages_client: TestClient) -> None:
+    html = pages_client.get("/feed").text
+    assert "Applies to you" in html
+    assert "Doesn't apply to you" in html
+    assert "Unclear — one question" in html
+    # the unchecked change carries no pill
+    assert 'class="pill' not in _section(html, "unchecked")
+
+
+def test_feed_item_meta(pages_client: TestClient) -> None:
+    html = pages_client.get("/feed").text
+    assert "2 to-dos · in force since 19 Jun 2026" in html
+    assert "No to-dos yet — see the obligations" in html
+    assert "Answer one question to find out" in html
+    assert 'class="chip">eur-lex.europa.eu' in html
+    assert 'class="chip">help.shopify.com' in html
+    assert "Established in Germany" in html
+
+
+def test_feed_footer_seed_state(seed_client: TestClient) -> None:
+    html = seed_client.get("/feed").text
+    assert "Showing the recorded seed run" in html
+    assert "14 Tavily credits used when it was recorded" in html
+    assert "no live crawl yet" in html
+    assert "2 documents from 1 source " in html
+    assert "Last crawl" not in html
+    assert "credits used" in html  # test_app.test_feed_shows_both_seed_changes relies on it
+
+
+def test_feed_footer_after_crawl(seed_client: TestClient) -> None:
+    import regwatch.app as appmod
+
+    with session(appmod.engine) as s:
+        s.add(
+            CrawlRunRow(
+                started_at=datetime(2026, 10, 21, 13, 50),
+                finished_at=datetime(2026, 10, 21, 14, 2),
+                stage="all",
+                tavily_credits=44,
+                model_cost_usd=0.0312,
+            )
+        )
+        s.commit()
+    html = seed_client.get("/feed").text
+    assert "Last crawl 21 Oct 2026 14:02 UTC" in html
+    assert "44 Tavily credits used this crawl" in html
+    assert "$0.0312 Nemotron" in html
+    assert "2 documents from 1 source " in html
+    assert "seed run" not in html
+
+
+def test_feed_footer_unfinished_run_still_shows_seed_state(seed_client: TestClient) -> None:
+    import regwatch.app as appmod
+
+    with session(appmod.engine) as s:
+        s.add(CrawlRunRow(started_at=datetime(2026, 10, 21, 13, 50), stage="all"))
+        s.commit()
+    html = seed_client.get("/feed").text
+    assert "Showing the recorded seed run" in html and "Last crawl" not in html
+
+
+def test_feed_empty_state(empty_client: TestClient) -> None:
+    empty_client.post(
+        "/profile",
+        data={"establishment_country": "FR", "ship_to": ["FR"], "categories": ["leather"]},
+        follow_redirects=False,
+    )
+    html = empty_client.get("/feed").text
+    assert "No changes on file yet." in html
+    assert "0 documents from 0 sources" in html
+    assert "Established in France" in html
+
+
+def test_feed_unchecked_section_after_profile_change(pages_client: TestClient) -> None:
+    r = pages_client.post(
+        "/profile",
+        data={"establishment_country": "AT", "ship_to": ["AT", "DE"], "categories": ["apparel"]},
+        follow_redirects=False,
+    )
+    assert r.status_code == 303
+    r = pages_client.get("/feed")
+    assert r.status_code == 200
+    html = r.text
+    assert "Not checked against your profile yet" in html
+    assert "regwatch crawl --stage classify" in html
+    with session(__import__("regwatch.app", fromlist=["engine"]).engine) as s:
+        instruments = [c.instrument for c in s.exec(select(RegChangeRow)).all()]
+    assert len(instruments) == 6
+    for name in instruments:
+        assert escape(name) in html
+    assert 'class="pill' not in html
+    assert "Applies to you" not in html
