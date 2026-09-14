@@ -1,6 +1,6 @@
 # Status — Oct 24 freeze (offline)
 
-**Days merged:** Oct 17 `83ce7ed` · 18 `2cec1c3` · 19 `f831474` · 20 `16474d0` · 21 `2266495` · 22 `9a02a38` · 23 `37a80bc` · 24 (this branch).
+**Days merged:** Oct 17 `83ce7ed` · 18 `2cec1c3` · 19 `f831474` · 20 `16474d0` · 21 `2266495` · 22 `9a02a38` · 23 `37a80bc` · 24 `ebe8246`.
 **Tests:** 136 → 141 passed, 4 live deselected. No live call has been made; every credit/token/USD figure is fixture replay.
 
 **Pending:** live keys · Endpoint + Job deploy (`docs/runbook-nebius.md`) · re-record `examples/seed-run` from a live crawl · video (Oct 25–26) · clean-machine dry run (Oct 27).
