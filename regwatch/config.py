@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     classifier_price_out_per_mtok: float = Field(
         default=3.00, alias="REGWATCH_CLASSIFIER_PRICE_OUT_PER_MTOK"
     )
+    # Recipient of the "Report a wrong call" mailto on the change page; empty leaves the To: blank.
+    report_email: str = Field(default="", alias="REGWATCH_REPORT_EMAIL")
 
 
 # Only these domains are ever searched or extracted. Official sources first, platform guidance last.
@@ -148,10 +150,24 @@ PLATFORMS: list[tuple[str, str]] = [
 ]
 REGULATION_TAGS: frozenset[str] = frozenset(r["tag"] for r in SEED_REGULATIONS)
 
+# Plain-language group headings for the feed (what to do first; the instrument name is the subline).
+REGULATION_LABELS: dict[str, str] = {
+    "withdrawal": "Withdrawal button for online orders",
+    "eudr": "Deforestation-free products (EUDR)",
+}
+
 
 def country_name(code: str) -> str:
     """Plain country name for a two-letter code; the code itself when unknown."""
     return COUNTRY_NAMES.get(code, code)
+
+
+def regulation_instrument(tag: str) -> str:
+    """Instrument name of the SEED_REGULATIONS entry with `tag`; KeyError when unknown."""
+    for r in SEED_REGULATIONS:
+        if r["tag"] == tag:
+            return r["instrument"]
+    raise KeyError(tag)
 
 
 def sources_for(tag: str) -> list[str]:

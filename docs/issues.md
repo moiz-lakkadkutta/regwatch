@@ -1,13 +1,13 @@
 # Open issues (no remote tracker yet)
 
-- [ ] (oct17-verifier) profile_form.html: platform field lacks the inline `<p class="help">` the other three fields have (UX brief §3.3) — do on Oct 21.
+- [x] (oct17-verifier) profile_form.html: platform field lacks the inline `<p class="help">` the other three fields have (UX brief §3.3) — do on Oct 21. (Oct 21: added.)
 - [ ] (oct17-verifier) tests/test_seed_run.py parametrises over glob with no guard — passes vacuously if seed files move; add a `assert len(files) >= 2` guard when next touched.
 - [ ] (oct17-verifier) schemas.Document validates source_domain but not the url host — ingest must derive source_domain from the URL (done Oct 18, see below).
 - [ ] (oct17-verifier) tests/test_app.py `assert "selected" not in r.text` scans the whole page — brittle.
 - [ ] (oct18-verifier) extract.py: an extracted result whose URL no longer matches a Hit after normalize_url (redirect/canonicalisation) is stored with regulation_tags=[] and published_date=None, and then silently skipped by tag filters — log at WARNING when hit is None and consider matching by allowed_domain+path. (touch on Oct 23 hardening)
 - [ ] (oct18-verifier) search.py: an exception raised after Tavily billed the call skips the ledger → credits undercounted; note in FEEDBACK when a live number exists.
 - [x] (oct18-verifier) cli.py imports `DEFAULT_OUT` from jobs.crawl at module top → `regwatch --help` imports sqlmodel; make lazy when next touched. (Oct 19: `crawl` now delegates to `jobs.crawl.main` with a lazy import; `--out` defaults to None.)
-- [ ] (oct18-verifier) Footer "N Tavily credits used" means the seed sum before any crawl and the last crawl's credits after — Oct 21 should label the two states distinctly.
+- [x] (oct18-verifier) Footer "N Tavily credits used" means the seed sum before any crawl and the last crawl's credits after — Oct 21 should label the two states distinctly. (Oct 21: "Showing the recorded seed run … credits used when it was recorded" vs "Last crawl … credits used this crawl".)
 - [ ] (oct18-verifier) examples/seed-run/documents.jsonl must be re-recorded from a LIVE ingest before the Oct 24 freeze so every demo citation points at real page text (Oct 23).
 - [ ] (oct18-verifier) manifest: `shopify-help-eu-withdrawal` carries tags ['eudr','withdrawal'] only to exercise tag-merging; Oct 20 must not treat it as an EUDR source (its classify fixture is `unclear`/`does_not`, never `applies` for EUDR).
 - [ ] (oct19-verifier) normalize.py: a document that fails normalisation stores nothing and is re-selected by `documents_needing_normalize` on every crawl (2 model calls per run forever). Persist a failed marker per (url, content_hash) and skip until the hash changes. Same pattern will apply to classify failures — do it for both in one small follow-up (Oct 23 hardening).
@@ -15,3 +15,8 @@
 - [ ] (oct19-verifier) llm_backend.py imports `normalize_url` from ingest.tavily_backend (understand→ingest dependency); move `normalize_url` to a small `regwatch/urls.py` when next touched.
 - [ ] (oct19-verifier) normalize.py MIN_QUOTE_WORDS = 6 vs prompt "at least 8 words" — align the prompt to 6 or the code to 8 (code stays ≥ as strict).
 - [ ] (oct20-plan) App does not re-classify after `POST /profile`; the next `crawl --stage classify` does. Oct 21/22: show 'profile changed — re-check pending' in the feed.
+- [ ] (oct20-verifier) prompts/classify.md says `"unclear" → an empty list` while `enforce()` keeps up to one grounded to-do for unclear — align the prompt to "at most one" (prompt-only change; Oct 24 polish).
+- [ ] (oct20-verifier) classify_all's final `ungrounded_todos == []` re-check before store is a second barrier no test catches when removed — add a test that monkeypatches `enforce` to leak an ungrounded todo and asserts nothing is stored.
+- [ ] (oct20-verifier) "exactly one retry" is only guarded by the stub-backend test; the gii fixture test passes a conditional-3rd-call mutation — keep the stub test load-bearing.
+- [ ] (oct20-verifier) tests/test_classify.py has a `# type: ignore[union-attr]` that should be an `assert … is not None`.
+- [ ] (oct20-verifier) The two seed changes are hand-recorded applicabilities; Ultra grounding for change-001/002 is only proven by tests/test_classify_live.py once NEBIUS_API_KEY exists (Oct 23 live run).

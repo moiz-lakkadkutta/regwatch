@@ -1,17 +1,31 @@
-{% extends "base.html" %}{% block title %}{{item.change.instrument}} · RegWatch{% endblock %}
+{% extends "base.html" %}{% block title %}{{change.instrument}} · RegWatch{% endblock %}
 {% block body %}
 <p><a href="/feed">← All changes</a></p>
-<span class="pill {{item.decision}}">{% if item.decision=="applies" %}Applies to you{% elif item.decision=="does_not" %}Doesn't apply{% else %}Unclear{% endif %}</span>
-<h1>{{item.change.instrument}}</h1>
-<p>{{item.change.summary}}</p>
-<h2>Why this {% if item.decision=="applies" %}applies to you{% elif item.decision=="does_not" %}doesn't apply to you{% else %}is unclear{% endif %}</h2>
+{% if item %}<span class="pill {{item.decision}}">{% if item.decision == "applies" %}Applies to you{% elif item.decision == "does_not" %}Doesn't apply to you{% else %}Unclear — one question{% endif %}</span>{% endif %} <span class="muted">· {{created_at|d}} · <span class="chip">{{source_domain}}</span></span>
+<h1>{{change.instrument}}</h1>
+<p>{{change.summary}}</p>
+{% if not item %}<div class="card"><h2>Not checked against your profile yet</h2><p>Your profile changed. The next crawl re-checks this change; to do it now run <code>regwatch crawl --stage classify</code>.</p></div>
+{% elif item.decision == "unclear" %}<h2>We couldn't tell from your profile</h2>
 <ul>{% for r in item.reasons %}<li>{{r}}</li>{% endfor %}</ul>
-{% if item.todos %}<h2>What to do</h2><div class="card">
-{% for t in item.todos %}<div class="todo {% if t.done %}done{% endif %}"><div><div class="text">{{t.text}}</div>
-<div class="muted">{% if t.due %}by {{t.due}}{% endif %}</div>
-<blockquote>“{{t.quote}}”<cite><a href="{{t.citation_url}}" rel="noopener">source</a></cite></blockquote></div></div>{% endfor %}
-</div>{% endif %}
+<p><a href="/profile">Answer one question in your store profile</a> and the next crawl decides.</p>
+{% else %}<h2>Why this {% if item.decision == "applies" %}applies to you{% else %}doesn't apply to you{% endif %}</h2>
+<ul>{% for r in item.reasons %}<li>{{r}}</li>{% endfor %}</ul>{% endif %}
+{% if item and item.decision == "applies" %}<h2>What to do</h2>{% if item.todos %}<div class="card">{% for t in item.todos %}
+  <div class="todo{% if t.done %} done{% endif %}"><div><div class="text">{{t.text}}</div>
+  <div class="due">{% if t.due %}{% if t.overdue %}<span class="pill overdue">in force since {{t.due|d}}</span>{% else %}by {{t.due|d}}{% endif %}{% else %}no fixed date{% endif %}</div>
+  <blockquote>“{{t.quote}}”<cite>— <a href="{{t.citation_url}}" rel="noopener">{{item.source_domain}}</a></cite></blockquote></div></div>{% endfor %}</div>
+{% else %}<p class="muted">No to-dos yet — the obligations below are the source text.</p>{% endif %}{% endif %}
 <h2>Obligations in the text</h2>
-{% for o in item.change.obligations %}<div class="card"><div>{{o.text}}</div><blockquote>“{{o.quote}}”<cite><a href="{{item.change.document_url}}" rel="noopener">{{item.change.document_url}}</a></cite></blockquote></div>{% endfor %}
-<p class="muted">Jurisdiction: {{item.change.jurisdiction}}{% if item.change.effective_dates %} · dates: {{item.change.effective_dates|join(", ")}}{% endif %} · <a href="mailto:?subject=RegWatch%20wrong%20call%20{{item.id}}">report a wrong call</a></p>
+{% for o in change.obligations %}<div class="card"><div>{{o.text}}</div><blockquote>“{{o.quote}}”<cite>— <a href="{{change.document_url}}" rel="noopener">{{source_domain}}</a></cite></blockquote></div>{% endfor %}
+<section class="source"><h2>Source</h2><dl>
+<dt>Document</dt><dd><a href="{{change.document_url}}" rel="noopener">{{change.document_url}}</a></dd>
+<dt>Jurisdiction</dt><dd>{{change.jurisdiction}}</dd>
+{% if change.effective_dates %}<dt>Dates</dt><dd>{{change.effective_dates|map("d")|join(" · ")}}</dd>{% endif %}
+{% if published_date %}<dt>Published</dt><dd>{{published_date}}</dd>{% endif %}
+{% if fetched_at %}<dt>Fetched</dt><dd>{{fetched_at|stamp}}</dd>{% endif %}
+{% if content_hash %}<dt>Content hash</dt><dd><code>{{content_hash[:12]}}</code></dd>{% endif %}
+<dt>Extracted by</dt><dd>{{"recorded seed run" if normalize_model == "seed" else normalize_model}}</dd>
+{% if item %}<dt>Classified by</dt><dd>{{item.classify_model}} · ${{"%.4f"|format(item.cost_usd)}}</dd>{% endif %}
+</dl></section>
+{% if mailto %}<p class="muted"><a class="wrong" href="{{mailto}}">Report a wrong call</a></p>{% endif %}
 {% endblock %}

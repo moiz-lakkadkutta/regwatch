@@ -5,11 +5,14 @@ from __future__ import annotations
 import json
 from collections.abc import Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import UTC, datetime
+from urllib.parse import urlparse
 
-from sqlmodel import Field, Session, SQLModel, col, create_engine, select
+from sqlmodel import Field, Session, SQLModel, col, create_engine, func, select
+from sqlmodel.sql.expression import Select
 
-from regwatch.config import Settings
+from regwatch.config import SEED_REGULATIONS, Settings
 from regwatch.schemas import Applicability, Document, Profile, RegChange
 
 
@@ -223,3 +226,111 @@ def store_applicability(
     s.commit()
     s.refresh(row)
     return row
+
+
+@dataclass(frozen=True)
+class FeedRow:
+    """One Applicability joined to its change and (outer) source document, as stored."""
+
+    change_id: int
+    change: RegChange
+    appl: Applicability
+    created_at: datetime  # naive, UTC as stored
+    tag: str | None  # regulation_tag_for(doc)
+    source_domain: str  # doc.source_domain, else the document_url host
+    published_date: str | None
+    fetched_at: datetime | None
+    content_hash: str
+    normalize_model: str
+    classify_model: str
+    cost_usd: float
+    tavily_credits: int
+
+
+def regulation_tag_for(doc: DocumentRow | None) -> str | None:
+    """First tag in SEED_REGULATIONS order present on `doc`; None without a doc or a known tag."""
+    if doc is None:
+        return None
+    tags: list[str] = json.loads(doc.regulation_tags)
+    for r in SEED_REGULATIONS:
+        if r["tag"] in tags:
+            return r["tag"]
+    return None
+
+
+def source_domain_for(document_url: str, doc: DocumentRow | None) -> str:
+    """The stored source domain, else the host of `document_url` ("" if it has none)."""
+    if doc is not None:
+        return doc.source_domain
+    return urlparse(document_url).hostname or ""
+
+
+def _feed_row(app_row: ApplicabilityRow, ch_row: RegChangeRow, doc: DocumentRow | None) -> FeedRow:
+    assert ch_row.id is not None
+    return FeedRow(
+        change_id=ch_row.id,
+        change=ch_row.to_schema(),
+        appl=app_row.to_schema(),
+        created_at=ch_row.created_at,
+        tag=regulation_tag_for(doc),
+        source_domain=source_domain_for(ch_row.document_url, doc),
+        published_date=doc.published_date if doc is not None else None,
+        fetched_at=doc.fetched_at if doc is not None else None,
+        content_hash=ch_row.content_hash,
+        normalize_model=ch_row.model,
+        classify_model=app_row.model,
+        cost_usd=app_row.cost_usd,
+        tavily_credits=app_row.tavily_credits,
+    )
+
+
+def _feed_select() -> Select[tuple[ApplicabilityRow, RegChangeRow, DocumentRow]]:
+    """Applicability → its change → (outer) the source document, joined by url."""
+    return (
+        select(ApplicabilityRow, RegChangeRow, DocumentRow)
+        .join(RegChangeRow, col(ApplicabilityRow.regchange_id) == col(RegChangeRow.id))
+        .outerjoin(DocumentRow, col(DocumentRow.url) == col(RegChangeRow.document_url))
+    )
+
+
+def feed_rows(s: Session, profile_id: int) -> list[FeedRow]:
+    """Every classified change for `profile_id`, newest change first."""
+    stmt = (
+        _feed_select()
+        .where(ApplicabilityRow.profile_id == profile_id)
+        .order_by(col(RegChangeRow.created_at).desc(), col(RegChangeRow.id).desc())
+    )
+    return [_feed_row(a, c, d) for a, c, d in s.exec(stmt).all()]
+
+
+def feed_row(s: Session, profile_id: int, change_id: int) -> FeedRow | None:
+    """One classified change for `profile_id`, or None when not (yet) classified."""
+    stmt = _feed_select().where(
+        ApplicabilityRow.profile_id == profile_id, RegChangeRow.id == change_id
+    )
+    hit = s.exec(stmt).first()
+    if hit is None:
+        return None
+    a, c, d = hit
+    return _feed_row(a, c, d)
+
+
+def unchecked_changes(s: Session, profile_id: int) -> list[RegChangeRow]:
+    """RegChangeRows with no ApplicabilityRow for `profile_id`, newest first."""
+    done = select(ApplicabilityRow.id).where(
+        ApplicabilityRow.regchange_id == RegChangeRow.id,
+        ApplicabilityRow.profile_id == profile_id,
+    )
+    stmt = (
+        select(RegChangeRow)
+        .where(~done.exists())
+        .order_by(col(RegChangeRow.created_at).desc(), col(RegChangeRow.id).desc())
+    )
+    return list(s.exec(stmt).all())
+
+
+def corpus_counts(s: Session) -> tuple[int, int]:
+    """(number of stored documents, number of distinct source domains)."""
+    n_docs = s.exec(select(func.count(col(DocumentRow.url)))).one()
+    n_sources = s.exec(select(func.count(func.distinct(col(DocumentRow.source_domain))))).one()
+    return int(n_docs), int(n_sources)
