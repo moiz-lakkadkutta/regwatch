@@ -6,9 +6,11 @@ import pytest
 
 from regwatch.config import Settings
 from regwatch.ingest.tavily_backend import FixtureTavilyBackend
+from regwatch.understand.llm_backend import FixtureLLMBackend
 from tests.fakes import RecordingBackend
 
 FIXTURES_ROOT = Path(__file__).resolve().parent / "fixtures" / "tavily"
+LLM_FIXTURES_ROOT = Path(__file__).resolve().parent / "fixtures" / "llm"
 
 
 @pytest.fixture()
@@ -32,3 +34,13 @@ def manifest(fixtures_root: Path) -> list[dict[str, Any]]:
         (fixtures_root / "manifest.json").read_text(encoding="utf-8")
     )
     return data
+
+
+@pytest.fixture()
+def llm_fixtures_root() -> Path:
+    return LLM_FIXTURES_ROOT
+
+
+@pytest.fixture()
+def fixture_llm(llm_fixtures_root: Path) -> FixtureLLMBackend:
+    return FixtureLLMBackend(llm_fixtures_root / "normalize")
