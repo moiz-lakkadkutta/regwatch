@@ -10,7 +10,7 @@ from datetime import UTC, datetime
 from sqlmodel import Field, Session, SQLModel, col, create_engine, select
 
 from regwatch.config import Settings
-from regwatch.schemas import Applicability, Profile, RegChange
+from regwatch.schemas import Applicability, Document, Profile, RegChange
 
 
 class ProfileRow(SQLModel, table=True):
@@ -37,6 +37,16 @@ class DocumentRow(SQLModel, table=True):
     published_date: str | None = None
     fetched_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     markdown: str
+
+    def to_schema(self) -> Document:
+        return Document(
+            url=self.url,
+            content_hash=self.content_hash,
+            published_date=self.published_date,
+            fetched_at=self.fetched_at,
+            markdown=self.markdown,
+            source_domain=self.source_domain,
+        )
 
 
 class RegChangeRow(SQLModel, table=True):
