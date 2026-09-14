@@ -10,3 +10,8 @@
 - [ ] (oct18-verifier) Footer "N Tavily credits used" means the seed sum before any crawl and the last crawl's credits after — Oct 21 should label the two states distinctly.
 - [ ] (oct18-verifier) examples/seed-run/documents.jsonl must be re-recorded from a LIVE ingest before the Oct 24 freeze so every demo citation points at real page text (Oct 23).
 - [ ] (oct18-verifier) manifest: `shopify-help-eu-withdrawal` carries tags ['eudr','withdrawal'] only to exercise tag-merging; Oct 20 must not treat it as an EUDR source (its classify fixture is `unclear`/`does_not`, never `applies` for EUDR).
+- [ ] (oct19-verifier) normalize.py: a document that fails normalisation stores nothing and is re-selected by `documents_needing_normalize` on every crawl (2 model calls per run forever). Persist a failed marker per (url, content_hash) and skip until the hash changes. Same pattern will apply to classify failures — do it for both in one small follow-up (Oct 23 hardening).
+- [ ] (oct19-verifier) crawl.py `summary_lines()` rebuilds the normalize line from CrawlRunRow with zero token counts and `n_docs = n_changes_new + n_normalize_failed`; fine while line() prints no tokens — add token columns to CrawlRunRow when touched next.
+- [ ] (oct19-verifier) llm_backend.py imports `normalize_url` from ingest.tavily_backend (understand→ingest dependency); move `normalize_url` to a small `regwatch/urls.py` when next touched.
+- [ ] (oct19-verifier) normalize.py MIN_QUOTE_WORDS = 6 vs prompt "at least 8 words" — align the prompt to 6 or the code to 8 (code stays ≥ as strict).
+- [ ] (oct20-plan) App does not re-classify after `POST /profile`; the next `crawl --stage classify` does. Oct 21/22: show 'profile changed — re-check pending' in the feed.
