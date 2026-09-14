@@ -410,3 +410,172 @@ def test_feed_unchecked_section_after_profile_change(pages_client: TestClient) -
         assert escape(name) in html
     assert 'class="pill' not in html
     assert "Applies to you" not in html
+
+
+# ---------- change detail (plan §5 tests 8–12) ----------
+
+
+def _blockquotes(html: str) -> list[str]:
+    return [chunk.split("</blockquote>")[0] for chunk in html.split("<blockquote>")[1:]]
+
+
+def test_detail_every_todo_links_citation_url(seed_client: TestClient) -> None:
+    """Grounding guard: every rendered to-do quote cites the change's own document URL."""
+    import regwatch.app as appmod
+
+    for change_id in (1, 2):
+        with session(appmod.engine) as s:
+            ch = s.get(RegChangeRow, change_id)
+            assert ch is not None
+            appl = s.exec(
+                select(ApplicabilityRow).where(ApplicabilityRow.regchange_id == change_id)
+            ).one()
+        change = ch.to_schema()
+        todos = appl.to_schema().todos
+        assert todos, "seed changes carry to-dos"
+        html = seed_client.get(f"/change/{change_id}").text
+        for t in todos:
+            assert t.citation_url == change.document_url
+            assert f'<a href="{t.citation_url}"' in html
+            assert escape(t.quote) in html
+            assert escape(t.text) in html
+        for o in change.obligations:
+            assert escape(o.quote) in html
+        quotes = _blockquotes(html)
+        assert len(quotes) == len(todos) + len(change.obligations)
+        assert all("<cite>" in q for q in quotes)
+        assert all(f'href="{change.document_url}"' in q for q in quotes)
+
+
+def test_templates_never_mark_stored_text_safe() -> None:
+    tpl = Path(__file__).resolve().parent.parent / "regwatch" / "templates"
+    for name in ("feed.html", "change_detail.html"):
+        assert "|safe" not in (tpl / name).read_text(encoding="utf-8")
+
+
+def test_detail_applies_todo_due_and_overdue(seed_client: TestClient) -> None:
+    html = seed_client.get("/change/1").text
+    assert "Applies to you" in html
+    assert "Why this applies to you" in html
+    assert "What to do" in html
+    assert html.index("What to do") < html.index("Obligations in the text")
+    assert html.index("Obligations in the text") < html.index("<h2>Source</h2>")
+    # due 19 Jun 2026 is in the past on any day this test runs after that date
+    assert '<span class="pill overdue">in force since 19 Jun 2026</span>' in html
+    assert "19 Jun 2026" in html.split("<dt>Dates</dt>")[1].split("</dd>")[0]
+    assert 'class="chip">eur-lex.europa.eu' in html
+
+
+def test_detail_unclear_copy(pages_client: TestClient) -> None:
+    html = pages_client.get(f"/change/{_change_id(IHK_URL)}").text
+    assert "Unclear — one question" in html
+    assert "We couldn't tell from your profile" in html
+    assert escape(UNCLEAR_REASON) in html
+    assert 'href="/profile"' in html
+    assert "What to do" not in html
+    assert "Why this" not in html
+    assert "Obligations in the text" in html
+    assert "is%20marked%20unclear" in html
+
+
+def test_detail_applies_zero_todos_and_does_not(pages_client: TestClient) -> None:
+    html = pages_client.get(f"/change/{_change_id(GII_URL)}").text
+    assert "Why this applies to you" in html
+    assert "What to do" in html
+    assert "No to-dos yet — the obligations below are the source text." in html
+    assert html.count("<blockquote>") == 1
+    assert 'href="https://www.gesetze-im-internet.de/bgb/__356a.html"' in html
+    assert "nvidia/Nemotron-3_5-Lightning" in html  # extracted by a model, not the seed run
+
+    html = pages_client.get(f"/change/{_change_id(SHOPIFY_URL)}").text
+    assert "Doesn't apply to you" in html
+    assert "Why this doesn't apply to you" in html
+    assert "What to do" not in html
+    assert "No to-dos yet" not in html
+    assert escape("This page covers US returns; you sell to EU consumers only.") in html
+    assert "is%20marked%20does_not" in html
+
+
+def test_detail_source_metadata_and_mailto(seed_client: TestClient) -> None:
+    import regwatch.app as appmod
+    from regwatch.app import wrong_call_mailto
+
+    with session(appmod.engine) as s:
+        ch = s.get(RegChangeRow, 1)
+        assert ch is not None
+        doc = s.get(DocumentRow, ch.document_url)
+        assert doc is not None
+        content_hash = doc.content_hash
+    html = seed_client.get("/change/1").text
+    assert "<dt>Extracted by</dt><dd>recorded seed run</dd>" in html
+    assert "nvidia/Nemotron-3-Ultra-550b-a55b · $0.0600" in html
+    assert f"<code>{content_hash[:12]}</code>" in html
+    assert "<dt>Published</dt><dd>2023-11-22</dd>" in html
+    assert "<dt>Fetched</dt><dd>" in html and " UTC</dd>" in html
+    assert "EU; transposed in Germany as § 356a BGB" in html
+    mailto = wrong_call_mailto(1, "applies")
+    assert (
+        mailto
+        == "mailto:?subject=RegWatch%20wrong%20call%3A%20change%20%231%20is%20marked%20applies"
+    )
+    assert f'<a class="wrong" href="{mailto}">Report a wrong call</a>' in html
+
+
+def test_detail_mailto_uses_report_email_setting(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("REGWATCH_DB_URL", f"sqlite:///{tmp_path / 'mail.db'}")
+    monkeypatch.setenv("REGWATCH_REPORT_EMAIL", "ops@example.org")
+    import regwatch.app as appmod
+
+    appmod = importlib.reload(appmod)
+    from regwatch.jobs.crawl import seed
+
+    seed()
+    html = TestClient(appmod.app).get("/change/1").text
+    assert 'href="mailto:ops@example.org?subject=RegWatch%20wrong%20call' in html
+
+
+def test_detail_unchecked_change_renders(pages_client: TestClient) -> None:
+    bmj_id = _change_id(BMJ_URL)
+    assert bmj_id == 4
+    r = pages_client.get(f"/change/{bmj_id}")
+    assert r.status_code == 200
+    assert "Not checked against your profile yet" in r.text
+    assert "regwatch crawl --stage classify" in r.text
+    assert 'class="pill' not in r.text
+    assert "Report a wrong call" not in r.text
+    assert "Obligations in the text" in r.text
+    assert 'class="chip">bmj.de' in r.text
+    assert "<dt>Classified by</dt>" not in r.text
+    assert pages_client.get("/change/999").status_code == 404
+
+
+def test_detail_redirects_to_profile_on_empty_db(empty_client: TestClient) -> None:
+    r = empty_client.get("/change/1", follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == "/profile"
+
+
+def test_detail_unchecked_change_without_document_row(pages_client: TestClient) -> None:
+    """A change whose source document is gone still renders, with the URL host as its source."""
+    import regwatch.app as appmod
+
+    with session(appmod.engine) as s:
+        row = RegChangeRow(
+            document_url="https://commission.europa.eu/some-page",
+            instrument="Commission notice",
+            jurisdiction="EU",
+            summary="s",
+            effective_dates="[]",
+            obligations="[]",
+        )
+        s.add(row)
+        s.commit()
+        s.refresh(row)
+        assert row.id is not None
+        new_id = row.id
+    html = pages_client.get(f"/change/{new_id}").text
+    assert 'class="chip">commission.europa.eu' in html
+    assert "<dt>Content hash</dt>" not in html
+    feed = pages_client.get("/feed").text
+    assert "Commission notice" in _section(feed, "unchecked")

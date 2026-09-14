@@ -31,15 +31,19 @@ from regwatch.config import (
     regulation_instrument,
 )
 from regwatch.db import (
+    DocumentRow,
     FeedRow,
     ProfileRow,
+    RegChangeRow,
     TodoStateRow,
     corpus_counts,
     current_profile,
+    feed_row,
     feed_rows,
     last_crawl,
     make_engine,
     session,
+    source_domain_for,
     unchecked_changes,
 )
 from regwatch.schemas import Decision, RegChange
@@ -372,16 +376,45 @@ def toggle_todo(key: str) -> Any:
 
 @app.get("/change/{change_id}", response_class=HTMLResponse)
 def change_detail(request: Request, change_id: int) -> Any:
+    """Stored rows only: nothing is classified from a web route."""
+    today = date.today()
     with session(engine) as s:
         prof = current_profile(s)
-    if prof is None or prof.id is None:
-        return RedirectResponse("/profile", status_code=303)
-    item = next((i for i in _feed_items(prof.id) if i["id"] == change_id), None)
-    if item is None:
-        return HTMLResponse("Not found", status_code=404)
-    return templates.TemplateResponse(
-        request, "change_detail.html", {"item": item, "profile": prof.to_schema()}
-    )
+        if prof is None or prof.id is None:
+            return RedirectResponse("/profile", status_code=303)
+        row = feed_row(s, prof.id, change_id)
+        if row is not None:
+            item = _item(row, _done_keys(s, prof.id), today)
+            ctx: dict[str, Any] = {
+                "item": item,
+                "change": item.change,
+                "created_at": item.created_at,
+                "source_domain": item.source_domain,
+                "published_date": item.published_date,
+                "fetched_at": item.fetched_at,
+                "content_hash": item.content_hash,
+                "normalize_model": item.normalize_model,
+                "mailto": wrong_call_mailto(change_id, item.decision, settings.report_email),
+            }
+        else:
+            ch = s.get(RegChangeRow, change_id)
+            if ch is None:
+                return HTMLResponse("Not found", status_code=404)
+            doc = s.get(DocumentRow, ch.document_url)
+            ctx = {
+                "item": None,
+                "change": ch.to_schema(),
+                "created_at": ch.created_at,
+                "source_domain": source_domain_for(ch.document_url, doc),
+                "published_date": doc.published_date if doc is not None else None,
+                "fetched_at": doc.fetched_at if doc is not None else None,
+                "content_hash": ch.content_hash,
+                "normalize_model": ch.model,
+                "mailto": "",
+            }
+    ctx["change_id"] = change_id
+    ctx["profile"] = prof.to_schema()
+    return templates.TemplateResponse(request, "change_detail.html", ctx)
 
 
 @app.get("/healthz")
