@@ -1,2 +1,3 @@
 {% extends "base.html" %}{% block title %}This month · RegWatch{% endblock %}
+{% block head %}<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>{% endblock %}
 {% block body %}<h1>What to do this month</h1>{% include "partials/month_list.html" %}{% endblock %}

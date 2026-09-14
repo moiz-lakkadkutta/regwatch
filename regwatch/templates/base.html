@@ -27,8 +27,15 @@ footer{max-width:760px;margin:32px auto 0;color:var(--ink3);font-size:13px}a{col
 .todo .due{font-size:14px;color:var(--ink2);margin:2px 0 6px}
 .source dl{display:grid;grid-template-columns:max-content 1fr;gap:4px 12px;font-size:14px}.source dt{color:var(--ink3)}.source dd{margin:0;overflow-wrap:anywhere}
 a.wrong{color:var(--ink3)}
+.hint{font-size:14px;color:var(--ink3);margin:-4px 0 8px}
+.todo .body{flex:1;min-width:0}.todo time{white-space:nowrap}
+.todo button[aria-pressed="true"]{background:var(--applies-bg);border-color:var(--applies);color:var(--applies)}
+.todo.done .meta,.todo.done .pill.overdue{opacity:.55}
+.question{padding:10px 0;border-top:1px solid var(--line)}.question:first-child{border-top:0}
+.card.empty strong{display:block;margin-bottom:4px}
 @media(max-width:420px){h1{font-size:1.3rem}.card{padding:12px 14px}}
 </style>
+{% block head %}{% endblock %}
 </head>
 <body>
 <header><a class="brand" href="/feed">RegWatch</a><nav><a href="/month">This month</a><a href="/feed">Changes</a><a href="/profile">Store profile</a></nav></header>

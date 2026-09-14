@@ -414,7 +414,7 @@ def home(request: Request) -> Any:
         prof = current_profile(s)
     if prof is None:
         return RedirectResponse("/profile", status_code=303)
-    return RedirectResponse("/feed", status_code=303)
+    return RedirectResponse("/month", status_code=303)
 
 
 @app.get("/profile", response_class=HTMLResponse)
@@ -491,7 +491,9 @@ def month(request: Request) -> Any:
 
 
 @app.post("/todo/{key}/toggle")
-def toggle_todo(key: str) -> Any:
+def toggle_todo(request: Request, key: str) -> Any:
+    """Flip one to-do's done mark. htmx callers (HX-Request: true) get the refreshed
+    #month-list fragment; a plain form post is redirected back to /month."""
     with session(engine) as s:
         prof = current_profile(s)
         if prof is None or prof.id is None:
@@ -507,6 +509,11 @@ def toggle_todo(key: str) -> Any:
             row.done = not row.done
             s.add(row)
         s.commit()
+        profile_id = prof.id
+    if request.headers.get("HX-Request") == "true":
+        return templates.TemplateResponse(
+            request, "partials/month_list.html", {"m": _load_month(profile_id, _today())}
+        )
     return RedirectResponse("/month", status_code=303)
 
 
