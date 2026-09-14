@@ -17,6 +17,7 @@ from typing import Any, Literal, Protocol
 from pydantic import BaseModel
 
 from regwatch.config import Settings
+from regwatch.ingest.tavily_backend import normalize_url
 
 log = logging.getLogger(__name__)
 
@@ -93,7 +94,11 @@ def source_url_of(messages: list[dict[str, str]]) -> str | None:
 
 
 class FixtureLLMBackend:
-    """Replays `<root>/*.json`; each file has "url" and "responses" [{text, usage}, ...]."""
+    """Replays `<root>/*.json`; each file has "url" and "responses" [{text, usage}, ...].
+
+    Keyed by `normalize_url(url)`, like the Tavily fixture backend, so a document stored under its
+    canonical URL still finds the reply recorded for the manifest spelling.
+    """
 
     def __init__(self, root: Path) -> None:
         self.root = root
@@ -101,7 +106,8 @@ class FixtureLLMBackend:
         self._responses: dict[str, list[dict[str, Any]]] = {}
         for path in sorted(root.glob("*.json")):
             payload = json.loads(path.read_text(encoding="utf-8"))
-            self._responses.setdefault(payload["url"], []).extend(payload["responses"])
+            key = normalize_url(payload["url"])
+            self._responses.setdefault(key, []).extend(payload["responses"])
 
     def complete(
         self,
@@ -114,7 +120,7 @@ class FixtureLLMBackend:
         url = source_url_of(messages)
         if url is None:
             raise FixtureMissing("last user message has no 'Source URL: <url>' line")
-        queue = self._responses.get(url)
+        queue = self._responses.get(normalize_url(url))
         if not queue:
             raise FixtureMissing(f"no recorded reply left for {url} under {self.root}")
         reply = queue.pop(0)

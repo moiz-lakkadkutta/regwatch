@@ -18,8 +18,10 @@ from importlib import resources
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from sqlmodel import Session
 
 from regwatch.config import Settings
+from regwatch.db import documents_needing_normalize, store_regchange
 from regwatch.schemas import Document, Obligation, RegChange
 from regwatch.understand.llm_backend import (
     SOURCE_URL_PREFIX,
@@ -309,3 +311,74 @@ def normalize(
     if change.validate_quotes(document.markdown):
         return attempt.fail("ungrounded_all_dropped", dropped)
     return attempt.done(change, error=None, dropped=dropped)
+
+
+@dataclass
+class NormalizeSummary:
+    """`n_retried` counts documents that were OK only after the retry; `n_failed` stored nothing.
+    So n_docs == n_ok_first_try + n_retried + n_failed and n_ok == n_ok_first_try + n_retried."""
+
+    n_docs: int
+    n_ok: int
+    n_ok_first_try: int
+    n_retried: int
+    n_failed: int
+    n_changes_new: int
+    cost_usd: float
+    prompt_tokens: int
+    completion_tokens: int
+
+    @property
+    def success_rate_no_retry(self) -> float:
+        return self.n_ok_first_try / self.n_docs if self.n_docs else 0.0
+
+    def line(self) -> str:
+        pct = round(self.success_rate_no_retry * 100)
+        return (
+            f"normalize: {self.n_docs} documents · {self.n_ok_first_try} ok first try ({pct}%) · "
+            f"{self.n_retried} retried · {self.n_failed} failed · ${self.cost_usd:.4f} model"
+        )
+
+
+def normalize_all(
+    s: Session,
+    *,
+    backend: LLMBackend,
+    settings: Settings,
+    ledger: ModelLedger | None = None,
+) -> NormalizeSummary:
+    """Normalise every DocumentRow without a RegChangeRow for its (url, content_hash) and store the
+    grounded ones. Failures store nothing and are retried on the next crawl."""
+    ledger = ledger or ModelLedger.for_extractor(settings)
+    rows = documents_needing_normalize(s)
+    n_ok_first_try = n_retried = n_failed = 0
+    prompt_tokens = completion_tokens = 0
+    cost = 0.0
+    for row in rows:
+        result = normalize(row.to_schema(), backend=backend, settings=settings, ledger=ledger)
+        prompt_tokens += result.usage.prompt_tokens
+        completion_tokens += result.usage.completion_tokens
+        cost += result.cost_usd
+        if result.change is None:
+            n_failed += 1
+            continue
+        if result.retried:
+            n_retried += 1
+        else:
+            n_ok_first_try += 1
+        store_regchange(
+            s, result.change, content_hash=row.content_hash, model=settings.extractor_model
+        )
+    summary = NormalizeSummary(
+        n_docs=len(rows),
+        n_ok=n_ok_first_try + n_retried,
+        n_ok_first_try=n_ok_first_try,
+        n_retried=n_retried,
+        n_failed=n_failed,
+        n_changes_new=n_ok_first_try + n_retried,
+        cost_usd=cost,
+        prompt_tokens=prompt_tokens,
+        completion_tokens=completion_tokens,
+    )
+    log.info("%s", summary.line())
+    return summary

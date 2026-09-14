@@ -1,12 +1,23 @@
 import json
 import logging
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import pytest
+from sqlmodel import Session, col, select
 
 from regwatch.config import Settings
+from regwatch.db import (
+    CrawlRunRow,
+    DocumentRow,
+    RegChangeRow,
+    documents_needing_normalize,
+    make_engine,
+)
+from regwatch.ingest.diff import content_hash
+from regwatch.jobs.crawl import crawl, main, seed
 from regwatch.schemas import Document
 from regwatch.understand import normalize as norm
 from regwatch.understand.llm_backend import FixtureLLMBackend, ModelLedger
@@ -16,11 +27,13 @@ from regwatch.understand.normalize import (
     build_messages,
     load_prompt,
     normalize,
+    normalize_all,
     parse_payload,
     response_format,
     response_json_schema,
     to_regchange,
 )
+from tests.conftest import LLM_FIXTURES_ROOT
 
 EXTRACT = Path(__file__).resolve().parent / "fixtures" / "tavily" / "extract"
 URL_2673 = "https://eur-lex.europa.eu/eli/dir/2023/2673/oj"
@@ -307,3 +320,171 @@ def test_backend_error_is_not_fatal(monkeypatch: pytest.MonkeyPatch) -> None:
     )
     assert result.change is None and result.error == "backend:TimeoutError"
     assert norm.MIN_QUOTE_WORDS == 6
+
+
+# --- normalize_all over the DB, crawl stage ---------------------------------------------------
+
+
+def _manifest_rows(manifest: list[dict[str, Any]]) -> list[DocumentRow]:
+    rows = []
+    for m in manifest:
+        markdown = (EXTRACT / f"{m['id']}.md").read_text(encoding="utf-8")
+        rows.append(
+            DocumentRow(
+                url=m["url"],
+                content_hash=content_hash(markdown),
+                source_domain=m["source_domain"],
+                markdown=markdown,
+                regulation_tags=json.dumps(m["regulation_tags"]),
+            )
+        )
+    return rows
+
+
+def test_normalize_all_rate_at_least_80pct(
+    tmp_settings: Settings, manifest: list[dict[str, Any]], fixture_llm: FixtureLLMBackend
+) -> None:
+    engine = make_engine(tmp_settings)
+    with Session(engine) as s:
+        s.add_all(_manifest_rows(manifest))
+        s.commit()
+        ledger = ModelLedger.for_extractor(tmp_settings)
+        summary = normalize_all(s, backend=fixture_llm, settings=tmp_settings, ledger=ledger)
+    assert summary.n_docs == 16
+    assert (summary.n_ok_first_try, summary.n_retried, summary.n_failed) == (14, 1, 1)
+    assert summary.n_ok == 15 and summary.n_changes_new == 15
+    assert summary.success_rate_no_retry >= 0.8
+    assert summary.line().startswith(
+        "normalize: 16 documents · 14 ok first try (88%) · 1 retried · 1 failed · $"
+    )
+    assert summary.cost_usd == pytest.approx(ledger.cost_usd) and summary.cost_usd > 0
+    assert summary.prompt_tokens == ledger.prompt_tokens > 0
+    assert len(fixture_llm.calls) == 18
+    with Session(engine) as s:
+        changes = s.exec(select(RegChangeRow)).all()
+        assert len(changes) == 15
+        assert all(c.model == tmp_settings.extractor_model and c.content_hash for c in changes)
+        assert not any(c.document_url == URL_US for c in changes)
+        # every stored change is grounded in its document, checked by the code, not the prompt
+        for c in changes:
+            doc = s.get(DocumentRow, c.document_url)
+            assert doc is not None and c.content_hash == doc.content_hash
+            assert c.to_schema().validate_quotes(doc.markdown) == []
+        ihk = next(c for c in changes if c.document_url == URL_IHK)
+        assert len(ihk.to_schema().obligations) == 2
+        assert documents_needing_normalize(s) == [s.get(DocumentRow, URL_US)]
+
+
+def test_normalize_all_idempotent_by_content_hash(
+    tmp_settings: Settings, manifest: list[dict[str, Any]], llm_fixtures_root: Path
+) -> None:
+    engine = make_engine(tmp_settings)
+    with Session(engine) as s:
+        s.add_all(_manifest_rows(manifest))
+        s.commit()
+        first = FixtureLLMBackend(llm_fixtures_root / "normalize")
+        normalize_all(s, backend=first, settings=tmp_settings)
+        assert len(first.calls) == 18
+        # second run: only the failed doc is retried (nothing stored for it), no other calls
+        second = FixtureLLMBackend(llm_fixtures_root / "normalize")
+        again = normalize_all(s, backend=second, settings=tmp_settings)
+        assert again.n_docs == 1 and again.n_failed == 1 and again.n_changes_new == 0
+        assert [m.get("content", "").endswith(URL_US) for m in second.calls[0]][-1]
+        assert len(second.calls) == 2
+        # bumping one document's content hash re-normalises exactly that one
+        row = s.get(DocumentRow, URL_2673)
+        assert row is not None
+        row.content_hash = "changed-" + row.content_hash
+        s.add(row)
+        s.commit()
+        third = FixtureLLMBackend(llm_fixtures_root / "normalize")
+        third_summary = normalize_all(s, backend=third, settings=tmp_settings)
+        assert third_summary.n_docs == 2 and third_summary.n_changes_new == 1
+        urls = {
+            m["content"].splitlines()[-1]
+            for call in third.calls
+            for m in call
+            if m["role"] == "user"
+        }
+        assert urls == {f"Source URL: {URL_2673}", f"Source URL: {URL_US}"}
+        rows_2673 = s.exec(select(RegChangeRow).where(RegChangeRow.document_url == URL_2673)).all()
+        assert len(rows_2673) == 2 and {r.content_hash for r in rows_2673} == {
+            row.content_hash,
+            row.content_hash.removeprefix("changed-"),
+        }
+
+
+def test_crawl_stage_normalize_updates_run_row_and_prints_line(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    db_url = f"sqlite:///{tmp_path / 'crawl.db'}"
+    monkeypatch.setenv("REGWATCH_DB_URL", db_url)
+    assert main(["--stage", "ingest", "--backend", "fixtures", "--no-out"]) == 0
+    capsys.readouterr()
+    with caplog.at_level(logging.INFO, logger="regwatch.understand.normalize"):
+        assert main(["--stage", "normalize", "--llm-backend", "fixtures"]) == 0
+    err = capsys.readouterr().err
+    assert "normalize: 16 documents · 14 ok first try (88%) · 1 retried · 1 failed · $" in err
+    usage_lines = [
+        r.message
+        for r in caplog.records
+        if re.match(r"model=\S+ prompt_tokens=\d+ completion_tokens=\d+ cost_usd=", r.message)
+    ]
+    assert len(usage_lines) == 18  # one INFO per model call, retries included
+    with Session(make_engine(Settings(REGWATCH_DB_URL=db_url))) as s:
+        runs = s.exec(select(CrawlRunRow).order_by(col(CrawlRunRow.id))).all()
+        assert [r.stage for r in runs] == ["ingest", "normalize"]
+        run = runs[-1]
+        assert run.model_cost_usd > 0
+        assert run.n_changes_new == 15
+        assert (run.n_normalize_retried, run.n_normalize_failed) == (1, 1)
+        assert run.finished_at is not None and run.tavily_credits == 0
+        assert runs[0].model_cost_usd == 0.0
+
+    # --stage all on a fresh DB: one row carries both ingest and normalize, then the classify stop
+    monkeypatch.setenv("REGWATCH_DB_URL", f"sqlite:///{tmp_path / 'all.db'}")
+    rc = main(["--stage", "all", "--backend", "fixtures", "--llm-backend", "fixtures"])
+    assert rc == 2
+    err = capsys.readouterr().err
+    lines = [
+        line for line in err.splitlines() if line.startswith(("ingest:", "normalize:", "crawl:"))
+    ]
+    assert lines[0].startswith("ingest: 16 documents (16 new")
+    assert lines[1].startswith("normalize: 16 documents · 14 ok first try (88%)")
+    assert lines[2] == "crawl: classify lands Oct 20"
+    with Session(make_engine(Settings(REGWATCH_DB_URL=f"sqlite:///{tmp_path / 'all.db'}"))) as s:
+        runs = s.exec(select(CrawlRunRow)).all()
+        assert len(runs) == 1 and runs[0].stage == "all"
+        assert runs[0].tavily_credits == 36 and runs[0].model_cost_usd > 0
+        assert runs[0].n_changes_new == 15
+    assert not (tmp_path / "documents.jsonl").exists()
+
+
+def test_seed_then_normalize_adds_zero_for_seed_docs(
+    tmp_settings: Settings, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    assert seed(tmp_settings) == 2
+    assert seed(tmp_settings) == 0
+    with Session(make_engine(tmp_settings)) as s:
+        changes = s.exec(select(RegChangeRow)).all()
+        assert len(changes) == 2
+        for c in changes:
+            doc = s.get(DocumentRow, c.document_url)
+            assert doc is not None and c.content_hash == doc.content_hash != ""
+            assert c.model == "seed"
+        assert documents_needing_normalize(s) == []
+    backend = FixtureLLMBackend(LLM_FIXTURES_ROOT / "normalize")
+    run = crawl(tmp_settings, stage="normalize", llm_backend=backend)
+    assert backend.calls == []
+    assert run.stage == "normalize" and run.n_changes_new == 0 and run.model_cost_usd == 0.0
+    monkeypatch.setenv("REGWATCH_DB_URL", tmp_settings.db_url)
+    assert main(["--stage", "normalize", "--llm-backend", "fixtures"]) == 0
+    assert (
+        "normalize: 0 documents · 0 ok first try (0%) · 0 retried · 0 failed"
+        in capsys.readouterr().err
+    )
+    with Session(make_engine(tmp_settings)) as s:
+        assert len(s.exec(select(RegChangeRow)).all()) == 2
