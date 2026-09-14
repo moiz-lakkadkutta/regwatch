@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     )
     # Characters of markdown sent to the extractor; quotes are still validated on the full text.
     normalize_max_chars: int = Field(default=60_000, alias="REGWATCH_NORMALIZE_MAX_CHARS")
+    # USD per million tokens for the classifier model. PLACEHOLDERS — confirm against Token Factory pricing.
+    classifier_price_in_per_mtok: float = Field(
+        default=1.00, alias="REGWATCH_CLASSIFIER_PRICE_IN_PER_MTOK"
+    )
+    classifier_price_out_per_mtok: float = Field(
+        default=3.00, alias="REGWATCH_CLASSIFIER_PRICE_OUT_PER_MTOK"
+    )
 
 
 # Only these domains are ever searched or extracted. Official sources first, platform guidance last.
@@ -103,12 +110,48 @@ EU_COUNTRIES: list[str] = [
     "SE",
 ]
 
+# Plain names for the prompt ("Germany (DE)"); keys == EU_COUNTRIES.
+COUNTRY_NAMES: dict[str, str] = {
+    "AT": "Austria",
+    "BE": "Belgium",
+    "BG": "Bulgaria",
+    "HR": "Croatia",
+    "CY": "Cyprus",
+    "CZ": "Czechia",
+    "DK": "Denmark",
+    "EE": "Estonia",
+    "FI": "Finland",
+    "FR": "France",
+    "DE": "Germany",
+    "GR": "Greece",
+    "HU": "Hungary",
+    "IE": "Ireland",
+    "IT": "Italy",
+    "LV": "Latvia",
+    "LT": "Lithuania",
+    "LU": "Luxembourg",
+    "MT": "Malta",
+    "NL": "Netherlands",
+    "PL": "Poland",
+    "PT": "Portugal",
+    "RO": "Romania",
+    "SK": "Slovakia",
+    "SI": "Slovenia",
+    "ES": "Spain",
+    "SE": "Sweden",
+}
+
 PLATFORMS: list[tuple[str, str]] = [
     ("shopify", "Shopify"),
     ("woocommerce", "WooCommerce"),
     ("other", "Other"),
 ]
 REGULATION_TAGS: frozenset[str] = frozenset(r["tag"] for r in SEED_REGULATIONS)
+
+
+def country_name(code: str) -> str:
+    """Plain country name for a two-letter code; the code itself when unknown."""
+    return COUNTRY_NAMES.get(code, code)
 
 
 def sources_for(tag: str) -> list[str]:

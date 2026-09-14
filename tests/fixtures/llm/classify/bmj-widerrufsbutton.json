@@ -1,0 +1,13 @@
+{
+  "doc_id": "bmj-widerrufsbutton",
+  "url": "https://www.bmj.de/DE/themen/verbraucherschutz/widerrufsbutton/widerrufsbutton_node.html",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"unclear\",\n  \"reasons\": [\n    \"We couldn't tell from your profile: whether this German ministry page adds anything beyond the withdrawal-button rule you already have depends on whether your checkout is on your own domain, which your profile doesn't say.\"\n  ],\n  \"todos\": []\n}",
+      "usage": {
+        "prompt_tokens": 1450,
+        "completion_tokens": 140
+      }
+    }
+  ]
+}

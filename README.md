@@ -6,7 +6,7 @@ extract over official sources only); understanding by **NVIDIA Nemotron 3 Ultra*
 Lightning** on **Nebius Token Factory**; hosted as a **Nebius Serverless Endpoint** with a daily
 **Serverless Job** crawl.
 
-> Status: ingest (Oct 18) and normalise (Oct 19) done — `regwatch crawl --stage ingest` searches + extracts the allow-list via Tavily and diffs by hash; `--stage normalize` turns each new document into obligations with verbatim quotes via Nemotron 3.5 Lightning (one retry, then ungrounded quotes are dropped). Offline: `--backend fixtures --llm-backend fixtures`. Classify lands Oct 20 (see `docs/regwatch-plan.md`). Schema changed on Oct 19: delete a pre-existing local `regwatch.db` before running.
+> Status: ingest (Oct 18), normalise (Oct 19) and classify (Oct 20) done — `regwatch crawl --stage all` searches + extracts the allow-list via Tavily, diffs by hash, turns each new document into obligations with verbatim quotes (Nemotron 3.5 Lightning) and decides applies / doesn't / unclear with grounded to-dos for the current profile (Nemotron 3 Ultra; `citation_url` and due dates set in code, ungrounded to-dos dropped after one retry). Offline: `--backend fixtures --llm-backend fixtures`. Schema changed on Oct 20 (CrawlRunRow classify counters): delete a pre-existing local `regwatch.db` before running. Feed shows model cost from Oct 21 (see `docs/regwatch-plan.md`).
 
 ```bash
 uv sync --dev

@@ -1,0 +1,13 @@
+{
+  "doc_id": "ihk-eudr-kmu",
+  "url": "https://www.ihk.de/themen/umwelt-energie/eudr-kleinstunternehmen-fristen",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"unclear\",\n  \"reasons\": [\n    \"We couldn't tell from your profile: the date this applies to you depends on your annual turnover and headcount, which your profile doesn't include.\",\n    \"If your shop is a micro or small enterprise (under 50 staff and €10 m turnover), the EUDR duties start on 30 June 2026; larger businesses are already covered.\",\n    \"You do sell wood and leather products, so the regulation itself is relevant either way.\"\n  ],\n  \"todos\": []\n}",
+      "usage": {
+        "prompt_tokens": 1850,
+        "completion_tokens": 300
+      }
+    }
+  ]
+}

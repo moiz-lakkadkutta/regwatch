@@ -444,17 +444,20 @@ def test_crawl_stage_normalize_updates_run_row_and_prints_line(
         assert run.finished_at is not None and run.tavily_credits == 0
         assert runs[0].model_cost_usd == 0.0
 
-    # --stage all on a fresh DB: one row carries both ingest and normalize, then the classify stop
+    # --stage all on a fresh DB: one row carries ingest, normalize and classify (no profile → 0)
     monkeypatch.setenv("REGWATCH_DB_URL", f"sqlite:///{tmp_path / 'all.db'}")
     rc = main(["--stage", "all", "--backend", "fixtures", "--llm-backend", "fixtures"])
-    assert rc == 2
+    assert rc == 0
     err = capsys.readouterr().err
     lines = [
-        line for line in err.splitlines() if line.startswith(("ingest:", "normalize:", "crawl:"))
+        line
+        for line in err.splitlines()
+        if line.startswith(("ingest:", "normalize:", "classify:", "crawl:"))
     ]
     assert lines[0].startswith("ingest: 16 documents (16 new")
     assert lines[1].startswith("normalize: 16 documents · 14 ok first try (88%)")
-    assert lines[2] == "crawl: classify lands Oct 20"
+    assert lines[2].startswith("classify: 0 changes")
+    assert lines[3].startswith("crawl: 16 new documents · 15 new changes · 0 classified")
     with Session(make_engine(Settings(REGWATCH_DB_URL=f"sqlite:///{tmp_path / 'all.db'}"))) as s:
         runs = s.exec(select(CrawlRunRow)).all()
         assert len(runs) == 1 and runs[0].stage == "all"

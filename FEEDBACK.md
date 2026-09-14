@@ -19,5 +19,11 @@ Dated entries with numbers; this feeds the hackathon's mandatory feedback field.
   `response_format` json_schema strict: pending live (the live backend retries once without it on a 400).
   Grounding is enforced in code (`RegChange.validate_quotes` on the full page text) — the prompt cannot
   loosen it; `uv run pytest -m live tests/test_llm_backend.py` is the smoke test once a key exists.
-- (Oct 20) Nemotron 3 Ultra: applicability accuracy on the 6 fixtures; structured-output retries.
+- (Oct 20) Nemotron 3 Ultra via Token Factory, classify stage. OFFLINE fixture replay: 6/6 labels (3 apply / 2 don't / 1 unclear);
+  ungrounded to-dos before retry 1, after retry 0; invented dates nulled 1; tokens/call prompt 1,638 · completion 218
+  (26,200 / 3,490 over 16 calls, 15 changes + 1 retry); $0.0367 per 16-change crawl at PLACEHOLDER $1.00/$3.00 per Mtok
+  (`Settings.classifier_price_*`, confirm on the Token Factory pricing page). Grounding is enforced in code
+  (`Applicability.ungrounded_todos` at the store boundary, `citation_url` and `due` set by us) — the prompt cannot loosen it.
+  Live accuracy, response_format strict acceptance (anyOf on `due`), reasoning-trace size and latency: pending
+  NEBIUS_API_KEY (`uv run pytest -m live -s tests/test_classify_live.py` prints usage and cost).
 - (Oct 23) Nebius Serverless Endpoint + Job: deploy steps, cold start, scheduling.

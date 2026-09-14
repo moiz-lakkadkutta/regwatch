@@ -1,0 +1,13 @@
+{
+  "doc_id": "eurlex-2023-2673",
+  "url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"applies\",\n  \"reasons\": [\n    \"Applies because you sell to consumers in 10 EU countries — every online order from them is a distance contract covered by these rules.\",\n    \"You are established in Germany, so the same rule reaches you as § 356a BGB, in force since 19 June 2026.\"\n  ],\n  \"todos\": [\n    {\n      \"text\": \"Add a labelled, two-step withdrawal button to your storefront\",\n      \"due\": \"2026-06-19\",\n      \"quote\": \"the trader shall ensure that the consumer can also exercise the right of withdrawal by means of a withdrawal function\"\n    },\n    {\n      \"text\": \"Label the button 'withdraw contract here' (or an equally clear wording)\",\n      \"due\": \"2026-06-19\",\n      \"quote\": \"The withdrawal function shall be labelled with the words 'withdraw contract here' or a corresponding unambiguous formulation in an easily legible manner\"\n    },\n    {\n      \"text\": \"Send an automatic confirmation email whenever a customer uses it\",\n      \"due\": \"2026-06-19\",\n      \"quote\": \"the trader shall communicate to the consumer without undue delay an acknowledgement of receipt of the withdrawal on a durable medium\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 1950,
+        "completion_tokens": 430
+      }
+    }
+  ]
+}

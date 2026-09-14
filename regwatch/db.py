@@ -109,7 +109,8 @@ class CrawlRunRow(SQLModel, table=True):
     finished_at: datetime | None = None
     stage: str
     tavily_credits: int = 0
-    model_cost_usd: float = 0.0
+    model_cost_usd: float = 0.0  # every model call of the run (normalize + classify)
+    classify_cost_usd: float = 0.0  # the classify share, so per-stage lines can be rebuilt
     n_search_calls: int = 0
     n_extract_calls: int = 0
     n_docs_new: int = 0
@@ -118,6 +119,14 @@ class CrawlRunRow(SQLModel, table=True):
     n_changes_new: int = 0
     n_normalize_retried: int = 0
     n_normalize_failed: int = 0
+    n_classified: int = 0
+    n_applies: int = 0
+    n_does_not: int = 0
+    n_unclear: int = 0
+    n_classify_retried: int = 0
+    n_classify_failed: int = 0
+    n_todos: int = 0
+    n_todos_dropped: int = 0
 
 
 class TodoStateRow(SQLModel, table=True):
@@ -172,6 +181,43 @@ def store_regchange(
         summary=change.summary,
         effective_dates=json.dumps([d.isoformat() for d in change.effective_dates]),
         obligations=json.dumps([o.model_dump() for o in change.obligations]),
+    )
+    s.add(row)
+    s.commit()
+    s.refresh(row)
+    return row
+
+
+def regchanges_needing_classify(s: Session, profile_id: int) -> list[RegChangeRow]:
+    """RegChangeRows with no ApplicabilityRow for `profile_id`, ordered by id."""
+    done = select(ApplicabilityRow.id).where(
+        ApplicabilityRow.regchange_id == RegChangeRow.id,
+        ApplicabilityRow.profile_id == profile_id,
+    )
+    return list(
+        s.exec(select(RegChangeRow).where(~done.exists()).order_by(col(RegChangeRow.id))).all()
+    )
+
+
+def store_applicability(
+    s: Session,
+    *,
+    profile_id: int,
+    regchange_id: int,
+    appl: Applicability,
+    model: str,
+    cost_usd: float,
+) -> ApplicabilityRow:
+    """Persist a classification. Callers must have checked `appl.ungrounded_todos(change)` == []."""
+    row = ApplicabilityRow(
+        profile_id=profile_id,
+        regchange_id=regchange_id,
+        decision=appl.decision,
+        reasons=json.dumps(appl.reasons),
+        todos=json.dumps([t.model_dump(mode="json") for t in appl.todos]),
+        model=model,
+        cost_usd=cost_usd,
+        tavily_credits=0,
     )
     s.add(row)
     s.commit()

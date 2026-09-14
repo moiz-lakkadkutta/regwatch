@@ -24,7 +24,7 @@ def seed() -> None:
 
 @app.command()
 def crawl(
-    stage: Annotated[str, typer.Option(help="all | ingest | normalize")] = "all",
+    stage: Annotated[str, typer.Option(help="all | ingest | normalize | classify")] = "all",
     backend: Annotated[str, typer.Option(help="Tavily: live | fixtures")] = "live",
     fixtures_dir: Annotated[Path | None, typer.Option()] = None,
     llm_backend: Annotated[str, typer.Option(help="Token Factory: live | fixtures")] = "live",
@@ -36,7 +36,7 @@ def crawl(
     ] = None,
     no_out: Annotated[bool, typer.Option("--no-out", help="do not write documents.jsonl")] = False,
 ) -> None:
-    """Search → extract → diff → normalise (classify from Oct 20); the Serverless Job entrypoint."""
+    """Search → extract → diff → normalise → classify; the Serverless Job entrypoint."""
     from regwatch.jobs.crawl import STAGES, main
 
     if stage not in STAGES:

@@ -1,0 +1,20 @@
+{
+  "doc_id": "gii-356a-bgb",
+  "url": "https://www.gesetze-im-internet.de/bgb/__356a.html",
+  "responses": [
+    {
+      "text": "{\n  \"decision\": \"applies\",\n  \"reasons\": [\n    \"Applies because your shop is established in Germany, where this paragraph is the binding version of the EU withdrawal-button rule.\",\n    \"You sell online to consumers in 10 EU countries, so your German storefront must carry the button from 19 June 2026.\"\n  ],\n  \"todos\": [\n    {\n      \"text\": \"Add a 'Vertrag hier widerrufen' button to your German storefront\",\n      \"due\": \"2026-06-19\",\n      \"quote\": \"Die Widerrufsfunktion ist mit den Worten „Vertrag hier widerrufen\\\" zu kennzeichnen.\"\n    },\n    {\n      \"text\": \"Confirm every withdrawal to the customer by email straight away\",\n      \"due\": \"2026-06-19\",\n      \"quote\": \"hat der Unternehmer dem Verbraucher unverzüglich auf einem dauerhaften Datenträger den Eingang der Widerrufserklärung zu bestätigen\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 1900,
+        "completion_tokens": 420
+      }
+    },
+    {
+      "text": "{\n  \"decision\": \"applies\",\n  \"reasons\": [\n    \"Applies because your shop is established in Germany, where this paragraph is the binding version of the EU withdrawal-button rule.\",\n    \"You sell online to consumers in 10 EU countries, so your German storefront must carry the button from 19 June 2026.\"\n  ],\n  \"todos\": [\n    {\n      \"text\": \"Add a 'Vertrag hier widerrufen' button to your German storefront\",\n      \"due\": \"2026-06-19\",\n      \"quote\": \"Die Widerrufsfunktion ist mit den Worten „Vertrag hier widerrufen\\\" oder mit einer entsprechenden eindeutigen Formulierung in gut lesbarer Form zu kennzeichnen.\"\n    },\n    {\n      \"text\": \"Confirm every withdrawal to the customer by email straight away\",\n      \"due\": \"2026-06-19\",\n      \"quote\": \"hat der Unternehmer dem Verbraucher unverzüglich auf einem dauerhaften Datenträger den Eingang der Widerrufserklärung zu bestätigen\"\n    }\n  ]\n}",
+      "usage": {
+        "prompt_tokens": 2400,
+        "completion_tokens": 410
+      }
+    }
+  ]
+}

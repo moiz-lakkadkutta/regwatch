@@ -76,6 +76,13 @@ class ModelLedger:
             price_out_per_mtok=settings.extractor_price_out_per_mtok,
         )
 
+    @classmethod
+    def for_classifier(cls, settings: Settings) -> ModelLedger:
+        return cls(
+            price_in_per_mtok=settings.classifier_price_in_per_mtok,
+            price_out_per_mtok=settings.classifier_price_out_per_mtok,
+        )
+
 
 class FixtureMissing(RuntimeError):  # noqa: N818 — name fixed by the plan
     """No (more) recorded replies for this Source URL."""
@@ -216,12 +223,20 @@ def strict_schema(model: type[BaseModel]) -> dict[str, Any]:
     return schema
 
 
+LLMStage = Literal["normalize", "classify"]
+
+
 def make_llm_backend(
     kind: Literal["live", "fixtures"],
     settings: Settings,
     fixtures_dir: Path | None = None,
+    *,
+    stage: LLMStage = "normalize",
 ) -> LLMBackend:
-    """`fixtures_dir` is the parent of the per-stage folders (tests/fixtures/llm/normalize, …)."""
+    """`fixtures_dir` is the parent of the per-stage folders (tests/fixtures/llm/<stage>).
+
+    One live backend serves every stage; a fixture backend replays one stage's folder.
+    """
     if kind == "live":
         return LiveLLMBackend(settings)
-    return FixtureLLMBackend((fixtures_dir or DEFAULT_LLM_FIXTURES_DIR) / "normalize")
+    return FixtureLLMBackend((fixtures_dir or DEFAULT_LLM_FIXTURES_DIR) / stage)
