@@ -17,7 +17,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import col, select
 
-from regwatch.config import CATEGORIES, EU_COUNTRIES, Settings
+from regwatch.config import CATEGORIES, EU_COUNTRIES, PLATFORMS, Settings
 from regwatch.db import (
     ApplicabilityRow,
     ProfileRow,
@@ -96,6 +96,7 @@ def profile_form(request: Request) -> Any:
         {
             "countries": EU_COUNTRIES,
             "categories": CATEGORIES,
+            "platforms": PLATFORMS,
             "profile": prof.to_schema() if prof else None,
         },
     )

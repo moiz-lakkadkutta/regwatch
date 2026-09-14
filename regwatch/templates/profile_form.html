@@ -23,7 +23,7 @@
   <p class="help">Product rules (like the deforestation regulation) depend on materials: wood, leather, coffee, rubber.</p>
 
   <label for="platform">Platform</label>
-  <select id="platform" name="platform"><option value="shopify">Shopify</option><option value="woocommerce">WooCommerce</option><option value="other">Other</option></select>
+  <select id="platform" name="platform">{% for key,name in platforms %}<option value="{{key}}" {% if profile and profile.platform==key %}selected{% endif %}>{{name}}</option>{% endfor %}</select>
 
   <button class="primary" type="submit">Save and show my changes</button>
 </form>

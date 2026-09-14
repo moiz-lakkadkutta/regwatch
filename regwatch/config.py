@@ -93,3 +93,15 @@ EU_COUNTRIES: list[str] = [
     "ES",
     "SE",
 ]
+
+PLATFORMS: list[tuple[str, str]] = [
+    ("shopify", "Shopify"),
+    ("woocommerce", "WooCommerce"),
+    ("other", "Other"),
+]
+REGULATION_TAGS: frozenset[str] = frozenset(r["tag"] for r in SEED_REGULATIONS)
+
+
+def sources_for(tag: str) -> list[str]:
+    """Allow-listed domains to search for one regulation tag, in SOURCE_DOMAINS order."""
+    return [d for d, tags in SOURCE_DOMAINS.items() if tag in tags]
