@@ -40,7 +40,8 @@ help.shopify.com, shopify.com. The feed footer shows the credits and model cost 
   `Applicability.ungrounded_todos()` (a to-do's quote is one of the obligations) must be empty before
   anything is stored — and `classify_all` re-checks at the store boundary.
 - A model answer with an ungrounded quote gets exactly one retry; what is still ungrounded is dropped
-  and logged, never shown. Citation URLs and due dates are set by code, not by the model.
+  and logged, never shown. Citation URLs are set by code; a due date the model proposes is kept only if it is one of the change's
+  effective dates, otherwise it is nulled.
 - "Unclear" is a first-class answer: the page says which missing profile fact would decide it.
 - Every change page has a "Report a wrong call" link (`REGWATCH_REPORT_EMAIL`).
 
@@ -68,7 +69,7 @@ Schema changes are not migrated — delete a stale local `regwatch.db` first.
 
 ## Deploy on Nebius
 
-The public URL serves the recorded run in `examples/seed-run` (re-recorded from a live crawl before freeze); the daily Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database and proves in its logs that a second pass adds nothing — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
+The public URL serves the recorded run in `examples/seed-run` (to be re-recorded from a live crawl before freeze); the daily Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database and is expected to prove in its logs that a second pass adds nothing (verified offline by `tests/test_crawl_all.py::test_crawl_all_twice_is_idempotent`) — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
 
 One image, two modes (`ops/entrypoint.sh serve|crawl`; `crawl` exits 2 without both keys and never uses
 fixtures). Console values: `ops/serverless-endpoint.yaml`, `ops/serverless-job.yaml`; daily schedule:
@@ -76,8 +77,9 @@ fixtures). Console values: `ops/serverless-endpoint.yaml`, `ops/serverless-job.y
 
 ## Costs and measurement
 
-All figures below are from the offline fixture run above (recorded Tavily and model replies); **no live
-call has been made yet — live figures pending** and will replace this block.
+All figures below are offline fixture replays (Tavily row: the crawl above; model rows: the per-stage
+replays recorded in FEEDBACK.md, Oct 19/20 — a full crawl after `seed` costs $0.0345 at the placeholder
+prices); **no live call has been made yet — live figures pending** and will replace this block.
 
 | Item | Offline figure | Basis |
 |---|---|---|

@@ -1,7 +1,7 @@
 # Feedback on Nebius, NVIDIA and Tavily tooling
 
 Dated entries with numbers. **Measured:** everything marked OFFLINE (fixture replay of recorded
-Tavily/model replies, 136 tests). **Pending live keys:** every credit, token, USD, latency and
+Tavily/model replies, 141 tests). **Pending live keys:** every credit, token, USD, latency and
 console-step figure; the Oct 23 entry is a template with `__` blanks, filled on the live day.
 
 - (Oct 18) Tavily, `tavily-python 0.8.2`: `TavilyClient(api_key=None)` does not raise — it silently
@@ -38,7 +38,7 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   (`docker info` failed on the dev Mac, arm64 → `--platform linux/amd64`), so the exit-2 smoke runs in CI and
   `uv run pytest -m live tests/test_ops.py` skips locally.
 - (Oct 24) Freeze, offline. Top frictions so far, with numbers: (1) Tavily `tavily-python 0.8.2` accepts
-  `api_key=None` and still sends HTTP — one guard line in `LiveTavilyBackend.__init__` is what keeps 136 tests
+  `api_key=None` and still sends HTTP — one guard line in `LiveTavilyBackend.__init__` is what keeps 141 tests
   network-free; ask: fail fast in the SDK. (2) Nebius Serverless Jobs have no schedule field — replacing one
   cron line took a 5-step GitHub Actions workflow, 4 repository secrets and 1 variable
   (`.github/workflows/daily-crawl.yml`). (3) No documented persistent volume for Serverless Endpoints and no
