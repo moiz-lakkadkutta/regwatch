@@ -37,8 +37,10 @@ class DocumentRow(SQLModel, table=True):
     published_date: str | None = None
     fetched_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     markdown: str
+    regulation_tags: str = "[]"  # JSON list
 
     def to_schema(self) -> Document:
+        tags: list[str] = json.loads(self.regulation_tags)
         return Document(
             url=self.url,
             content_hash=self.content_hash,
@@ -46,6 +48,7 @@ class DocumentRow(SQLModel, table=True):
             fetched_at=self.fetched_at,
             markdown=self.markdown,
             source_domain=self.source_domain,
+            regulation_tags=tags,
         )
 
 

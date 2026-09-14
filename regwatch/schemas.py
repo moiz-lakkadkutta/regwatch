@@ -32,6 +32,7 @@ class Document(BaseModel):
     fetched_at: datetime
     markdown: str
     source_domain: str
+    regulation_tags: list[str] = Field(default_factory=list)
 
     @field_validator("source_domain")
     @classmethod
