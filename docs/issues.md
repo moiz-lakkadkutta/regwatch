@@ -1,7 +1,7 @@
 # Open issues (no remote tracker yet)
 
 - [x] (oct17-verifier) profile_form.html: platform field lacks the inline `<p class="help">` the other three fields have (UX brief §3.3) — do on Oct 21. (Oct 21: added.)
-- [ ] (oct17-verifier) tests/test_seed_run.py parametrises over glob with no guard — passes vacuously if seed files move; add a `assert len(files) >= 2` guard when next touched.
+- [x] (oct17-verifier) tests/test_seed_run.py parametrises over glob with no guard — passes vacuously if seed files move; add a `assert len(files) >= 2` guard when next touched. (Oct 24: `test_seed_change_files_present`.)
 - [ ] (oct17-verifier) schemas.Document validates source_domain but not the url host — ingest must derive source_domain from the URL (done Oct 18, see below).
 - [ ] (oct17-verifier) tests/test_app.py `assert "selected" not in r.text` scans the whole page — brittle.
 - [ ] (oct18-verifier) extract.py: an extracted result whose URL no longer matches a Hit after normalize_url (redirect/canonicalisation) is stored with regulation_tags=[] and published_date=None, and then silently skipped by tag filters — log at WARNING when hit is None and consider matching by allowed_domain+path. (touch on Oct 23 hardening)
@@ -15,19 +15,19 @@
 - [ ] (oct19-verifier) llm_backend.py imports `normalize_url` from ingest.tavily_backend (understand→ingest dependency); move `normalize_url` to a small `regwatch/urls.py` when next touched.
 - [ ] (oct19-verifier) normalize.py MIN_QUOTE_WORDS = 6 vs prompt "at least 8 words" — align the prompt to 6 or the code to 8 (code stays ≥ as strict).
 - [ ] (oct20-plan) App does not re-classify after `POST /profile`; the next `crawl --stage classify` does. Oct 21/22: show 'profile changed — re-check pending' in the feed.
-- [ ] (oct20-verifier) prompts/classify.md says `"unclear" → an empty list` while `enforce()` keeps up to one grounded to-do for unclear — align the prompt to "at most one" (prompt-only change; Oct 24 polish).
-- [ ] (oct20-verifier) classify_all's final `ungrounded_todos == []` re-check before store is a second barrier no test catches when removed — add a test that monkeypatches `enforce` to leak an ungrounded todo and asserts nothing is stored.
+- [x] (oct20-verifier) prompts/classify.md says `"unclear" → an empty list` while `enforce()` keeps up to one grounded to-do for unclear — align the prompt to "at most one" (prompt-only change; Oct 24 polish). (Oct 24: wording only; `test_prompt_unclear_rule_matches_enforce`.)
+- [x] (oct20-verifier) classify_all's final `ungrounded_todos == []` re-check before store is a second barrier no test catches when removed — add a test that monkeypatches `enforce` to leak an ungrounded todo and asserts nothing is stored. (Oct 24: `test_classify_all_refuses_leaked_ungrounded_todo`.)
 - [ ] (oct20-verifier) "exactly one retry" is only guarded by the stub-backend test; the gii fixture test passes a conditional-3rd-call mutation — keep the stub test load-bearing.
-- [ ] (oct20-verifier) tests/test_classify.py has a `# type: ignore[union-attr]` that should be an `assert … is not None`.
+- [x] (oct20-verifier) tests/test_classify.py has a `# type: ignore[union-attr]` that should be an `assert … is not None`. (Oct 24: done.)
 - [ ] (oct20-verifier) The two seed changes are hand-recorded applicabilities; Ultra grounding for change-001/002 is only proven by tests/test_classify_live.py once NEBIUS_API_KEY exists (Oct 23 live run).
 - [x] (oct21-verifier) feed.html profile subline prints raw category keys (`furniture_wood`) — show CATEGORIES plain names. (Oct 22: `category_names` via `dict(CATEGORIES)`.)
 - [x] (oct21-verifier) feed group subline and item h3 both show the full instrument; with one item per group the legal name appears twice within 4 lines at 390px — drop `.law` when the group has one item. (Oct 22: `.law` only when the group has more than one item.)
-- [ ] (oct21-verifier) `wrong_call_mailto` subject uses the raw enum (`does_not`) — map to "doesn't apply" wording (Oct 24 polish).
+- [x] (oct21-verifier) `wrong_call_mailto` subject uses the raw enum (`does_not`) — map to "doesn't apply" wording (Oct 24 polish). (Oct 24: `DECISION_WORDS`.)
 - [ ] (oct21-verifier) Dates render English only; UX §3.4 wants the owner's locale — deferred, no babel.
 - [ ] (oct21-verifier) Detail page h1 is the legal name; the first verb phrase appears under "What to do" — consider a one-line "Do this by <date>" lead under the h1 (Oct 24 polish).
 - [ ] (oct22-impl) `_todo_key = sha1(url|quote)[:16]`: two to-dos of one change that cite the same obligation quote share a key, so one check-off marks both. Seed has none; classify prompt asks for distinct quotes. Include the to-do text in the key when the schema is next touched (would orphan stored TodoStateRows — do it with the Oct 23 DB reset).
 - [ ] (oct22-impl) Month view dates are English only (`MONTHS` in app.py, "19 June 2026"); UX §3.4 wants the owner's locale — same deferral as the feed, no babel.
 - [ ] (oct22-impl) Month view "this month" is the calendar month of `_today()`; a to-do due on the 1st of next month shows under "Coming up" on the 30th. Fine for the demo; revisit if a 30-day window reads better.
-- [ ] (oct23-implementer) `regwatch/jobs/crawl.py` resolves `SEED_DIR` as `Path(__file__).parents[2]/examples/seed-run`, so a non-editable wheel in the image would look in `site-packages/../examples`; `ops/Dockerfile` therefore installs editable (`uv pip install --system -e .`). Move SEED_DIR to a setting or package data when `regwatch/` is next touched.
+- [x] (oct23-implementer) `regwatch/jobs/crawl.py` resolves `SEED_DIR` as `Path(__file__).parents[2]/examples/seed-run`, so a non-editable wheel in the image would look in `site-packages/../examples`; `ops/Dockerfile` therefore installs editable (`uv pip install --system -e .`). Move SEED_DIR to a setting or package data when `regwatch/` is next touched. (Oct 24: `Settings.seed_dir` / `REGWATCH_SEED_DIR`; Dockerfile sets it to `/app/examples/seed-run`, install stays editable.)
 - [ ] (oct23-implementer) Unverified offline (no Docker daemon, no nebius CLI on the Mac): the ci.yml docker build + exit-2 smoke, the `daily-crawl.yml` nebius CLI syntax (`profile create --profile ci`, `--args`-only override of an ENTRYPOINT image, `--disk-size` on jobs, installer path `~/.nebius/bin`). Confirm at runbook steps 1, 5 and 10; fallback `--container-command /app/entrypoint.sh`.
 - [ ] (oct23-implementer) `tests/test_ops.py::test_prompts_ship_as_package_data` passes trivially in the editable dev env; the load-bearing check of the built image is `uv run pytest -m live tests/test_ops.py` (needs `docker info`) and the CI smoke.

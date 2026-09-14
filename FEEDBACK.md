@@ -1,6 +1,8 @@
 # Feedback on Nebius, NVIDIA and Tavily tooling
 
-Dated entries with numbers; this feeds the hackathon's mandatory feedback field.
+Dated entries with numbers. **Measured:** everything marked OFFLINE (fixture replay of recorded
+Tavily/model replies, 136 tests). **Pending live keys:** every credit, token, USD, latency and
+console-step figure; the Oct 23 entry is a template with `__` blanks, filled on the live day.
 
 - (Oct 18) Tavily, `tavily-python 0.8.2`: `TavilyClient(api_key=None)` does not raise — it silently
   goes keyless and still issues the HTTP request. Without a key on the dev machine this would have
@@ -35,3 +37,14 @@ Dated entries with numbers; this feeds the hackathon's mandatory feedback field.
   (4) __ (registry/CLI); (5) local: the image cannot be built or smoke-tested without a running Docker daemon
   (`docker info` failed on the dev Mac, arm64 → `--platform linux/amd64`), so the exit-2 smoke runs in CI and
   `uv run pytest -m live tests/test_ops.py` skips locally.
+- (Oct 24) Freeze, offline. Top frictions so far, with numbers: (1) Tavily `tavily-python 0.8.2` accepts
+  `api_key=None` and still sends HTTP — one guard line in `LiveTavilyBackend.__init__` is what keeps 136 tests
+  network-free; ask: fail fast in the SDK. (2) Nebius Serverless Jobs have no schedule field — replacing one
+  cron line took a 5-step GitHub Actions workflow, 4 repository secrets and 1 variable
+  (`.github/workflows/daily-crawl.yml`). (3) No documented persistent volume for Serverless Endpoints and no
+  confirmed rw filesystem shared with a Job — so the daily Job cannot write the Endpoint's SQLite; the demo
+  URL is refreshed by re-recording the seed and rebuilding (README "Deploy"); default 250Gi disk ≈
+  $17.75/month unless lowered to 32Gi. (4) Our own packaging bug: `jobs/crawl.py` resolved the seed dir as
+  `Path(__file__).parents[2]/examples/seed-run`, which points into `site-packages` in a non-editable install —
+  fixed Oct 24 with `Settings.seed_dir` (`REGWATCH_SEED_DIR`, Dockerfile sets `/app/examples/seed-run`). No
+  live numbers exist yet.
