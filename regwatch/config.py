@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# The recorded seed run next to the package in a checkout / editable install. A non-editable
+# install (or the container) points REGWATCH_SEED_DIR at the copied examples directory instead.
+DEFAULT_SEED_DIR = Path(__file__).resolve().parents[1] / "examples" / "seed-run"
 
 
 class Settings(BaseSettings):
@@ -39,6 +45,8 @@ class Settings(BaseSettings):
     )
     # Recipient of the "Report a wrong call" mailto on the change page; empty leaves the To: blank.
     report_email: str = Field(default="", alias="REGWATCH_REPORT_EMAIL")
+    # Directory with profile.json, change-*.json and documents.jsonl that `regwatch seed` loads.
+    seed_dir: Path = Field(default=DEFAULT_SEED_DIR, alias="REGWATCH_SEED_DIR")
 
 
 # Only these domains are ever searched or extracted. Official sources first, platform guidance last.

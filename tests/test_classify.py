@@ -17,7 +17,7 @@ from regwatch.db import (
     store_regchange,
 )
 from regwatch.jobs.crawl import SEED_DIR
-from regwatch.schemas import Document, Obligation, Profile, RegChange
+from regwatch.schemas import Applicability, Document, Obligation, Profile, RegChange, Todo
 from regwatch.understand.classify import (
     MAX_TODOS,
     ClassifiedPayload,
@@ -151,7 +151,9 @@ def test_core_fixtures_match_expected_labels(doc: dict[str, Any]) -> None:
 
 
 def test_core_label_counts_are_3_2_1() -> None:
-    decisions = [_run(m["id"]).applicability.decision for m in CORE]  # type: ignore[union-attr]
+    applicabilities = [_run(m["id"]).applicability for m in CORE]
+    decisions = [a.decision for a in applicabilities if a is not None]
+    assert len(decisions) == len(CORE)
     assert (
         decisions.count("applies"),
         decisions.count("does_not"),
@@ -319,6 +321,12 @@ def test_prompt_renders_profile_and_change() -> None:
     assert retry_message(change, []).startswith("Your previous answer was not one valid JSON")
 
 
+def test_prompt_unclear_rule_matches_enforce() -> None:
+    """The prompt says what enforce() does for "unclear": at most one grounded to-do."""
+    assert "at most one\n  to-do that asks the one question that would decide it" in load_prompt()
+    assert '"unclear" → an empty list.' not in load_prompt()
+
+
 def test_response_format_is_strict() -> None:
     fmt = response_format()
     assert fmt["type"] == "json_schema" and fmt["json_schema"]["strict"] is True
@@ -392,6 +400,43 @@ def test_unparseable_twice_is_failed_not_stored(tmp_settings: Settings) -> None:
             "classify: 1 changes · 0 apply · 0 don't · 0 unclear · 0 retried · 1 failed · "
             "0 to-dos (0 dropped) · $"
         )
+
+
+def test_classify_all_refuses_leaked_ungrounded_todo(
+    tmp_settings: Settings, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """The store-boundary re-check in classify_all is its own barrier: even if enforce() leaked an
+    ungrounded to-do, nothing is stored and the change counts as failed."""
+    change = _change("eurlex-2023-2673")
+
+    def leaky_enforce(
+        payload: ClassifiedPayload, change: RegChange
+    ) -> tuple[Applicability, list[Todo], int]:
+        leaked = Todo(text="Do it", quote="NOT IN THE SOURCE", citation_url=change.document_url)
+        return Applicability(decision="applies", reasons=["x"], todos=[leaked]), [], 0
+
+    monkeypatch.setattr("regwatch.understand.classify.enforce", leaky_enforce)
+    q = change.obligations[0].quote
+    valid = _payload("applies", [{"text": "Add the button", "due": None, "quote": q}])
+    backend = StubBackend([valid])
+    engine = make_engine(tmp_settings)
+    with Session(engine) as s:
+        prof = _profile_row(s)
+        store_regchange(s, change, content_hash="h", model="test")
+        with caplog.at_level(logging.ERROR, logger="regwatch.understand.classify"):
+            summary = classify_all(
+                s,
+                profile_row=prof,
+                backend=backend,
+                settings=tmp_settings,
+                ledger=ModelLedger.for_classifier(tmp_settings),
+            )
+        assert len(backend.calls) == 1
+        assert summary.n_changes == 1 and summary.n_failed == 1
+        assert summary.n_applies == 0 and summary.n_todos == 0
+        assert s.exec(select(ApplicabilityRow)).all() == []
+        assert len(regchanges_needing_classify(s, prof.id or 0)) == 1
+    assert "refusing to store ungrounded to-dos" in caplog.text
 
 
 def _profile_row(s: Session, profile: Profile | None = None) -> ProfileRow:

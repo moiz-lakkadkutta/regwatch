@@ -3,7 +3,8 @@
 `--stage ingest` (search + extract + diff), `--stage normalize` (Lightning → grounded RegChange per
 new document) and `--stage classify` (Ultra → grounded Applicability per change for the current
 profile) each work end to end with a `CrawlRunRow`; `--stage all` runs the three on one row. `seed`
-loads examples/seed-run/*.json and documents.jsonl so the demo URL is never empty.
+loads `Settings.seed_dir` (`REGWATCH_SEED_DIR`, default examples/seed-run): *.json and
+documents.jsonl, so the demo URL is never empty.
 `examples/seed-run/documents.jsonl` is only written by a LIVE ingest by default; fixture runs write
 nothing unless `--out` is given.
 """
@@ -22,7 +23,7 @@ from typing import Literal, cast
 
 from sqlmodel import Session, col, select
 
-from regwatch.config import Settings
+from regwatch.config import DEFAULT_SEED_DIR, Settings
 from regwatch.db import (
     ApplicabilityRow,
     CrawlRunRow,
@@ -44,7 +45,7 @@ from regwatch.understand.normalize import NormalizeSummary, normalize_all
 
 log = logging.getLogger(__name__)
 
-SEED_DIR = Path(__file__).resolve().parents[2] / "examples" / "seed-run"
+SEED_DIR = DEFAULT_SEED_DIR  # tests import it; `seed()` itself reads `settings.seed_dir`
 DEFAULT_OUT = SEED_DIR / "documents.jsonl"
 Stage = Literal["all", "ingest", "normalize", "classify"]
 STAGES: tuple[Stage, ...] = ("all", "ingest", "normalize", "classify")
@@ -264,11 +265,13 @@ def seed(settings: Settings | None = None) -> int:
     """
     settings = settings or Settings()
     engine = make_engine(settings)
-    profile = Profile.model_validate_json((SEED_DIR / "profile.json").read_text(encoding="utf-8"))
+    seed_dir = settings.seed_dir
+    profile = Profile.model_validate_json((seed_dir / "profile.json").read_text(encoding="utf-8"))
     added = 0
     with session(engine) as s:
-        if DEFAULT_OUT.exists():
-            diff = upsert_documents(s, read_documents_jsonl(DEFAULT_OUT))
+        documents_jsonl = seed_dir / "documents.jsonl"
+        if documents_jsonl.exists():
+            diff = upsert_documents(s, read_documents_jsonl(documents_jsonl))
             log.info(
                 "seed documents: %d new, %d changed, %d unchanged",
                 len(diff.new),
@@ -287,7 +290,7 @@ def seed(settings: Settings | None = None) -> int:
             s.commit()
             s.refresh(prof)
         assert prof.id is not None
-        for path in sorted(SEED_DIR.glob("change-*.json")):
+        for path in sorted(seed_dir.glob("change-*.json")):
             payload = json.loads(path.read_text(encoding="utf-8"))
             change = RegChange.model_validate(payload["change"])
             appl = Applicability.model_validate(payload["applicability"])

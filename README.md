@@ -1,54 +1,111 @@
 # RegWatch
 
-Tells a small EU online merchant **which regulation changes apply to their store and what to do**,
-with the source sentence quoted under every to-do. Ingestion by **Tavily** (domain-filtered search +
-extract over official sources only); understanding by **NVIDIA Nemotron 3 Ultra** and **Nemotron 3.5
-Lightning** on **Nebius Token Factory**; hosted as a **Nebius Serverless Endpoint** with a daily
-**Serverless Job** crawl.
-
-> Status: ingest (Oct 18), normalise (Oct 19) and classify (Oct 20) done — `regwatch crawl --stage all` searches + extracts the allow-list via Tavily, diffs by hash, turns each new document into obligations with verbatim quotes (Nemotron 3.5 Lightning) and decides applies / doesn't / unclear with grounded to-dos for the current profile (Nemotron 3 Ultra; `citation_url` and due dates set in code, ungrounded to-dos dropped after one retry). Offline: `--backend fixtures --llm-backend fixtures`. Schema changed on Oct 20 (CrawlRunRow classify counters): delete a pre-existing local `regwatch.db` before running. Web app (Oct 21): the feed groups changes by regulation with applies / doesn't / unclear pills and a "not checked against your profile yet" section after a profile change; each change page shows why, the to-dos with their verbatim quote and source link, the obligations, source metadata and a "Report a wrong call" link (`REGWATCH_REPORT_EMAIL`); the footer distinguishes the recorded seed run from the last live crawl (Tavily credits + Nemotron USD). Month view (Oct 22): `/` lands on `/month`; open to-dos are bucketed Already in force (calm "in force since 19 June 2026" label, the only red) → Due this month → Coming up → No fixed date, each row linking its change and its source; check-off persists per profile and swaps the list in place via htmx (pinned 2.0.4) with the plain form as fallback; unclear changes surface as "One question decides these"; the empty state names the next stored date ("Nothing due this month. Next: <label>, <date>."). Ops (Oct 23, offline half): one image with `ops/entrypoint.sh serve|crawl` — the Endpoint seeds and serves, the daily Job crawls live or exits 2 without keys; console values in `ops/serverless-*.yaml`, live deploy per `docs/runbook-nebius.md`.
+Tells a small EU online shop **which regulation changes apply to it and what to do by when**, with the
+source sentence quoted under every to-do. Nothing is invented: a to-do is stored only if its quote is
+verbatim in the official page (`regwatch/schemas.py`, checked in code, never in a prompt).
 
 ```bash
 uv sync --dev
-uv run regwatch seed          # loads examples/seed-run (idempotent)
-uv run regwatch serve         # http://localhost:8000
+uv run regwatch seed     # loads the recorded run in examples/seed-run (idempotent)
+uv run regwatch serve    # http://localhost:8000  →  /month
 ```
 
-## Runs on Nebius · uses NVIDIA models · built on Tavily
+Demo: `<endpoint-url>` (Nebius Serverless Endpoint — set on deploy; see Status).
+
+## Runs on Nebius · NVIDIA Nemotron · Tavily
 
 | Piece | Role |
 |---|---|
-| Tavily `search` (advanced, `include_domains` filter, `time_range`) + `extract` (advanced, markdown) | the whole ingestion layer; credits per crawl shown in the app footer |
-| `nvidia/Nemotron-3_5-Lightning` via Token Factory | document → obligations with verbatim quotes |
-| `nvidia/Nemotron-3-Ultra-550b-a55b` via Token Factory | (change, store profile) → applies / doesn't / unclear + grounded to-dos |
-| Nebius Serverless Endpoint / Job | web app / scheduled crawl, same container image |
+| **Nebius Token Factory** — `nvidia/Nemotron-3_5-Lightning` | document → obligations, each with a verbatim quote (`regwatch/understand/normalize.py`) |
+| **Nebius Token Factory** — `nvidia/Nemotron-3-Ultra-550b-a55b` | (change, store profile) → applies / doesn't apply / unclear + grounded to-dos (`regwatch/understand/classify.py`) |
+| **Nebius Serverless Endpoint** + **Serverless Job** | web app and the daily crawl, one container image (`ops/`) |
+| **Tavily** `search` (advanced, `include_domains`, `time_range`) + `extract` (advanced, markdown) | the only ingestion path; one crawl costs **36 Tavily credits** (14 searches × 2 + 1 extract of 16 URLs at 2 per 5 URLs) — measured offline against recorded fixtures; live figures pending |
 
-## Why it's trustworthy
+Only nine domains are ever searched or extracted (`config.SOURCE_DOMAINS`): eur-lex.europa.eu,
+commission.europa.eu, green-forum.ec.europa.eu, gesetze-im-internet.de, bmj.de, bmuv.de, ihk.de,
+help.shopify.com, shopify.com. The feed footer shows the credits and model cost of every crawl.
 
-Nothing is invented: a to-do is stored only if its quote is one of the obligations, and an obligation
-is stored only if its quote appears verbatim in the extracted source. See `regwatch/schemas.py`.
+## How it works
 
-## Seed regulations
+1. **Search** — `regwatch/ingest/search.py`: Tavily advanced search per (domain × regulation query), domain-filtered, deduped by URL.
+2. **Extract** — `regwatch/ingest/extract.py`: Tavily advanced extract in batches of ≤ 20 URLs → `Document` (markdown + content hash).
+3. **Diff** — `regwatch/ingest/diff.py`: new / changed / unchanged by content hash; unchanged documents cost no model call.
+4. **Normalize** — `regwatch/understand/normalize.py`: Lightning turns a new document into instrument, dates and obligations with verbatim quotes.
+5. **Classify** — `regwatch/understand/classify.py`: Ultra decides applies / doesn't / unclear for the store profile and drafts to-dos.
+6. **Store** — `regwatch/jobs/crawl.py`: one `CrawlRunRow` per crawl with Tavily credits and model USD; `regwatch crawl --stage all`.
 
-Directive (EU) 2023/2673 (withdrawal function, § 356a BGB, from 19 June 2026) and the EU Deforestation
-Regulation 2023/1115 (SME application from 30 June 2026 — verify current status; dates have shifted).
+## Why you can trust a to-do
+
+- Quotes are checked in code: `RegChange.validate_quotes()` (quote is a substring of the full page) and
+  `Applicability.ungrounded_todos()` (a to-do's quote is one of the obligations) must be empty before
+  anything is stored — and `classify_all` re-checks at the store boundary.
+- A model answer with an ungrounded quote gets exactly one retry; what is still ungrounded is dropped
+  and logged, never shown. Citation URLs are set by code; a due date the model proposes is kept only if it is one of the change's
+  effective dates, otherwise it is nulled.
+- "Unclear" is a first-class answer: the page says which missing profile fact would decide it.
+- Every change page has a "Report a wrong call" link (`REGWATCH_REPORT_EMAIL`).
+
+## What the app shows
+
+- `/profile` — four fields (country, ship-to, categories, platform); no account, no email.
+- `/feed` — changes grouped by regulation with applies / doesn't / unclear pills; footer with credits and USD.
+- `/month` — to-dos bucketed Already in force → Due this month → Coming up → No fixed date; check-off persists (htmx). `/` lands here.
+- `/change/<id>` — why it applies in your profile's terms, to-dos with their quote and source link, obligations, source metadata.
+
+## Run it locally
+
+No keys needed (recorded Tavily and model replies from `tests/fixtures/`):
+
+```bash
+uv sync --dev
+uv run regwatch seed
+uv run regwatch crawl --stage all --backend fixtures --llm-backend fixtures --no-out   # prints "… 36 Tavily credits …"
+uv run regwatch serve
+```
+
+With keys: copy `.env.example` to `.env`, set `TAVILY_API_KEY=` and `NEBIUS_API_KEY=`, then
+`uv run regwatch crawl` (live search + extract + both models; writes `examples/seed-run/documents.jsonl`).
+Schema changes are not migrated — delete a stale local `regwatch.db` first.
 
 ## Deploy on Nebius
 
-The public URL serves the recorded run in `examples/seed-run` (re-recorded from a live crawl before freeze); the daily Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database and proves in its logs that a second pass adds nothing — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
+The public URL serves the recorded run in `examples/seed-run` (to be re-recorded from a live crawl before freeze); the daily Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database and is expected to prove in its logs that a second pass adds nothing (verified offline by `tests/test_crawl_all.py::test_crawl_all_twice_is_idempotent`) — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
 
-One image, two modes (`ops/entrypoint.sh serve|crawl`); values for the console are in
-`ops/serverless-endpoint.yaml` and `ops/serverless-job.yaml`, the step-by-step is `docs/runbook-nebius.md`.
+One image, two modes (`ops/entrypoint.sh serve|crawl`; `crawl` exits 2 without both keys and never uses
+fixtures). Console values: `ops/serverless-endpoint.yaml`, `ops/serverless-job.yaml`; daily schedule:
+`.github/workflows/daily-crawl.yml` (Jobs have no cron field); step-by-step: `docs/runbook-nebius.md`.
 
-```bash
-# build + push (arm64 Mac → linux/amd64)
-IMAGE=cr.eu-north1.nebius.cloud/$REGISTRY_ID/regwatch:$(git rev-parse --short HEAD)
-docker build --platform linux/amd64 -f ops/Dockerfile -t $IMAGE . && docker push $IMAGE
-# endpoint (web app; no keys on the public VM)
-nebius ai endpoint create --name regwatch-web --image $IMAGE --platform cpu-d3 --preset 4vcpu-16gb --container-port 8000/http --auth none --disk-size 32Gi --args serve --env PORT=8000
-# job (live crawl; exits 2 without both keys — never fixtures). Daily: .github/workflows/daily-crawl.yml
-nebius ai job create --name regwatch-crawl-$(date +%F) --image $IMAGE --platform cpu-d3 --preset 4vcpu-16gb --args crawl --timeout 1h --env REGWATCH_TIME_RANGE=month --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys
-```
+## Costs and measurement
+
+All figures below are offline fixture replays (Tavily row: the crawl above; model rows: the per-stage
+replays recorded in FEEDBACK.md, Oct 19/20 — a full crawl after `seed` costs $0.0345 at the placeholder
+prices); **no live call has been made yet — live figures pending** and will replace this block.
+
+| Item | Offline figure | Basis |
+|---|---|---|
+| Tavily credits per crawl | 36, offline (14 searches, 1 extract of 16 URLs) | documented pricing: 2 per advanced search, 2 per 5 URLs extracted |
+| Lightning tokens, 16 documents | 17,330 prompt / 3,900 completion, 18 calls | $0.0058 offline, at PLACEHOLDER $0.20 / $0.60 per Mtok |
+| Ultra tokens, 15 changes + 1 retry | 26,200 prompt / 3,490 completion, 16 calls | $0.0367 offline, at PLACEHOLDER $1.00 / $3.00 per Mtok |
+| Grounding | quotes verbatim first try 20/22; ungrounded to-dos after retry 0 | `validate_quotes`, `ungrounded_todos` |
+
+Prices live in `Settings` (`.env.example`) and are placeholders until confirmed on the Token Factory
+pricing page. Tooling friction with numbers: `FEEDBACK.md`.
+
+## Scope cut
+
+Pre-approved: if live classification of the EU Deforestation Regulation proves unreliable, EUDR is
+dropped and the withdrawal function stays; everything else is unchanged.
+
+## Status / what's not done
+
+- Live deploy (Endpoint + Job) pending Moiz's keys and console session — `docs/runbook-nebius.md`.
+- Live Tavily and Token Factory numbers pending; `examples/seed-run` still to be re-recorded from a live crawl.
+- Open issues: `docs/issues.md`.
+
+## Seed regulations
+
+Directive (EU) 2023/2673 (withdrawal button, § 356a BGB, from 19 June 2026) and Regulation (EU) 2023/1115
+(EUDR; SME application from 30 June 2026 — verify, dates have shifted).
 
 ## License
 

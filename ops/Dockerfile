@@ -6,8 +6,10 @@ WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY regwatch ./regwatch
 COPY examples ./examples
-# Editable install: `regwatch.jobs.crawl.SEED_DIR` is resolved relative to the package file
-# (`parents[2]/examples/seed-run`), so the package must stay at /app/regwatch next to /app/examples.
+# `regwatch seed` reads Settings.seed_dir; pin it to the copied examples so the seed run is found
+# whether the package is installed editable (below) or as a wheel into site-packages.
+ENV REGWATCH_SEED_DIR=/app/examples/seed-run
+# Editable install keeps /app/regwatch next to /app/examples (the DEFAULT_SEED_DIR fallback).
 RUN uv pip install --system --no-cache -e . && mkdir -p /data
 COPY ops/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh

@@ -26,7 +26,8 @@ something else, even when the underlying regulation would.
 - "does_not": say what the text covers and which profile fact puts the shop outside it.
 
 ## To-dos
-- Only for "applies". "does_not" → an empty list. "unclear" → an empty list.
+- Only for "applies". "does_not" → an empty list. "unclear" → an empty list, or at most one
+  to-do that asks the one question that would decide it.
 - Each to-do turns one numbered obligation into an action. `text` is a verb phrase with an object,
   second person where natural, no legalese: "Add a labelled, two-step withdrawal button to your
   storefront", never "Ensure compliance with the withdrawal function requirement".
