@@ -48,3 +48,12 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   `Path(__file__).parents[2]/examples/seed-run`, which points into `site-packages` in a non-editable install —
   fixed Oct 24 with `Settings.seed_dir` (`REGWATCH_SEED_DIR`, Dockerfile sets `/app/examples/seed-run`). No
   live numbers exist yet.
+- (2026-10-01, first LIVE run, 21:31Z) `uv run pytest -m live` → 4 passed (57 s incl. docker build).
+  Token Factory `/v1/models` lists both `nvidia/Nemotron-3-Ultra-550b-a55b` and `nvidia/Nemotron-3_5-Lightning`
+  (25 models on the account). Tavily: advanced search on `eur-lex.europa.eu`, `max_results=3` → `usage.credits` 2;
+  advanced extract of 1 URL → `usage.credits` **0** (documented as 2 per 5 URLs; a single URL appears to round down).
+  Tavily `GET /usage` still reported `usage: 0` for the key right after two runs (~4 searches) — the dashboard
+  counter lags the per-response `usage` field, so the per-call log is the reliable figure.
+  Ultra classify of seed change-001 (withdrawal): decision `applies`, 3 to-dos all grounded, due 2026-06-19,
+  no grounding retry, 0 dropped, 0 dates nulled; tokens 1,395 prompt / **1,054 completion** (offline fixture
+  average was 218 completion — ~5× more live); $0.0046 at PLACEHOLDER $1.00/$3.00 per Mtok.
