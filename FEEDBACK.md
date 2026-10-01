@@ -57,3 +57,13 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   Ultra classify of seed change-001 (withdrawal): decision `applies`, 3 to-dos all grounded, due 2026-06-19,
   no grounding retry, 0 dropped, 0 dates nulled; tokens 1,395 prompt / **1,054 completion** (offline fixture
   average was 218 completion — ~5× more live); $0.0046 at PLACEHOLDER $1.00/$3.00 per Mtok.
+- (2026-10-01, second LIVE crawl after the crawl-scope fix, 22:08Z, branch `fix/crawl-scope`) `regwatch crawl --stage all`
+  into a scratch DB: 9 min 07 s end to end (first run was cancelled after 11 min at 5/109 documents).
+  Tavily: 14 searches + 3 extracts = **42 credits** (first run 72); 36 documents kept (first run 109). The allow-list path
+  rule and language filter dropped apps/cdn/community.shopify.com, regional `www.shopify.com/xx/blog/…` and ~20
+  foreign-language copies (all logged). **14 of 20 eur-lex `legal-content/…` URLs failed in `extract` with
+  "Failed to fetch url"** (PDF/HTML/LSU variants); `eli/dir/2023/2673/oj` itself extracted fine.
+  Lightning normalise: 36 documents · 9 ok first try · 3 retried · **24 failed** (invalid_json / schema) · $0.2616 at
+  PLACEHOLDER prices. Cause: **53 of 63 calls returned exactly `completion_tokens=4096`** — the `max_tokens=4096` cap in
+  `LiveLLMBackend` truncates Lightning's output mid-JSON. The offline fixtures never reached it (avg 217 completion
+  tokens). The seed withdrawal document failed this way, so `examples/seed-run` was **not** re-recorded from this run.

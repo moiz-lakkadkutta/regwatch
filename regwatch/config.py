@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     )
     # Characters of markdown sent to the extractor; quotes are still validated on the full text.
     normalize_max_chars: int = Field(default=60_000, alias="REGWATCH_NORMALIZE_MAX_CHARS")
+    normalize_concurrency: int = Field(default=4, alias="REGWATCH_NORMALIZE_CONCURRENCY")
     # USD per million tokens for the classifier model. PLACEHOLDERS — confirm against Token Factory pricing.
     classifier_price_in_per_mtok: float = Field(
         default=1.00, alias="REGWATCH_CLASSIFIER_PRICE_IN_PER_MTOK"
@@ -61,6 +62,17 @@ SOURCE_DOMAINS: dict[str, list[str]] = {
     "help.shopify.com": ["withdrawal", "eudr"],
     "shopify.com": ["withdrawal", "eudr"],
 }
+
+# A key listed here only accepts URLs whose host + path starts with one of the prefixes.
+SOURCE_URL_PREFIXES: dict[str, tuple[str, ...]] = {
+    "shopify.com": ("www.shopify.com/blog/", "shopify.com/blog/"),
+}
+
+# Language copies: URLs marked with a code in LANG_CODES - KEEP_LANGS are dropped at search/extract.
+KEEP_LANGS: frozenset[str] = frozenset({"en", "de"})
+LANG_CODES: frozenset[str] = frozenset(
+    "bg cs da de el en es et fi fr ga hr hu it lt lv mt nl pl pt ro sk sl sv ru ja ko zh".split()
+)
 
 # Seed regulations: what the first crawl looks for. Dates are as known on 2026-09-14 — verify at build.
 SEED_REGULATIONS: list[dict[str, str]] = [

@@ -4,6 +4,7 @@ search(query, search_depth="advanced", include_domains=[domain], include_domains
        time_range=..., max_results=10, include_raw_content=False, include_usage=True)
 Every response's `usage` is logged and added to the `CreditLedger` so the feed footer can show
 credits per crawl. Hits whose host is not on the allow-list are dropped and logged, never stored.
+Non-en/de language copies are dropped the same way.
 """
 
 from __future__ import annotations
@@ -18,6 +19,7 @@ from regwatch.ingest.tavily_backend import (
     TavilyBackend,
     allowed_domain,
     domains_for,
+    foreign_language,
     normalize_url,
 )
 
@@ -75,6 +77,16 @@ def search_regulation(
             source_domain = allowed_domain(url)
             if source_domain is None:
                 log.warning("dropped off-list hit tag=%s domain=%s url=%s", tag, domain, url)
+                continue
+            lang = foreign_language(url)
+            if lang is not None:
+                log.warning(
+                    "dropped foreign-language hit tag=%s domain=%s lang=%s url=%s",
+                    tag,
+                    domain,
+                    lang,
+                    url,
+                )
                 continue
             hits.append(
                 Hit(

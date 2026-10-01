@@ -5,7 +5,9 @@ empty key because tavily-python 0.8.2 would silently go keyless and still hit th
 `FixtureTavilyBackend` (replays recorded-shape JSON under tests/fixtures/tavily).
 
 Allow-list helpers live here too: `allowed_domain(url)` maps a URL host to its
-`config.SOURCE_DOMAINS` key (exact host or a subdomain), `normalize_url` is the dedupe key.
+`config.SOURCE_DOMAINS` key (exact host or a subdomain, plus the `SOURCE_URL_PREFIXES` path
+rule for keys that have one), `foreign_language(url)` flags non-en/de language copies,
+`normalize_url` is the dedupe key.
 """
 
 from __future__ import annotations
@@ -13,12 +15,21 @@ from __future__ import annotations
 import json
 import logging
 import math
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, Protocol, cast
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import parse_qsl, urlsplit, urlunsplit
 
-from regwatch.config import SEED_REGULATIONS, SOURCE_DOMAINS, Settings, sources_for
+from regwatch.config import (
+    KEEP_LANGS,
+    LANG_CODES,
+    SEED_REGULATIONS,
+    SOURCE_DOMAINS,
+    SOURCE_URL_PREFIXES,
+    Settings,
+    sources_for,
+)
 
 log = logging.getLogger(__name__)
 
@@ -130,13 +141,62 @@ def domains_for(tag: str) -> list[str]:
 
 
 def allowed_domain(url: str) -> str | None:
-    """The `SOURCE_DOMAINS` key for this URL's host (exact or subdomain), else None."""
-    host = (urlsplit(url).hostname or "").lower()
+    """The `SOURCE_DOMAINS` key for this URL's host (exact or subdomain), else None.
+
+    A key in `SOURCE_URL_PREFIXES` only matches when `host + path` starts with one of its prefixes.
+    """
+    parts = urlsplit(url)
+    host = (parts.hostname or "").lower()
     if not host:
         return None
     for d in SOURCE_DOMAINS:
         if host == d or host.endswith("." + d):
-            return d
+            prefixes = SOURCE_URL_PREFIXES.get(d)
+            if prefixes is None or (host + parts.path).startswith(prefixes):
+                return d
+            return None
+    return None
+
+
+# `de`, `zh-TW`, `pt-br`, `zh-hant`: a bare code, optionally with a region or script subtag.
+_LANG_TOKEN = re.compile(r"[a-z]{2}(-[a-z]{2}|-[a-z]{4})?", re.IGNORECASE)
+
+
+def _foreign_code(token: str) -> str | None:
+    """`token` as a language code (`zh-TW` -> `zh`) if it is a dropped language, else None."""
+    m = _LANG_TOKEN.fullmatch(token)
+    if m is None:
+        return None
+    code = token.lower().split("-", 1)[0]
+    return code if code in LANG_CODES and code not in KEEP_LANGS else None
+
+
+def foreign_language(url: str) -> str | None:
+    """The non-kept language code marking `url` as a language copy, else None.
+
+    Markers: first path segment, segment after `legal-content`, last segment suffix `_xx`
+    (extension stripped), and a `prefLang` / `locale` / `lang` query parameter.
+    """
+    parts = urlsplit(url)
+    segs = [s for s in parts.path.split("/") if s]
+    candidates: list[str] = []
+    if segs:
+        candidates.append(segs[0])
+    for i, seg in enumerate(segs[:-1]):
+        if seg.lower() == "legal-content":
+            candidates.append(segs[i + 1])
+    if segs:
+        stem = segs[-1].rsplit(".", 1)[0]
+        # `_xx` suffixes are bare codes; `y_et-al` is a slug, not Estonian.
+        if "_" in stem and "-" not in stem.rsplit("_", 1)[1]:
+            candidates.append(stem.rsplit("_", 1)[1])
+    for name, value in parse_qsl(parts.query):
+        if name.lower() in ("preflang", "locale", "lang"):
+            candidates.append(value)
+    for c in candidates:
+        code = _foreign_code(c)
+        if code is not None:
+            return code
     return None
 
 

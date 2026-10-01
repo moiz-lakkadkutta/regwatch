@@ -18,6 +18,7 @@ from regwatch.ingest.tavily_backend import (
     CreditLedger,
     TavilyBackend,
     allowed_domain,
+    foreign_language,
     normalize_url,
 )
 from regwatch.schemas import Document
@@ -31,6 +32,35 @@ def batched(urls: Sequence[str], n: int = EXTRACT_BATCH) -> list[list[str]]:
     if n < 1:
         raise ValueError("batch size must be >= 1")
     return [list(urls[i : i + n]) for i in range(0, len(urls), n)]
+
+
+def _dedupe_by_content(docs: list[Document]) -> list[Document]:
+    """Collapse identical `content_hash` into the shortest URL (tie: smallest), merging tags."""
+    groups: dict[str, list[Document]] = {}
+    for d in docs:
+        groups.setdefault(d.content_hash, []).append(d)
+    kept: dict[str, Document] = {}
+    for h, group in groups.items():
+        if len(group) == 1:
+            if group[0].url in kept:
+                log.warning("dedupe dropped same-url twin url=%s", group[0].url)
+            kept[group[0].url] = group[0]
+            continue
+        best = min(group, key=lambda d: (len(d.url), d.url))
+        tags = sorted({t for d in group for t in d.regulation_tags})
+        published = next((d.published_date for d in group if d.published_date), None)
+        winner = best.model_copy(update={"regulation_tags": tags, "published_date": published})
+        log.info(
+            "dedupe content_hash=%s kept=%s dropped=%s",
+            h,
+            best.url,
+            [d.url for d in group if d is not best],
+        )
+        if best.url in kept:
+            log.warning("dedupe dropped same-url twin url=%s", best.url)
+        kept[best.url] = winner
+    out = [kept.pop(d.url) for d in docs if d.url in kept]
+    return out
 
 
 def extract_documents(
@@ -73,6 +103,10 @@ def extract_documents(
             if source_domain is None:
                 log.warning("dropped off-list extract result url=%s", raw_url)
                 continue
+            lang = foreign_language(raw_url)
+            if lang is not None:
+                log.warning("dropped foreign-language extract result lang=%s url=%s", lang, raw_url)
+                continue
             url = normalize_url(raw_url)
             markdown = str(r.get("raw_content") or "")
             if not markdown.strip():
@@ -90,4 +124,4 @@ def extract_documents(
                     regulation_tags=sorted(hit.regulation_tags) if hit else [],
                 )
             )
-    return docs
+    return _dedupe_by_content(docs)

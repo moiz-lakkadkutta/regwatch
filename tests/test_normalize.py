@@ -1,6 +1,9 @@
 import json
 import logging
 import re
+import threading
+import time
+from dataclasses import asdict
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -20,7 +23,7 @@ from regwatch.ingest.diff import content_hash
 from regwatch.jobs.crawl import crawl, main, seed
 from regwatch.schemas import Document
 from regwatch.understand import normalize as norm
-from regwatch.understand.llm_backend import FixtureLLMBackend, ModelLedger
+from regwatch.understand.llm_backend import FixtureLLMBackend, LLMResult, LLMUsage, ModelLedger
 from regwatch.understand.normalize import (
     NormalizedPayload,
     PayloadError,
@@ -491,3 +494,154 @@ def test_seed_then_normalize_adds_zero_for_seed_docs(
     )
     with Session(make_engine(tmp_settings)) as s:
         assert len(s.exec(select(RegChangeRow)).all()) == 2
+
+
+# --- concurrency -------------------------------------------------------------------------------
+
+
+def _with_concurrency(settings: Settings, n: int) -> Settings:
+    return settings.model_copy(update={"normalize_concurrency": n})
+
+
+def _run_all(
+    settings: Settings, rows: list[DocumentRow], backend: Any
+) -> tuple[Any, ModelLedger, list[tuple[str, str, str]]]:
+    engine = make_engine(settings)
+    with Session(engine) as s:
+        s.add_all(rows)
+        s.commit()
+        ledger = ModelLedger.for_extractor(settings)
+        summary = normalize_all(s, backend=backend, settings=settings, ledger=ledger)
+    with Session(engine) as s:
+        stored = sorted(
+            (c.document_url, c.content_hash, c.obligations)
+            for c in s.exec(select(RegChangeRow)).all()
+        )
+    return summary, ledger, stored
+
+
+def test_normalize_concurrency_default_is_4(tmp_settings: Settings) -> None:
+    assert tmp_settings.normalize_concurrency == 4
+
+
+def test_normalize_all_same_result_at_concurrency_1_and_4(
+    tmp_path: Path, manifest: list[dict[str, Any]], llm_fixtures_root: Path
+) -> None:
+    outcomes = []
+    for n in (1, 4):
+        settings = Settings(REGWATCH_DB_URL=f"sqlite:///{tmp_path / f'c{n}.db'}")
+        backend = FixtureLLMBackend(llm_fixtures_root / "normalize")
+        outcomes.append(_run_all(_with_concurrency(settings, n), _manifest_rows(manifest), backend))
+    (sum1, led1, stored1), (sum4, led4, stored4) = outcomes
+    assert stored1 == stored4 and len(stored1) == 15
+    assert asdict(sum1) == pytest.approx(asdict(sum4))
+    assert (led1.n_calls, led1.prompt_tokens, led1.completion_tokens) == (
+        led4.n_calls,
+        led4.prompt_tokens,
+        led4.completion_tokens,
+    )
+    assert led1.cost_usd == pytest.approx(led4.cost_usd)
+
+
+class _StubBackend:
+    """Replies with a grounded payload for every document; optional sleep / one failing URL."""
+
+    def __init__(self, *, delay: float = 0.0, fail_url: str | None = None) -> None:
+        self.delay = delay
+        self.fail_url = fail_url
+        self.threads: set[int] = set()
+
+    def complete(
+        self, *, model: str, messages: list[dict[str, str]], response_format: Any
+    ) -> LLMResult:
+        self.threads.add(threading.get_ident())
+        if self.fail_url and messages[-1]["content"].endswith(self.fail_url):
+            raise RuntimeError("boom")
+        time.sleep(self.delay)
+        text = json.dumps(_payload([{"text": "Provide it.", "quote": GOOD_QUOTE}]))
+        return LLMResult(
+            text=text, usage=LLMUsage(prompt_tokens=100, completion_tokens=10), model=model
+        )
+
+
+def _stub_rows(n: int) -> list[DocumentRow]:
+    markdown = (EXTRACT / "eurlex-2023-2673.md").read_text(encoding="utf-8")
+    return [
+        DocumentRow(
+            url=f"https://eur-lex.europa.eu/stub/{i}",
+            content_hash=f"h{i}",
+            source_domain="eur-lex.europa.eu",
+            markdown=markdown,
+            regulation_tags=json.dumps(["withdrawal"]),
+        )
+        for i in range(n)
+    ]
+
+
+def test_normalize_all_overlaps_model_calls(tmp_settings: Settings) -> None:
+    backend = _StubBackend(delay=0.2)
+    start = time.monotonic()
+    summary, ledger, stored = _run_all(_with_concurrency(tmp_settings, 4), _stub_rows(4), backend)
+    assert time.monotonic() - start < 0.6
+    assert summary.n_ok == 4 and len(stored) == 4 and ledger.n_calls == 4
+    assert ledger.prompt_tokens == 400 and len(backend.threads) > 1
+
+
+def test_normalize_all_one_exception_fails_only_that_document(
+    tmp_settings: Settings, caplog: pytest.LogCaptureFixture
+) -> None:
+    bad = "https://eur-lex.europa.eu/stub/2"
+    backend = _StubBackend(fail_url=bad)
+    with caplog.at_level(logging.WARNING):
+        summary, _, stored = _run_all(_with_concurrency(tmp_settings, 4), _stub_rows(4), backend)
+    assert summary.n_failed == 1 and summary.n_ok == 3
+    assert [u for u, _, _ in stored] == [f"https://eur-lex.europa.eu/stub/{i}" for i in (0, 1, 3)]
+    assert any(bad in r.getMessage() for r in caplog.records)
+
+
+def test_normalize_all_survives_normalize_raising(
+    tmp_settings: Settings, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    bad = "https://eur-lex.europa.eu/stub/1"
+    real = norm.normalize
+
+    def flaky(document: Document, **kwargs: Any) -> Any:
+        if document.url == bad:
+            raise ValueError("unexpected")
+        return real(document, **kwargs)
+
+    monkeypatch.setattr(norm, "normalize", flaky)
+    with caplog.at_level(logging.ERROR):
+        summary, ledger, stored = _run_all(
+            _with_concurrency(tmp_settings, 4), _stub_rows(3), _StubBackend()
+        )
+    assert summary.n_failed == 1 and len(stored) == 2 and ledger.n_calls == 2
+    assert any(
+        bad in r.getMessage() and r.levelno == logging.ERROR and r.exc_info for r in caplog.records
+    )
+
+
+def test_normalize_all_stops_paying_when_the_calling_thread_raises(
+    tmp_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class _CountingBackend(_StubBackend):
+        def __init__(self) -> None:
+            super().__init__(delay=0.05)
+            self.n_calls = 0
+            self._lock = threading.Lock()
+
+        def complete(
+            self, *, model: str, messages: list[dict[str, str]], response_format: Any
+        ) -> LLMResult:
+            with self._lock:
+                self.n_calls += 1
+            return super().complete(model=model, messages=messages, response_format=response_format)
+
+    def boom(*args: Any, **kwargs: Any) -> None:
+        raise RuntimeError("store failed")
+
+    monkeypatch.setattr(norm, "store_regchange", boom)
+    backend = _CountingBackend()
+    with pytest.raises(RuntimeError, match="store failed"):
+        _run_all(_with_concurrency(tmp_settings, 2), _stub_rows(12), backend)
+    assert backend.n_calls < 12

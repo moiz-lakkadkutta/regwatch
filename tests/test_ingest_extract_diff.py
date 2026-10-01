@@ -161,3 +161,68 @@ def test_core_fixtures_contain_seed_quotes(
             assert len(body) >= 600
         else:
             assert body.strip()
+
+
+class _TwinBackend:
+    """Same body under a long and a short URL (a language/path twin)."""
+
+    def search(self, **kw: Any) -> dict[str, Any]:
+        raise AssertionError("not used")
+
+    def extract(self, **kw: Any) -> dict[str, Any]:
+        return {
+            "results": [
+                {
+                    "url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng",
+                    "raw_content": "# same",
+                },
+                {"url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj", "raw_content": "# same"},
+                {"url": "https://help.shopify.com/fr/manual/x", "raw_content": "# french"},
+            ],
+            "failed_results": [],
+            "usage": {"credits": 2},
+        }
+
+
+def test_extract_collapses_identical_bodies_and_drops_foreign(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    long_url = "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng"
+    short_url = "https://eur-lex.europa.eu/eli/dir/2023/2673/oj"
+    hits = [_hit(long_url, ("eudr",)), _hit(short_url, ("withdrawal",))]
+    with caplog.at_level(logging.INFO, logger="regwatch.ingest.extract"):
+        docs = extract_documents(_TwinBackend(), hits, ledger=CreditLedger())
+    assert [d.url for d in docs] == [short_url]
+    assert docs[0].regulation_tags == ["eudr", "withdrawal"]
+    assert any("dedupe content_hash=" in r.getMessage() for r in caplog.records)
+    assert any("dropped foreign-language extract result" in r.getMessage() for r in caplog.records)
+
+
+def test_dedupe_warns_when_same_url_twin_is_dropped(caplog: pytest.LogCaptureFixture) -> None:
+    url = "https://eur-lex.europa.eu/eli/dir/2023/2673/oj"
+
+    class _TwinBackend:
+        def extract(self, **kw: Any) -> dict[str, Any]:
+            return {
+                "results": [
+                    {"url": url, "raw_content": "first body"},
+                    {"url": url, "raw_content": "second, different body"},
+                ],
+                "failed_results": [],
+                "usage": {"credits": 1},
+            }
+
+    with caplog.at_level(logging.WARNING):
+        docs = extract_documents(
+            _TwinBackend(),  # type: ignore[arg-type]
+            [_hit(url)],
+            ledger=CreditLedger(),
+            fetched_at=FETCHED,
+        )
+    assert len(docs) == 1
+    assert any(
+        r.levelno == logging.WARNING
+        and "dedupe dropped same-url twin" in r.getMessage()
+        and url in r.getMessage()
+        for r in caplog.records
+    )

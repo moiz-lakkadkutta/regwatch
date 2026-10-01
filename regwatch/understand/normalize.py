@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import date
 from functools import cache
@@ -354,21 +355,45 @@ def normalize_all(
     n_ok_first_try = n_retried = n_failed = 0
     prompt_tokens = completion_tokens = 0
     cost = 0.0
-    for row in rows:
-        result = normalize(row.to_schema(), backend=backend, settings=settings, ledger=ledger)
-        prompt_tokens += result.usage.prompt_tokens
-        completion_tokens += result.usage.completion_tokens
-        cost += result.cost_usd
-        if result.change is None:
-            n_failed += 1
-            continue
-        if result.retried:
-            n_retried += 1
-        else:
-            n_ok_first_try += 1
-        store_regchange(
-            s, result.change, content_hash=row.content_hash, model=settings.extractor_model
-        )
+    # Schemas are built here, on the calling thread; workers only see plain Documents. Each call
+    # gets its own ledger, merged below in row order, so totals match a sequential run lock-free.
+    jobs = [row.to_schema() for row in rows]
+    workers = max(1, settings.normalize_concurrency)
+
+    def run(doc: Document) -> tuple[NormalizeResult | None, ModelLedger]:
+        own = ModelLedger(ledger.price_in_per_mtok, ledger.price_out_per_mtok)
+        try:
+            return normalize(doc, backend=backend, settings=settings, ledger=own), own
+        except Exception:
+            log.exception("normalize crashed url=%s", doc.url)
+            return None, own
+
+    # No `with`: its exit waits for every queued call, so an error (or Ctrl-C) on this thread
+    # would still pay for all remaining model calls. Cancel the queue instead.
+    pool = ThreadPoolExecutor(max_workers=workers)
+    try:
+        for row, (result, own) in zip(rows, pool.map(run, jobs), strict=True):
+            ledger.merge(own)
+            if result is None:
+                n_failed += 1
+                continue
+            prompt_tokens += result.usage.prompt_tokens
+            completion_tokens += result.usage.completion_tokens
+            cost += result.cost_usd
+            if result.change is None:
+                n_failed += 1
+                continue
+            if result.retried:
+                n_retried += 1
+            else:
+                n_ok_first_try += 1
+            store_regchange(
+                s, result.change, content_hash=row.content_hash, model=settings.extractor_model
+            )
+    except BaseException:
+        pool.shutdown(wait=False, cancel_futures=True)
+        raise
+    pool.shutdown()
     summary = NormalizeSummary(
         n_docs=len(rows),
         n_ok=n_ok_first_try + n_retried,
