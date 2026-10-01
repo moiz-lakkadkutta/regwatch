@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, Protocol, cast
@@ -157,8 +158,15 @@ def allowed_domain(url: str) -> str | None:
     return None
 
 
+# `de`, `zh-TW`, `pt-br`, `zh-hant`: a bare code, optionally with a region or script subtag.
+_LANG_TOKEN = re.compile(r"[a-z]{2}(-[a-z]{2}|-[a-z]{4})?", re.IGNORECASE)
+
+
 def _foreign_code(token: str) -> str | None:
     """`token` as a language code (`zh-TW` -> `zh`) if it is a dropped language, else None."""
+    m = _LANG_TOKEN.fullmatch(token)
+    if m is None:
+        return None
     code = token.lower().split("-", 1)[0]
     return code if code in LANG_CODES and code not in KEEP_LANGS else None
 
@@ -179,7 +187,8 @@ def foreign_language(url: str) -> str | None:
             candidates.append(segs[i + 1])
     if segs:
         stem = segs[-1].rsplit(".", 1)[0]
-        if "_" in stem:
+        # `_xx` suffixes are bare codes; `y_et-al` is a slug, not Estonian.
+        if "_" in stem and "-" not in stem.rsplit("_", 1)[1]:
             candidates.append(stem.rsplit("_", 1)[1])
     for name, value in parse_qsl(parts.query):
         if name.lower() in ("preflang", "locale", "lang"):

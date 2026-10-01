@@ -149,6 +149,9 @@ def test_allowed_domain_table(url: str, expected: str | None) -> None:
         ("https://eur-lex.europa.eu/page?lang=en", None),
         ("https://eur-lex.europa.eu/eli/dir/2023/2673/oj", None),
         ("https://eur-lex.europa.eu/eli/reg/2023/1115/oj", None),
+        ("https://www.ihk.de/it-recht/widerruf", None),
+        ("https://www.ihk.de/pfalz/recht/faq_it-sicherheit.pdf", None),
+        ("https://www.ihk.de/x/y_et-al", None),
     ],
 )
 def test_foreign_language_table(url: str, expected: str | None) -> None:
