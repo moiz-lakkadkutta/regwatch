@@ -42,6 +42,8 @@ def _dedupe_by_content(docs: list[Document]) -> list[Document]:
     kept: dict[str, Document] = {}
     for h, group in groups.items():
         if len(group) == 1:
+            if group[0].url in kept:
+                log.warning("dedupe dropped same-url twin url=%s", group[0].url)
             kept[group[0].url] = group[0]
             continue
         best = min(group, key=lambda d: (len(d.url), d.url))
@@ -54,6 +56,8 @@ def _dedupe_by_content(docs: list[Document]) -> list[Document]:
             best.url,
             [d.url for d in group if d is not best],
         )
+        if best.url in kept:
+            log.warning("dedupe dropped same-url twin url=%s", best.url)
         kept[best.url] = winner
     out = [kept.pop(d.url) for d in docs if d.url in kept]
     return out
