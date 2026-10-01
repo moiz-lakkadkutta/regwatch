@@ -69,6 +69,13 @@ class ModelLedger:
         self.cost_usd += cost
         return cost
 
+    def merge(self, other: ModelLedger) -> None:
+        """Fold another ledger's counters into this one (per-call ledgers from worker threads)."""
+        self.n_calls += other.n_calls
+        self.prompt_tokens += other.prompt_tokens
+        self.completion_tokens += other.completion_tokens
+        self.cost_usd += other.cost_usd
+
     @classmethod
     def for_extractor(cls, settings: Settings) -> ModelLedger:
         return cls(
