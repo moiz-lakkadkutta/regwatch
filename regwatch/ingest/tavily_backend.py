@@ -5,7 +5,8 @@ empty key because tavily-python 0.8.2 would silently go keyless and still hit th
 `FixtureTavilyBackend` (replays recorded-shape JSON under tests/fixtures/tavily).
 
 Allow-list helpers live here too: `allowed_domain(url)` maps a URL host to its
-`config.SOURCE_DOMAINS` key (exact host or a subdomain), `normalize_url` is the dedupe key.
+`config.SOURCE_DOMAINS` key (exact host or a subdomain, plus the `SOURCE_URL_PREFIXES` path
+rule for keys that have one), `normalize_url` is the dedupe key.
 """
 
 from __future__ import annotations
@@ -18,7 +19,13 @@ from pathlib import Path
 from typing import Any, Literal, Protocol, cast
 from urllib.parse import urlsplit, urlunsplit
 
-from regwatch.config import SEED_REGULATIONS, SOURCE_DOMAINS, Settings, sources_for
+from regwatch.config import (
+    SEED_REGULATIONS,
+    SOURCE_DOMAINS,
+    SOURCE_URL_PREFIXES,
+    Settings,
+    sources_for,
+)
 
 log = logging.getLogger(__name__)
 
@@ -130,13 +137,20 @@ def domains_for(tag: str) -> list[str]:
 
 
 def allowed_domain(url: str) -> str | None:
-    """The `SOURCE_DOMAINS` key for this URL's host (exact or subdomain), else None."""
-    host = (urlsplit(url).hostname or "").lower()
+    """The `SOURCE_DOMAINS` key for this URL's host (exact or subdomain), else None.
+
+    A key in `SOURCE_URL_PREFIXES` only matches when `host + path` starts with one of its prefixes.
+    """
+    parts = urlsplit(url)
+    host = (parts.hostname or "").lower()
     if not host:
         return None
     for d in SOURCE_DOMAINS:
         if host == d or host.endswith("." + d):
-            return d
+            prefixes = SOURCE_URL_PREFIXES.get(d)
+            if prefixes is None or (host + parts.path).startswith(prefixes):
+                return d
+            return None
     return None
 
 

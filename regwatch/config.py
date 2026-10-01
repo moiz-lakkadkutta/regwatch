@@ -62,6 +62,11 @@ SOURCE_DOMAINS: dict[str, list[str]] = {
     "shopify.com": ["withdrawal", "eudr"],
 }
 
+# A key listed here only accepts URLs whose host + path starts with one of the prefixes.
+SOURCE_URL_PREFIXES: dict[str, tuple[str, ...]] = {
+    "shopify.com": ("www.shopify.com/blog/", "shopify.com/blog/"),
+}
+
 # Seed regulations: what the first crawl looks for. Dates are as known on 2026-09-14 — verify at build.
 SEED_REGULATIONS: list[dict[str, str]] = [
     {

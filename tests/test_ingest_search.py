@@ -5,7 +5,7 @@ import pytest
 
 from regwatch.config import SEED_REGULATIONS, SOURCE_DOMAINS
 from regwatch.ingest.search import Hit, dedupe_hits, search_all, search_regulation
-from regwatch.ingest.tavily_backend import CreditLedger, LiveTavilyBackend
+from regwatch.ingest.tavily_backend import CreditLedger, LiveTavilyBackend, allowed_domain
 from tests.fakes import RecordingBackend
 
 WITHDRAWAL = next(r for r in SEED_REGULATIONS if r["tag"] == "withdrawal")
@@ -97,3 +97,25 @@ def test_ledger_falls_back_when_usage_absent() -> None:
 def test_live_backend_refuses_empty_key() -> None:
     with pytest.raises(RuntimeError):
         LiveTavilyBackend("")
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("https://apps.shopify.com/revoka?surface_detail=eu-withdrawal", None),
+        ("https://cdn.shopify.com/s/files/1/x.pdf", None),
+        ("https://community.shopify.com/t/foo/1", None),
+        ("https://www.shopify.com/ph/blog/micro-business", None),
+        ("https://www.shopify.com/blog/eu-withdrawal-button", "shopify.com"),
+        (
+            "https://help.shopify.com/en/manual/compliance/legal/eu-right-of-withdrawal",
+            "help.shopify.com",
+        ),
+        ("https://www.ihk.de/pfalz/recht/x", "ihk.de"),
+        ("https://www.wuerzburg.ihk.de/news", "ihk.de"),
+        ("https://hdr4.bmj.de/a.html", "bmj.de"),
+        ("https://eur-lex.europa.eu/eli/dir/2023/2673/oj", "eur-lex.europa.eu"),
+    ],
+)
+def test_allowed_domain_table(url: str, expected: str | None) -> None:
+    assert allowed_domain(url) == expected
