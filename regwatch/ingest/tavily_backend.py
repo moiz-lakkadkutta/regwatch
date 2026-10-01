@@ -6,7 +6,8 @@ empty key because tavily-python 0.8.2 would silently go keyless and still hit th
 
 Allow-list helpers live here too: `allowed_domain(url)` maps a URL host to its
 `config.SOURCE_DOMAINS` key (exact host or a subdomain, plus the `SOURCE_URL_PREFIXES` path
-rule for keys that have one), `normalize_url` is the dedupe key.
+rule for keys that have one), `foreign_language(url)` flags non-en/de language copies,
+`normalize_url` is the dedupe key.
 """
 
 from __future__ import annotations
@@ -17,9 +18,11 @@ import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, Protocol, cast
-from urllib.parse import urlsplit, urlunsplit
+from urllib.parse import parse_qsl, urlsplit, urlunsplit
 
 from regwatch.config import (
+    KEEP_LANGS,
+    LANG_CODES,
     SEED_REGULATIONS,
     SOURCE_DOMAINS,
     SOURCE_URL_PREFIXES,
@@ -151,6 +154,40 @@ def allowed_domain(url: str) -> str | None:
             if prefixes is None or (host + parts.path).startswith(prefixes):
                 return d
             return None
+    return None
+
+
+def _foreign_code(token: str) -> str | None:
+    """`token` as a language code (`zh-TW` -> `zh`) if it is a dropped language, else None."""
+    code = token.lower().split("-", 1)[0]
+    return code if code in LANG_CODES and code not in KEEP_LANGS else None
+
+
+def foreign_language(url: str) -> str | None:
+    """The non-kept language code marking `url` as a language copy, else None.
+
+    Markers: first path segment, segment after `legal-content`, last segment suffix `_xx`
+    (extension stripped), and a `prefLang` / `locale` / `lang` query parameter.
+    """
+    parts = urlsplit(url)
+    segs = [s for s in parts.path.split("/") if s]
+    candidates: list[str] = []
+    if segs:
+        candidates.append(segs[0])
+    for i, seg in enumerate(segs[:-1]):
+        if seg.lower() == "legal-content":
+            candidates.append(segs[i + 1])
+    if segs:
+        stem = segs[-1].rsplit(".", 1)[0]
+        if "_" in stem:
+            candidates.append(stem.rsplit("_", 1)[1])
+    for name, value in parse_qsl(parts.query):
+        if name.lower() in ("preflang", "locale", "lang"):
+            candidates.append(value)
+    for c in candidates:
+        code = _foreign_code(c)
+        if code is not None:
+            return code
     return None
 
 

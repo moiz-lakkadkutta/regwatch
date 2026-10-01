@@ -67,6 +67,12 @@ SOURCE_URL_PREFIXES: dict[str, tuple[str, ...]] = {
     "shopify.com": ("www.shopify.com/blog/", "shopify.com/blog/"),
 }
 
+# Language copies: URLs marked with a code in LANG_CODES - KEEP_LANGS are dropped at search/extract.
+KEEP_LANGS: frozenset[str] = frozenset({"en", "de"})
+LANG_CODES: frozenset[str] = frozenset(
+    "bg cs da de el en es et fi fr ga hr hu it lt lv mt nl pl pt ro sk sl sv ru ja ko zh".split()
+)
+
 # Seed regulations: what the first crawl looks for. Dates are as known on 2026-09-14 — verify at build.
 SEED_REGULATIONS: list[dict[str, str]] = [
     {
