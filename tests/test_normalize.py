@@ -619,3 +619,29 @@ def test_normalize_all_survives_normalize_raising(
     assert any(
         bad in r.getMessage() and r.levelno == logging.ERROR and r.exc_info for r in caplog.records
     )
+
+
+def test_normalize_all_stops_paying_when_the_calling_thread_raises(
+    tmp_settings: Settings, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class _CountingBackend(_StubBackend):
+        def __init__(self) -> None:
+            super().__init__(delay=0.05)
+            self.n_calls = 0
+            self._lock = threading.Lock()
+
+        def complete(
+            self, *, model: str, messages: list[dict[str, str]], response_format: Any
+        ) -> LLMResult:
+            with self._lock:
+                self.n_calls += 1
+            return super().complete(model=model, messages=messages, response_format=response_format)
+
+    def boom(*args: Any, **kwargs: Any) -> None:
+        raise RuntimeError("store failed")
+
+    monkeypatch.setattr(norm, "store_regchange", boom)
+    backend = _CountingBackend()
+    with pytest.raises(RuntimeError, match="store failed"):
+        _run_all(_with_concurrency(tmp_settings, 2), _stub_rows(12), backend)
+    assert backend.n_calls < 12

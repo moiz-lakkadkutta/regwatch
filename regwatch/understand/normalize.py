@@ -368,7 +368,10 @@ def normalize_all(
             log.exception("normalize crashed url=%s", doc.url)
             return None, own
 
-    with ThreadPoolExecutor(max_workers=workers) as pool:
+    # No `with`: its exit waits for every queued call, so an error (or Ctrl-C) on this thread
+    # would still pay for all remaining model calls. Cancel the queue instead.
+    pool = ThreadPoolExecutor(max_workers=workers)
+    try:
         for row, (result, own) in zip(rows, pool.map(run, jobs), strict=True):
             ledger.merge(own)
             if result is None:
@@ -387,6 +390,10 @@ def normalize_all(
             store_regchange(
                 s, result.change, content_hash=row.content_hash, model=settings.extractor_model
             )
+    except BaseException:
+        pool.shutdown(wait=False, cancel_futures=True)
+        raise
+    pool.shutdown()
     summary = NormalizeSummary(
         n_docs=len(rows),
         n_ok=n_ok_first_try + n_retried,
