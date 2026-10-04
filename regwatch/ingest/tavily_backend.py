@@ -158,6 +158,10 @@ def allowed_domain(url: str) -> str | None:
     return None
 
 
+# Query parameters that select a page language: checked by `foreign_language`,
+# dropped by `normalize_url`.
+LANG_QUERY_PARAMS = frozenset({"preflang", "locale", "lang"})
+
 # `de`, `zh-TW`, `pt-br`, `zh-hant`: a bare code, optionally with a region or script subtag.
 _LANG_TOKEN = re.compile(r"[a-z]{2}(-[a-z]{2}|-[a-z]{4})?", re.IGNORECASE)
 
@@ -191,7 +195,7 @@ def foreign_language(url: str) -> str | None:
         if "_" in stem and "-" not in stem.rsplit("_", 1)[1]:
             candidates.append(stem.rsplit("_", 1)[1])
     for name, value in parse_qsl(parts.query):
-        if name.lower() in ("preflang", "locale", "lang"):
+        if name.lower() in LANG_QUERY_PARAMS:
             candidates.append(value)
     for c in candidates:
         code = _foreign_code(c)
@@ -205,14 +209,18 @@ def is_allowed(url: str) -> bool:
 
 
 def normalize_url(url: str) -> str:
-    """Dedupe key: lowercase scheme+host, no fragment, no utm_* params, no trailing slash."""
+    """Dedupe key: lowercase scheme+host; no fragment, utm_*/language params or trailing slash."""
     parts = urlsplit(url.strip())
     scheme = parts.scheme.lower()
     netloc = parts.netloc.lower()
     path = parts.path or "/"
     if len(path) > 1 and path.endswith("/"):
         path = path.rstrip("/") or "/"
-    query = "&".join(p for p in parts.query.split("&") if p and not p.startswith("utm_"))
+    query = "&".join(
+        p
+        for p in parts.query.split("&")
+        if p and not p.startswith("utm_") and p.split("=", 1)[0].lower() not in LANG_QUERY_PARAMS
+    )
     return urlunsplit((scheme, netloc, path, query, ""))
 
 

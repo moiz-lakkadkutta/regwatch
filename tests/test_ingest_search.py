@@ -10,6 +10,7 @@ from regwatch.ingest.tavily_backend import (
     LiveTavilyBackend,
     allowed_domain,
     foreign_language,
+    normalize_url,
 )
 from tests.fakes import RecordingBackend
 
@@ -137,6 +138,7 @@ def test_allowed_domain_table(url: str, expected: str | None) -> None:
         ("https://commission.europa.eu/law/timeshare-directive_en", None),
         ("https://commission.europa.eu/law/timeshare-directive_en?prefLang=fi", "fi"),
         ("https://eur-lex.europa.eu/legal-content/sl/TXT/?uri=CELEX:32023L2673", "sl"),
+        ("https://eur-lex.europa.eu/legal-content/tr/LSU?uri=CELEX%3A32023L2673", "tr"),
         ("https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:32023L2673", None),
         ("https://eur-lex.europa.eu/EN/legal-content/summary/withdrawal.html", None),
         ("https://green-forum.ec.europa.eu/document/download/x/eudr_da", "da"),
@@ -182,3 +184,22 @@ def test_search_drops_foreign_language_hits(caplog: pytest.LogCaptureFixture) ->
         )
     assert {h.url for h in hits} == {"https://help.shopify.com/en/manual/x"}
     assert any("dropped foreign-language hit" in r.getMessage() for r in caplog.records)
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        (
+            "https://help.shopify.com/en/manual/your-account/privacy/gdpr/subprocessors?locale=en",
+            "https://help.shopify.com/en/manual/your-account/privacy/gdpr/subprocessors",
+        ),
+        ("https://example.eu/page?prefLang=de&id=7", "https://example.eu/page?id=7"),
+        ("https://example.eu/page?LANG=en&utm_source=x", "https://example.eu/page"),
+        (
+            "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023L2673",
+            "https://eur-lex.europa.eu/legal-content/EN/TXT?uri=CELEX:32023L2673",
+        ),
+    ],
+)
+def test_normalize_url_drops_language_query_params(url: str, expected: str) -> None:
+    assert normalize_url(url) == expected

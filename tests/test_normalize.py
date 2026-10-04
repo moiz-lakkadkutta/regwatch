@@ -645,3 +645,8 @@ def test_normalize_all_stops_paying_when_the_calling_thread_raises(
     with pytest.raises(RuntimeError, match="store failed"):
         _run_all(_with_concurrency(tmp_settings, 2), _stub_rows(12), backend)
     assert backend.n_calls < 12
+
+
+def test_default_input_cap_reaches_late_articles() -> None:
+    # Directive (EU) 2023/2673 inserts Art. 11a (withdrawal function) at char ~66,000 of ~106,000.
+    assert Settings(_env_file=None).normalize_max_chars >= 120_000  # type: ignore[call-arg]
