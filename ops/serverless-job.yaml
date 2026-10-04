@@ -20,7 +20,7 @@ env:                        # every non-secret variable from .env.example
   REGWATCH_EXTRACTOR_PRICE_OUT_PER_MTOK: "0.60"    # PLACEHOLDER
   REGWATCH_CLASSIFIER_PRICE_IN_PER_MTOK: "1.00"    # PLACEHOLDER
   REGWATCH_CLASSIFIER_PRICE_OUT_PER_MTOK: "3.00"   # PLACEHOLDER
-  REGWATCH_NORMALIZE_MAX_CHARS: "60000"
+  REGWATCH_NORMALIZE_MAX_CHARS: "200000"
   REGWATCH_REPORT_EMAIL: ""
   REGWATCH_TIME_RANGE: year                        # first run: year; the daily workflow passes month
 env_secret:                 # SecretStash secret `regwatch-keys` (runbook step 4)

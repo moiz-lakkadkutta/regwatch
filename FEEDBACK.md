@@ -80,3 +80,11 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   (PLACEHOLDER prices). Quality gap: the live normalisation of `eli/dir/2023/2673/oj` summarised it as a
   financial-services directive (effective 2024-12-09) and Ultra correctly said `does_not` for a furniture shop; the
   withdrawal-function text starts at char 53,132 of 106,388 (input cap 60,000). Seed not re-recorded.
+- (2026-10-04, fourth live crawl, 200k-char input cap) seed + `crawl --stage all`: 3 min 30 s, 40 Tavily credits,
+  28 documents; normalise **27/28** (12 first try, 15 retried, 1 dropped by the grounding check, 0 at max_tokens),
+  $0.1159; classify 27 → 13 apply / 11 don't / 3 unclear, 43 to-dos, 0 dropped, $0.1208 (PLACEHOLDER prices).
+  The tr eur-lex copy was dropped and the `?locale=` duplicate collapsed. With the full text Lightning now dates
+  Directive (EU) 2023/2673 correctly (2026-06-19, 4/4 runs) and lists the withdrawal-function obligation, but it
+  still frames every obligation as "for financial services" (the act's title), so Ultra answers `does_not` for a
+  furniture shop (5/5 runs). A prompt rule ("judge scope from the provision, not the title") changed nothing with
+  thinking off (3/3 runs) and was reverted. Guidance pages (help.shopify, IHK) restating Art. 11a classify `applies`.

@@ -35,7 +35,8 @@ class Settings(BaseSettings):
         default=0.60, alias="REGWATCH_EXTRACTOR_PRICE_OUT_PER_MTOK"
     )
     # Characters of markdown sent to the extractor; quotes are still validated on the full text.
-    normalize_max_chars: int = Field(default=60_000, alias="REGWATCH_NORMALIZE_MAX_CHARS")
+    # 200k keeps late articles of long acts (2023/2673 Art. 11a sits at ~66k of ~106k chars).
+    normalize_max_chars: int = Field(default=200_000, alias="REGWATCH_NORMALIZE_MAX_CHARS")
     normalize_concurrency: int = Field(default=4, alias="REGWATCH_NORMALIZE_CONCURRENCY")
     # Lightning reasons by default and writes the trace into `content`, exhausting max_tokens
     # before any JSON; off unless set (sent as chat_template_kwargs.enable_thinking).
@@ -74,7 +75,7 @@ SOURCE_URL_PREFIXES: dict[str, tuple[str, ...]] = {
 # Language copies: URLs marked with a code in LANG_CODES - KEEP_LANGS are dropped at search/extract.
 KEEP_LANGS: frozenset[str] = frozenset({"en", "de"})
 LANG_CODES: frozenset[str] = frozenset(
-    "bg cs da de el en es et fi fr ga hr hu it lt lv mt nl pl pt ro sk sl sv ru ja ko zh".split()
+    "bg cs da de el en es et fi fr ga hr hu it lt lv mt nl pl pt ro sk sl sv ru ja ko zh tr th".split()
 )
 
 # Seed regulations: what the first crawl looks for. Dates are as known on 2026-09-14 — verify at build.
