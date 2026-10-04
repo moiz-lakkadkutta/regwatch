@@ -37,6 +37,9 @@ class Settings(BaseSettings):
     # Characters of markdown sent to the extractor; quotes are still validated on the full text.
     normalize_max_chars: int = Field(default=60_000, alias="REGWATCH_NORMALIZE_MAX_CHARS")
     normalize_concurrency: int = Field(default=4, alias="REGWATCH_NORMALIZE_CONCURRENCY")
+    # Lightning reasons by default and writes the trace into `content`, exhausting max_tokens
+    # before any JSON; off unless set (sent as chat_template_kwargs.enable_thinking).
+    extractor_thinking: bool = Field(default=False, alias="REGWATCH_EXTRACTOR_THINKING")
     # USD per million tokens for the classifier model. PLACEHOLDERS — confirm against Token Factory pricing.
     classifier_price_in_per_mtok: float = Field(
         default=1.00, alias="REGWATCH_CLASSIFIER_PRICE_IN_PER_MTOK"

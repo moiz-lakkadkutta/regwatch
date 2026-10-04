@@ -156,6 +156,7 @@ class LiveLLMBackend:
         self._client: Any = OpenAI(
             base_url=settings.tokenfactory_base_url, api_key=settings.nebius_api_key
         )
+        self._no_thinking_model = None if settings.extractor_thinking else settings.extractor_model
 
     def complete(
         self,
@@ -170,6 +171,8 @@ class LiveLLMBackend:
             "temperature": 0,
             "max_tokens": 4096,
         }
+        if model == self._no_thinking_model:
+            kwargs["extra_body"] = {"chat_template_kwargs": {"enable_thinking": False}}
         try:
             if response_format is not None:
                 resp = self._client.chat.completions.create(
@@ -189,7 +192,10 @@ class LiveLLMBackend:
                 resp = self._client.chat.completions.create(**kwargs)
             else:
                 raise
-        text = resp.choices[0].message.content or ""
+        choice = resp.choices[0]
+        text = choice.message.content or ""
+        if choice.finish_reason == "length":
+            log.warning("model %s stopped at max_tokens (finish_reason=length)", model)
         if resp.usage is None:
             log.warning("model %s returned no usage; counting zero tokens", model)
             usage = LLMUsage()
