@@ -67,3 +67,16 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   PLACEHOLDER prices. Cause: **53 of 63 calls returned exactly `completion_tokens=4096`** — the `max_tokens=4096` cap in
   `LiveLLMBackend` truncates Lightning's output mid-JSON. The offline fixtures never reached it (avg 217 completion
   tokens). The seed withdrawal document failed this way, so `examples/seed-run` was **not** re-recorded from this run.
+- (2026-10-04, Lightning thinking) Root cause of the 4096-token failures: Nemotron 3.5 Lightning on Token Factory reasons by
+  default and writes the trace ("Here's a thinking process: …") into `message.content` — `reasoning_content` stays
+  None — so `response_format` json_schema is not honoured and the call ends `finish_reason=length` with
+  `reasoning_tokens=4096`. Same prompt, one page (help.shopify withdrawal): system `/no_think` → still 4096 reasoning
+  tokens (13.9 s); `reasoning_effort="low"` → same; `extra_body={"chat_template_kwargs": {"enable_thinking": false}}`
+  → **262 completion tokens, valid JSON, 1.3 s**. Suggest documenting the switch on the model card and returning the
+  trace in `reasoning_content`.
+  Third live crawl (seed + `crawl --stage all`, 08:51Z): **3 min 22 s**, 44 Tavily credits, 40 documents;
+  normalise 33/40 (18 first try, 15 retried, 7 dropped by the grounding check — 0 hit max_tokens), $0.1233;
+  Ultra classify 33 changes → 15 apply / 14 don't / 4 unclear, 46 to-dos, 0 dropped, 0 failed, $0.1300
+  (PLACEHOLDER prices). Quality gap: the live normalisation of `eli/dir/2023/2673/oj` summarised it as a
+  financial-services directive (effective 2024-12-09) and Ultra correctly said `does_not` for a furniture shop; the
+  withdrawal-function text starts at char 53,132 of 106,388 (input cap 60,000). Seed not re-recorded.

@@ -1,6 +1,7 @@
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -109,3 +110,62 @@ def test_live_backend_skipped_without_key() -> None:
     )
     assert result.text.strip()
     assert result.usage.prompt_tokens > 0
+
+
+class _RecordingCompletions:
+    """Stands in for `client.chat.completions`; returns one canned reply per call."""
+
+    def __init__(self, finish_reason: str = "stop") -> None:
+        self.calls: list[dict[str, object]] = []
+        self.finish_reason = finish_reason
+
+    def create(self, **kw: object) -> SimpleNamespace:
+        self.calls.append(kw)
+        return SimpleNamespace(
+            choices=[
+                SimpleNamespace(
+                    finish_reason=self.finish_reason, message=SimpleNamespace(content="{}")
+                )
+            ],
+            usage=SimpleNamespace(prompt_tokens=10, completion_tokens=4096),
+            model=kw["model"],
+        )
+
+
+def _live_with(completions: _RecordingCompletions) -> tuple[LiveLLMBackend, Settings]:
+    settings = Settings(NEBIUS_API_KEY="k", _env_file=None)  # type: ignore[call-arg]
+    backend = LiveLLMBackend(settings)
+    backend._client = SimpleNamespace(chat=SimpleNamespace(completions=completions))
+    return backend, settings
+
+
+def test_live_backend_turns_thinking_off_for_the_extractor_only() -> None:
+    completions = _RecordingCompletions()
+    backend, settings = _live_with(completions)
+    backend.complete(model=settings.extractor_model, messages=_messages("u"), response_format=None)
+    backend.complete(model=settings.classifier_model, messages=_messages("u"), response_format=None)
+    extractor_call, classifier_call = completions.calls
+    assert extractor_call["extra_body"] == {"chat_template_kwargs": {"enable_thinking": False}}
+    assert "extra_body" not in classifier_call
+
+
+def test_live_backend_extractor_thinking_can_be_turned_back_on() -> None:
+    completions = _RecordingCompletions()
+    settings = Settings(  # type: ignore[call-arg]
+        NEBIUS_API_KEY="k", REGWATCH_EXTRACTOR_THINKING=True, _env_file=None
+    )
+    backend = LiveLLMBackend(settings)
+    backend._client = SimpleNamespace(chat=SimpleNamespace(completions=completions))
+    backend.complete(model=settings.extractor_model, messages=_messages("u"), response_format=None)
+    assert "extra_body" not in completions.calls[0]
+
+
+def test_live_backend_warns_when_the_reply_hits_max_tokens(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    backend, settings = _live_with(_RecordingCompletions(finish_reason="length"))
+    with caplog.at_level("WARNING", logger="regwatch.understand.llm_backend"):
+        backend.complete(
+            model=settings.extractor_model, messages=_messages("u"), response_format=None
+        )
+    assert any("finish_reason=length" in r.getMessage() for r in caplog.records)
