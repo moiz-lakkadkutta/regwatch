@@ -603,3 +603,100 @@ def test_feed_multi_item_group_keeps_instrument_subline(pages_client: TestClient
     html = pages_client.get("/feed").text
     assert _section(html, "withdrawal").count('<p class="law">') == 1
     assert _section(html, "eudr").count('<p class="law">') == 1
+
+
+# ---------- sectioned acts collapse their non-applying sections ----------
+
+ACT_URL = "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023L2673"
+ACT_NAME = "Directive (EU) 2023/2673"
+
+
+def _add_sections(
+    client: TestClient, url: str, decisions: list[str], tag: str = "withdrawal"
+) -> None:
+    import regwatch.app as appmod
+
+    with session(appmod.engine) as s:
+        prof = appmod.current_profile(s)
+        assert prof is not None and prof.id is not None
+        s.add(
+            DocumentRow(
+                url=url,
+                content_hash="hash-act",
+                source_domain="eur-lex.europa.eu",
+                published_date="2023-11-28",
+                fetched_at=datetime(2026, 7, 1, 8, 0),
+                markdown="# Act\n\nQuote.\n",
+                regulation_tags=json.dumps([tag]),
+            )
+        )
+        for n, decision in enumerate(decisions, start=1):
+            row = RegChangeRow(
+                document_url=url,
+                content_hash="hash-act",
+                model="nvidia/Nemotron-3_5-Lightning",
+                instrument=f"{ACT_NAME} — Article {n}",
+                jurisdiction="EU",
+                summary=f"Section {n} summary.",
+                effective_dates="[]",
+                obligations=json.dumps([{"text": "Do it.", "quote": "Quote."}]),
+                created_at=datetime(2026, 7, 10, 9, n),
+            )
+            s.add(row)
+            s.commit()
+            s.refresh(row)
+            assert row.id is not None
+            s.add(
+                ApplicabilityRow(
+                    profile_id=prof.id,
+                    regchange_id=row.id,
+                    decision=decision,
+                    reasons=json.dumps(["Because."]),
+                    todos="[]",
+                    model="nvidia/Nemotron-3-Ultra-550b-a55b",
+                    cost_usd=0.01,
+                )
+            )
+            s.commit()
+
+
+def test_feed_collapses_does_not_sections_under_act(seed_client: TestClient) -> None:
+    _add_sections(seed_client, ACT_URL, ["applies", "does_not", "does_not"])
+    html = seed_client.get("/feed").text
+    assert f"2 other provisions of {ACT_NAME} don&#39;t apply to you" in html
+    assert f"{ACT_NAME} — Article 1" in html
+    assert f"{ACT_NAME} — Article 2" not in html
+    assert f"{ACT_NAME} — Article 3" not in html
+    assert html.count("other provisions of") == 1
+
+
+def test_feed_collapse_line_singular(seed_client: TestClient) -> None:
+    _add_sections(seed_client, ACT_URL, ["applies", "unclear", "does_not"])
+    html = seed_client.get("/feed").text
+    assert f"1 other provision of {ACT_NAME} doesn&#39;t apply to you" in html
+    assert f"{ACT_NAME} — Article 1" in html and f"{ACT_NAME} — Article 2" in html
+    assert f"{ACT_NAME} — Article 3" not in html
+
+
+def test_feed_all_does_not_act_is_one_item_with_count(seed_client: TestClient) -> None:
+    _add_sections(seed_client, ACT_URL, ["does_not", "does_not", "does_not"])
+    html = seed_client.get("/feed").text
+    assert html.count(f"{ACT_NAME} — Article") == 1
+    assert f"2 other provisions of {ACT_NAME} don&#39;t apply to you" in html
+
+
+def test_feed_single_change_documents_have_no_collapse_line(pages_client: TestClient) -> None:
+    html = pages_client.get("/feed").text
+    assert "other provision" not in html
+
+
+def test_month_and_detail_render_sectioned_instrument(seed_client: TestClient) -> None:
+    _add_sections(seed_client, ACT_URL, ["applies", "does_not"])
+    import regwatch.app as appmod
+
+    with session(appmod.engine) as s:
+        rows = s.exec(select(RegChangeRow).where(RegChangeRow.document_url == ACT_URL)).all()
+    assert seed_client.get("/month").status_code == 200
+    detail = seed_client.get(f"/change/{rows[0].id}")
+    assert detail.status_code == 200
+    assert f"{ACT_NAME} — Article 1" in detail.text
