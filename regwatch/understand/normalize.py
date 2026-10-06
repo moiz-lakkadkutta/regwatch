@@ -421,8 +421,9 @@ def normalize_act(
     The whole-act call (`_act_metadata`, truncated at `normalize_max_chars`) only supplies the
     instrument, jurisdiction and dates; its obligations are discarded without a quote check.
     Each `split_act` section is then normalised on its own text, sequentially, with quotes
-    validated against the FULL markdown and the usual single retry. A section that fails or
-    yields nothing is skipped."""
+    validated against the FULL markdown and the usual single retry. A section that fails on
+    quotes/JSON/schema or yields nothing is skipped; a backend error in ANY section fails the
+    whole act (no changes), so it is retried on the next crawl."""
     whole = _act_metadata(document, backend=backend, settings=settings, ledger=ledger)
     if whole.change is not None:
         instrument = whole.change.instrument
@@ -472,6 +473,22 @@ def normalize_act(
             )
         )
     n_failed = sum(r.change is None for _, r in sections)
+    backend_errors = [
+        f"{sec.label}: {r.error}"
+        for sec, r in sections
+        if r.error is not None and r.error.startswith("backend:")
+    ]
+    if backend_errors:
+        # A transient backend error must not leave the act "done" with missing sections: store
+        # nothing so the next crawl retries the whole act (dropped quotes/JSON stay per-section).
+        log.warning(
+            "act %s: backend error in %d of %d sections (%s); storing nothing, will retry",
+            document.url,
+            len(backend_errors),
+            len(sections),
+            "; ".join(backend_errors),
+        )
+        changes = []
     log.log(
         logging.WARNING if n_failed else logging.INFO,
         "act %s: %d of %d sections stored, %d failed",
@@ -487,7 +504,8 @@ def normalize_act(
 class NormalizeSummary:
     """`n_retried` counts documents that were OK only after the retry; `n_failed` stored nothing.
     So n_docs == n_ok_first_try + n_retried + n_failed and n_ok == n_ok_first_try + n_retried.
-    A long act is one document: ok if ≥ 1 section stored (retried if any section call retried).
+    A long act is one document: ok if ≥ 1 section stored (retried if any section call retried);
+    failed if no section stored or any section hit a backend error.
     `n_changes_new` counts stored changes, so one per stored section of a long act."""
 
     n_docs: int

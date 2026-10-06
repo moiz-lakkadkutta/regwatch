@@ -957,3 +957,43 @@ def test_crawl_lines_count_a_long_act_as_one_document(
     ]
     assert lines[0].startswith("normalize: 17 documents · 15 ok first try (88%) · 1 retried")
     assert lines[1].startswith("crawl: 16 new documents · 17 new changes · ")
+
+
+class _FailOnCall:
+    """Delegates to a fixture backend but raises on the n-th call (1-based)."""
+
+    def __init__(self, inner: FixtureLLMBackend, n: int) -> None:
+        self.inner, self.n, self.count = inner, n, 0
+
+    def complete(self, **kw: Any) -> LLMResult:
+        self.count += 1
+        if self.count == self.n:
+            raise TimeoutError("slow")
+        return self.inner.complete(**kw)
+
+
+def test_backend_error_in_one_section_fails_the_whole_act_and_retries_next_crawl(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    settings = _act_settings(tmp_path)
+    replies = [
+        _whole_act_reply(),
+        _reply(_section_payload([{"text": "Keep contract records.", "quote": ACT_QUOTE_1}])),
+        _reply(_section_payload([{"text": "Offer a withdrawal function.", "quote": ACT_QUOTE_2}])),
+        _reply(_section_payload([])),
+    ]
+    inner = FixtureLLMBackend(_fixture_dir(tmp_path, ACT_URL, replies))
+    engine = make_engine(settings)
+    with Session(engine) as s, caplog.at_level(logging.WARNING):
+        s.add(_act_row())
+        s.commit()
+        # call 3 = section "Article 1, point (2)"
+        summary = normalize_all(s, backend=_FailOnCall(inner, 3), settings=settings)
+        assert summary.n_docs == 1 and summary.n_failed == 1 and summary.n_ok == 0
+        assert summary.n_changes_new == 0
+        assert s.exec(select(RegChangeRow)).all() == []
+        assert [d.url for d in documents_needing_normalize(s)] == [ACT_URL]
+    assert any(
+        "backend:TimeoutError" in r.getMessage() and ACT_URL in r.getMessage()
+        for r in caplog.records
+    )
