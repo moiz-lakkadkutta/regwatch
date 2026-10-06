@@ -1,10 +1,11 @@
 import json
 import logging
 import re
+import shutil
 import threading
 import time
 from dataclasses import asdict
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -30,17 +31,20 @@ from regwatch.understand.normalize import (
     build_messages,
     load_prompt,
     normalize,
+    normalize_act,
     normalize_all,
     parse_payload,
     response_format,
     response_json_schema,
     to_regchange,
 )
+from regwatch.understand.sections import is_long_act, split_act
 from tests.conftest import LLM_FIXTURES_ROOT
 
 EXTRACT = Path(__file__).resolve().parent / "fixtures" / "tavily" / "extract"
 URL_2673 = "https://eur-lex.europa.eu/eli/dir/2023/2673/oj"
 URL_IHK = "https://www.ihk.de/themen/umwelt-energie/eudr-kleinstunternehmen-fristen"
+URL_2011_83 = "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32011L0083"
 URL_US = "https://help.shopify.com/en/manual/checkout-settings/refund-return-policy/us-return-refund-rules"
 
 
@@ -650,3 +654,222 @@ def test_normalize_all_stops_paying_when_the_calling_thread_raises(
 def test_default_input_cap_reaches_late_articles() -> None:
     # Directive (EU) 2023/2673 inserts Art. 11a (withdrawal function) at char ~66,000 of ~106,000.
     assert Settings(_env_file=None).normalize_max_chars >= 120_000  # type: ignore[call-arg]
+
+
+# --- long acts: one whole-act call for metadata, then one call per section -------------------
+
+ACT_URL = "https://eur-lex.europa.eu/eli/dir/2099/1/oj"
+ACT_QUOTE_1 = "the trader shall keep a record of every distance contract concluded with a consumer"
+ACT_QUOTE_2 = (
+    "the trader shall ensure that the consumer can also exercise the right of withdrawal "
+    "by means of a withdrawal function"
+)
+ACT_MARKDOWN = (
+    "Directive (EU) 2099/1 of the European Parliament and of the Council amending Directive "
+    "2011/83/EU as regards distance contracts\n\n"
+    + "".join(
+        f"({i}) Recital {i}: consumers buying at a distance should be able to rely on clear "
+        "information and a simple way to withdraw from contracts concluded online.\n\n"
+        for i in range(1, 15)
+    )
+    + "HAVE ADOPTED THIS DIRECTIVE:\n\n"
+    "Article 1\n\n"
+    "Directive 2011/83/EU is amended as follows:\n\n"
+    f"(1)Article 3 is amended as follows: {ACT_QUOTE_1} for five years.\n\n"
+    "(2)the following Article is inserted:\n\n"
+    f"'Article 11a Withdrawal function: For distance contracts concluded by means of an online "
+    f"interface, {ACT_QUOTE_2}.'\n\n"
+    "Article 2\n\n"
+    "Member States shall adopt and publish the laws necessary to comply with this Directive.\n\n"
+    "Article 3\n\n"
+    "This Directive is addressed to the Member States.\n"
+)
+ACT_MIN_CHARS = 1_500
+
+
+def _act_settings(tmp_path: Path) -> Settings:
+    return Settings(
+        REGWATCH_DB_URL=f"sqlite:///{tmp_path / 'act.db'}",
+        REGWATCH_ACT_SPLIT_MIN_CHARS=ACT_MIN_CHARS,
+    )
+
+
+def _act_row() -> DocumentRow:
+    return DocumentRow(
+        url=ACT_URL,
+        content_hash=content_hash(ACT_MARKDOWN),
+        source_domain="eur-lex.europa.eu",
+        markdown=ACT_MARKDOWN,
+        regulation_tags=json.dumps(["withdrawal"]),
+    )
+
+
+def _section_payload(
+    obligations: list[dict[str, str]], *, jurisdiction: str = "EU", dates: list[str] | None = None
+) -> dict[str, Any]:
+    return _payload(
+        obligations,
+        instrument="ignored for sections",
+        jurisdiction=jurisdiction,
+        effective_dates=dates or [],
+    )
+
+
+def _whole_act_reply() -> dict[str, Any]:
+    return _reply(
+        _payload(
+            [{"text": "Offer a withdrawal function.", "quote": ACT_QUOTE_2}],
+            instrument="Directive (EU) 2099/1",
+            effective_dates=["2026-06-19"],
+        )
+    )
+
+
+def test_synthetic_act_is_long_and_splits_into_three_sections(tmp_path: Path) -> None:
+    settings = _act_settings(tmp_path)
+    doc = _act_row().to_schema()
+    assert is_long_act(doc, settings)
+    assert [s.label for s in split_act(ACT_MARKDOWN)] == [
+        "Article 1, point (1)",
+        "Article 1, point (2)",
+        "Article 2 – Article 3",
+    ]
+
+
+def test_normalize_all_stores_one_change_per_section(
+    tmp_path: Path, manifest: list[dict[str, Any]]
+) -> None:
+    settings = _act_settings(tmp_path)
+    replies = [
+        _whole_act_reply(),
+        # point (1): jurisdiction unclear, no dates -> act's jurisdiction and dates
+        _reply(
+            _section_payload(
+                [{"text": "Keep contract records.", "quote": ACT_QUOTE_1}], jurisdiction="unclear"
+            )
+        ),
+        # point (2): own date wins
+        _reply(
+            _section_payload(
+                [{"text": "Offer a withdrawal function.", "quote": ACT_QUOTE_2}],
+                dates=["2026-07-01"],
+            )
+        ),
+        # Articles 2-3: nothing for a merchant -> not stored
+        _reply(_section_payload([])),
+    ]
+    root = _fixture_dir(tmp_path, ACT_URL, replies)
+    shutil.copy(LLM_FIXTURES_ROOT / "normalize" / "eurlex-2011-83.json", root)
+    shutil.copy(LLM_FIXTURES_ROOT / "normalize" / "ihk-eudr-kmu.json", root)
+    backend = FixtureLLMBackend(root)
+    short = [m for m in _manifest_rows(manifest) if m.url in (URL_2011_83, URL_IHK)]
+    engine = make_engine(settings)
+    with Session(engine) as s:
+        s.add_all([_act_row(), *short])
+        s.commit()
+        ledger = ModelLedger.for_extractor(settings)
+        summary = normalize_all(s, backend=backend, settings=settings, ledger=ledger)
+    assert summary.n_docs == 3 and summary.n_failed == 0 and summary.n_ok == 3
+    assert summary.n_changes_new == 4  # 2 sections + 2 short documents
+    # the recorded IHK reply is the one that needs its retry; the act and 2011/83 do not
+    assert summary.line().startswith(
+        "normalize: 3 documents · 2 ok first try (67%) · 1 retried · 0 failed · $"
+    )
+    act_calls = [c for c in backend.calls if c[-1]["content"].endswith(ACT_URL)]
+    assert len(act_calls) == 4 and ledger.n_calls == len(backend.calls)
+    assert summary.prompt_tokens == ledger.prompt_tokens
+    assert summary.cost_usd == pytest.approx(ledger.cost_usd)
+    # section messages: Source URL first and last, the section hint, only the section's text
+    user = act_calls[2][-1]["content"]
+    assert user.splitlines()[0] == f"Source URL: {ACT_URL}"
+    assert user.splitlines()[-1] == f"Source URL: {ACT_URL}"
+    assert (
+        "Section: Article 1, point (2) of Directive (EU) 2099/1. Extract obligations from this "
+        "section only; other sections of the act are processed separately. The amended act named "
+        "in the section text decides who an obligation binds." in user
+    )
+    assert ACT_QUOTE_2 in user and ACT_QUOTE_1 not in user and "Recital 3" not in user
+    assert user.index("Section: ") < user.index("<document>")
+    with Session(engine) as s:
+        rows = s.exec(select(RegChangeRow).order_by(col(RegChangeRow.id))).all()
+        act_rows = [r for r in rows if r.document_url == ACT_URL]
+        assert [r.instrument for r in act_rows] == [
+            "Directive (EU) 2099/1 — Article 1, point (1)",
+            "Directive (EU) 2099/1 — Article 1, point (2)",
+        ]
+        assert [r.jurisdiction for r in act_rows] == ["EU", "EU"]
+        assert [r.to_schema().effective_dates for r in act_rows] == [
+            [date(2026, 6, 19)],
+            [date(2026, 7, 1)],
+        ]
+        assert all(r.content_hash == content_hash(ACT_MARKDOWN) for r in act_rows)
+        for r in act_rows:
+            assert r.to_schema().validate_quotes(ACT_MARKDOWN) == []
+        assert len([r for r in rows if r.document_url == URL_2011_83]) == 1
+        assert len([r for r in rows if r.document_url == URL_IHK]) == 1
+        assert documents_needing_normalize(s) == []
+
+
+def test_section_with_ungrounded_quote_is_retried_then_dropped(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    settings = _act_settings(tmp_path)
+    bad = [{"text": "Offer a button.", "quote": BAD_QUOTE}]
+    replies = [
+        _whole_act_reply(),
+        _reply(_section_payload([{"text": "Keep contract records.", "quote": ACT_QUOTE_1}])),
+        _reply(_section_payload(bad)),
+        _reply(_section_payload(bad)),  # the one retry, still ungrounded
+        _reply(_section_payload([])),
+    ]
+    backend = FixtureLLMBackend(_fixture_dir(tmp_path, ACT_URL, replies))
+    engine = make_engine(settings)
+    with Session(engine) as s, caplog.at_level(logging.WARNING):
+        s.add(_act_row())
+        s.commit()
+        summary = normalize_all(s, backend=backend, settings=settings)
+    assert len(backend.calls) == 5
+    assert "withdrawal button" in backend.calls[3][-1]["content"]  # retry lists the bad quote
+    assert summary.n_docs == 1 and summary.n_ok == 1 and summary.n_changes_new == 1
+    assert summary.n_retried == 1 and summary.n_failed == 0
+    assert any("Article 1, point (2)" in r.getMessage() for r in caplog.records)
+    with Session(engine) as s:
+        rows = s.exec(select(RegChangeRow)).all()
+        assert [r.instrument for r in rows] == ["Directive (EU) 2099/1 — Article 1, point (1)"]
+
+
+def test_act_metadata_falls_back_when_whole_act_call_fails(tmp_path: Path) -> None:
+    settings = _act_settings(tmp_path)
+    replies = [
+        {"text": "not json", "usage": {}},
+        {"text": "still not json", "usage": {}},
+        _reply(_section_payload([{"text": "Keep records.", "quote": ACT_QUOTE_1}])),
+        _reply(_section_payload([])),
+        _reply(_section_payload([])),
+    ]
+    backend = FixtureLLMBackend(_fixture_dir(tmp_path, ACT_URL, replies))
+    result = normalize_act(
+        _act_row().to_schema(),
+        backend=backend,
+        settings=settings,
+        ledger=ModelLedger.for_extractor(settings),
+    )
+    first_line = ACT_MARKDOWN.splitlines()[0][:120]
+    assert len(backend.calls) == 5
+    assert f"of {first_line}." in backend.calls[2][-1]["content"]
+    assert [c.instrument for c in result.changes] == [f"{first_line} — Article 1, point (1)"]
+    assert result.changes[0].jurisdiction == "EU"
+    assert result.changes[0].effective_dates == []
+
+
+def test_act_with_no_grounded_section_fails_and_stores_nothing(tmp_path: Path) -> None:
+    settings = _act_settings(tmp_path)
+    replies = [_whole_act_reply(), *[_reply(_section_payload([])) for _ in range(3)]]
+    backend = FixtureLLMBackend(_fixture_dir(tmp_path, ACT_URL, replies))
+    engine = make_engine(settings)
+    with Session(engine) as s:
+        s.add(_act_row())
+        s.commit()
+        summary = normalize_all(s, backend=backend, settings=settings)
+        assert summary.n_failed == 1 and summary.n_ok == 0 and summary.n_changes_new == 0
+        assert s.exec(select(RegChangeRow)).all() == []

@@ -4,6 +4,10 @@ The model returns a `NormalizedPayload` (no `document_url`, string dates); we tu
 `RegChange` and run `RegChange.validate_quotes()` on the FULL markdown. Offending quotes trigger one
 retry that lists them; whatever still fails afterwards is dropped (the whole document if nothing
 grounded remains). Nothing is stored unless `validate_quotes()` is empty. Never relaxed in a prompt.
+
+Long EUR-Lex acts (`is_long_act`) take `normalize_act`: one whole-act call for instrument,
+jurisdiction and dates only, then one call per `split_act` section; each section with grounded
+obligations becomes its own `RegChange` (`"<act> — <label>"`, same `document_url`).
 """
 
 from __future__ import annotations
@@ -31,6 +35,7 @@ from regwatch.understand.llm_backend import (
     ModelLedger,
     strict_schema,
 )
+from regwatch.understand.sections import Section, is_long_act, split_act
 
 log = logging.getLogger(__name__)
 
@@ -39,6 +44,13 @@ MIN_QUOTE_WORDS = 6  # stricter than validate_quotes, never looser
 _THINK_RE = re.compile(r"<think>.*?</think>", re.DOTALL)
 _FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL)
 _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+SECTION_HINT = (
+    "Section: {label} of {instrument}. Extract obligations from this section only; other "
+    "sections of the act are processed separately. The amended act named in the section text "
+    "decides who an obligation binds."
+)
+FALLBACK_JURISDICTION = "EU"
+FALLBACK_INSTRUMENT_CHARS = 120
 
 
 class ObligationOut(BaseModel):
@@ -99,10 +111,18 @@ def load_prompt() -> tuple[str, str]:
     return system, quotes_addendum
 
 
-def build_messages(document: Document, *, max_chars: int) -> tuple[list[dict[str, str]], bool]:
-    """(messages, truncated). The user message ends with `Source URL: <url>` (fixture key)."""
+def build_messages(
+    document: Document, *, max_chars: int, section: Section | None = None, instrument: str = ""
+) -> tuple[list[dict[str, str]], bool]:
+    """(messages, truncated). The user message starts and ends with `Source URL: <url>` (fixture
+    key). With `section`, the document is the section's text, preceded by `SECTION_HINT`."""
     system, _ = load_prompt()
-    markdown = document.markdown
+    markdown = section.text if section is not None else document.markdown
+    hint = (
+        SECTION_HINT.format(label=section.label, instrument=instrument) + "\n\n"
+        if section is not None
+        else ""
+    )
     truncated = len(markdown) > max_chars
     if truncated:
         log.warning(
@@ -116,6 +136,7 @@ def build_messages(document: Document, *, max_chars: int) -> tuple[list[dict[str
         f"{SOURCE_URL_PREFIX}{document.url}\n"
         f"Source domain: {document.source_domain}\n"
         f"Published: {document.published_date or 'unknown'}\n\n"
+        f"{hint}"
         f"<document>\n{markdown}\n</document>\n\n"
         f"{SOURCE_URL_PREFIX}{document.url}"
     )
@@ -203,9 +224,15 @@ class _Attempt:
     ledger: ModelLedger
     url: str
     truncated: bool
+    section: str | None = None  # label when this is one section of a long act
     usage: LLMUsage = field(default_factory=LLMUsage)
     cost_usd: float = 0.0
     retried: bool = False
+
+    @property
+    def where(self) -> str:
+        """Log suffix naming the section, empty for a whole document."""
+        return f" [{self.section}]" if self.section else ""
 
     def call(self, messages: list[dict[str, str]]) -> str:
         result = self.backend.complete(
@@ -220,13 +247,14 @@ class _Attempt:
         )
         self.cost_usd += cost
         log.info(
-            "model=%s prompt_tokens=%d completion_tokens=%d cost_usd=%.6f retried=%s url=%s",
+            "model=%s prompt_tokens=%d completion_tokens=%d cost_usd=%.6f retried=%s url=%s%s",
             result.model,
             result.usage.prompt_tokens,
             result.usage.completion_tokens,
             cost,
             self.retried,
             self.url,
+            self.where,
         )
         return result.text
 
@@ -234,7 +262,7 @@ class _Attempt:
         self, change: RegChange | None, *, error: str | None, dropped: list[str]
     ) -> NormalizeResult:
         if change is None:
-            log.warning("not normalised (%s): %s", error, self.url)
+            log.warning("not normalised (%s): %s%s", error, self.url, self.where)
         return NormalizeResult(
             change=change,
             retried=self.retried,
@@ -254,11 +282,17 @@ def normalize(
 ) -> NormalizeResult:
     """One document → grounded RegChange or a failure; one retry at most; never raises."""
     messages, truncated = build_messages(document, max_chars=settings.normalize_max_chars)
-    _, quotes_addendum, json_addendum = _prompt_sections()
     attempt = _Attempt(
         settings=settings, backend=backend, ledger=ledger, url=document.url, truncated=truncated
     )
+    return _grounded(attempt, messages, document)
 
+
+def _grounded(
+    attempt: _Attempt, messages: list[dict[str, str]], document: Document
+) -> NormalizeResult:
+    """Call, parse, validate quotes on the FULL `document.markdown`; one retry at most."""
+    _, quotes_addendum, json_addendum = _prompt_sections()
     try:
         reply = attempt.call(messages)
     except Exception as e:
@@ -302,7 +336,7 @@ def normalize(
     dropped = failed
     if dropped:
         for q in dropped:
-            log.warning("dropped quote (%s): %.80s", document.url, q)
+            log.warning("dropped quote (%s%s): %.80s", document.url, attempt.where, q)
         kept = [o for o in change.obligations if o.quote not in dropped]
         if not kept:
             return attempt.fail("ungrounded_all_dropped", dropped)
@@ -315,9 +349,116 @@ def normalize(
 
 
 @dataclass
+class ActResult:
+    """A long act: the whole-act call (metadata only) and one result per section, in order.
+
+    `changes` are the stored-ready ones: each has ≥ 1 obligation grounded in the FULL markdown."""
+
+    changes: list[RegChange]
+    whole: NormalizeResult
+    sections: list[tuple[Section, NormalizeResult]]
+
+    @property
+    def results(self) -> list[NormalizeResult]:
+        return [self.whole, *(r for _, r in self.sections)]
+
+    @property
+    def retried(self) -> bool:
+        return any(r.retried for r in self.results)
+
+    @property
+    def usage(self) -> LLMUsage:
+        return LLMUsage(
+            prompt_tokens=sum(r.usage.prompt_tokens for r in self.results),
+            completion_tokens=sum(r.usage.completion_tokens for r in self.results),
+        )
+
+    @property
+    def cost_usd(self) -> float:
+        return sum(r.cost_usd for r in self.results)
+
+
+def _fallback_instrument(markdown: str) -> str:
+    """The act's first non-blank markdown line (heading marks stripped), capped."""
+    for line in markdown.splitlines():
+        text = line.strip().lstrip("#").strip()
+        if text:
+            return text[:FALLBACK_INSTRUMENT_CHARS]
+    return ""
+
+
+def normalize_act(
+    document: Document, *, backend: LLMBackend, settings: Settings, ledger: ModelLedger
+) -> ActResult:
+    """A long act → one grounded RegChange per section with obligations; never raises.
+
+    The whole-act call (`normalize`, truncated at `normalize_max_chars`) only supplies the
+    instrument, jurisdiction and dates; its obligations are discarded. Each `split_act` section
+    is then normalised on its own text, sequentially, with quotes validated against the FULL
+    markdown and the usual single retry. A section that fails or yields nothing is skipped."""
+    whole = normalize(document, backend=backend, settings=settings, ledger=ledger)
+    if whole.change is not None:
+        instrument = whole.change.instrument
+        jurisdiction = whole.change.jurisdiction
+        dates = whole.change.effective_dates
+    else:
+        instrument = _fallback_instrument(document.markdown)
+        jurisdiction, dates = FALLBACK_JURISDICTION, []
+        log.warning("act metadata from fallback (%s): %s", instrument, document.url)
+
+    changes: list[RegChange] = []
+    sections: list[tuple[Section, NormalizeResult]] = []
+    for section in split_act(document.markdown):
+        messages, truncated = build_messages(
+            document,
+            max_chars=settings.normalize_max_chars,
+            section=section,
+            instrument=instrument,
+        )
+        attempt = _Attempt(
+            settings=settings,
+            backend=backend,
+            ledger=ledger,
+            url=document.url,
+            truncated=truncated,
+            section=section.label,
+        )
+        result = _grounded(attempt, messages, document)
+        sections.append((section, result))
+        if result.change is None:
+            continue
+        if not result.change.obligations:
+            log.info("no obligations, not stored: %s [%s]", document.url, section.label)
+            continue
+        own = result.change
+        changes.append(
+            own.model_copy(
+                update={
+                    "instrument": f"{instrument} — {section.label}",
+                    "jurisdiction": (
+                        jurisdiction
+                        if own.jurisdiction.strip().lower() == "unclear"
+                        else own.jurisdiction
+                    ),
+                    "effective_dates": own.effective_dates or dates,
+                }
+            )
+        )
+    log.info(
+        "act %s: %d sections, %d with grounded obligations",
+        document.url,
+        len(sections),
+        len(changes),
+    )
+    return ActResult(changes=changes, whole=whole, sections=sections)
+
+
+@dataclass
 class NormalizeSummary:
     """`n_retried` counts documents that were OK only after the retry; `n_failed` stored nothing.
-    So n_docs == n_ok_first_try + n_retried + n_failed and n_ok == n_ok_first_try + n_retried."""
+    So n_docs == n_ok_first_try + n_retried + n_failed and n_ok == n_ok_first_try + n_retried.
+    A long act is one document: ok if ≥ 1 section stored (retried if any of its calls retried).
+    `n_changes_new` counts stored changes, so one per stored section of a long act."""
 
     n_docs: int
     n_ok: int
@@ -352,7 +493,7 @@ def normalize_all(
     grounded ones. Failures store nothing and are retried on the next crawl."""
     ledger = ledger or ModelLedger.for_extractor(settings)
     rows = documents_needing_normalize(s)
-    n_ok_first_try = n_retried = n_failed = 0
+    n_ok_first_try = n_retried = n_failed = n_changes_new = 0
     prompt_tokens = completion_tokens = 0
     cost = 0.0
     # Schemas are built here, on the calling thread; workers only see plain Documents. Each call
@@ -360,9 +501,11 @@ def normalize_all(
     jobs = [row.to_schema() for row in rows]
     workers = max(1, settings.normalize_concurrency)
 
-    def run(doc: Document) -> tuple[NormalizeResult | None, ModelLedger]:
+    def run(doc: Document) -> tuple[NormalizeResult | ActResult | None, ModelLedger]:
         own = ModelLedger(ledger.price_in_per_mtok, ledger.price_out_per_mtok)
         try:
+            if is_long_act(doc, settings):  # section calls run sequentially in this worker
+                return normalize_act(doc, backend=backend, settings=settings, ledger=own), own
             return normalize(doc, backend=backend, settings=settings, ledger=own), own
         except Exception:
             log.exception("normalize crashed url=%s", doc.url)
@@ -380,16 +523,22 @@ def normalize_all(
             prompt_tokens += result.usage.prompt_tokens
             completion_tokens += result.usage.completion_tokens
             cost += result.cost_usd
-            if result.change is None:
+            if isinstance(result, ActResult):
+                changes = result.changes
+            else:
+                changes = [result.change] if result.change is not None else []
+            if not changes:
                 n_failed += 1
                 continue
             if result.retried:
                 n_retried += 1
             else:
                 n_ok_first_try += 1
-            store_regchange(
-                s, result.change, content_hash=row.content_hash, model=settings.extractor_model
-            )
+            for change in changes:
+                store_regchange(
+                    s, change, content_hash=row.content_hash, model=settings.extractor_model
+                )
+            n_changes_new += len(changes)
     except BaseException:
         pool.shutdown(wait=False, cancel_futures=True)
         raise
@@ -400,7 +549,7 @@ def normalize_all(
         n_ok_first_try=n_ok_first_try,
         n_retried=n_retried,
         n_failed=n_failed,
-        n_changes_new=n_ok_first_try + n_retried,
+        n_changes_new=n_changes_new,
         cost_usd=cost,
         prompt_tokens=prompt_tokens,
         completion_tokens=completion_tokens,
