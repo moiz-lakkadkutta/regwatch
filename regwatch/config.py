@@ -81,6 +81,9 @@ LANG_CODES: frozenset[str] = frozenset(
 )
 
 # Seed regulations: what the first crawl looks for. Dates are as known on 2026-09-14 — verify at build.
+SECTION_SEP = " — "  # joins an act's instrument and a section label: "<act> — <label>"
+
+
 SEED_REGULATIONS: list[dict[str, str]] = [
     {
         "tag": "withdrawal",

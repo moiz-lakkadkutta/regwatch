@@ -25,7 +25,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlmodel import Session
 
-from regwatch.config import Settings
+from regwatch.config import SECTION_SEP, Settings
 from regwatch.db import documents_needing_normalize, store_regchange
 from regwatch.schemas import Document, Obligation, RegChange
 from regwatch.understand.llm_backend import (
@@ -461,7 +461,7 @@ def normalize_act(
         changes.append(
             own.model_copy(
                 update={
-                    "instrument": f"{instrument} — {section.label}",
+                    "instrument": f"{instrument}{SECTION_SEP}{section.label}",
                     "jurisdiction": (
                         jurisdiction
                         if own.jurisdiction.strip().lower() == "unclear"

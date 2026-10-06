@@ -700,3 +700,14 @@ def test_month_and_detail_render_sectioned_instrument(seed_client: TestClient) -
     detail = seed_client.get(f"/change/{rows[0].id}")
     assert detail.status_code == 200
     assert f"{ACT_NAME} — Article 1" in detail.text
+
+
+@pytest.mark.parametrize("tag", ["", "not-a-seed-tag"])
+def test_feed_collapses_sections_of_untagged_act(seed_client: TestClient, tag: str) -> None:
+    _add_sections(seed_client, ACT_URL, ["applies", "does_not", "does_not"], tag=tag)
+    html = seed_client.get("/feed").text
+    assert html.count(f"2 other provisions of {ACT_NAME} don&#39;t apply to you") == 1
+    assert f"{ACT_NAME} — Article 1" in html
+    assert f"{ACT_NAME} — Article 2" not in html
+    assert f"{ACT_NAME} — Article 3" not in html
+    assert f"<h2>{ACT_NAME}</h2>" in html

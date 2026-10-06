@@ -24,6 +24,7 @@ from regwatch.config import (
     EU_COUNTRIES,
     PLATFORMS,
     REGULATION_LABELS,
+    SECTION_SEP,
     SEED_REGULATIONS,
     SOURCE_DOMAINS,
     Settings,
@@ -210,7 +211,8 @@ def _item(row: FeedRow, done_keys: set[str], today: date) -> FeedItem:
     )
 
 
-SECTION_SEP = " — "
+def _act_name(instrument: str) -> str:
+    return instrument.split(SECTION_SEP)[0]
 
 
 def _collapse_line(act: str, n: int) -> str:
@@ -234,7 +236,7 @@ def _collapse_sections(ordered: list[FeedItem]) -> list[FeedItem]:
         shown = [i for i in its if i.decision != "does_not"]
         if not shown:
             shown, hidden = hidden[:1], hidden[1:]
-        act = shown[-1].change.instrument.split(SECTION_SEP)[0]
+        act = _act_name(shown[-1].change.instrument)
         drop.update(i.id for i in hidden)
         note[shown[-1].id] = _collapse_line(act, len(hidden))
     return [replace(i, collapsed_line=note.get(i.id, "")) for i in ordered if i.id not in drop]
@@ -245,7 +247,7 @@ def _group(items: list[FeedItem]) -> list[FeedGroup]:
     newest item; inside a group: applies → unclear → does_not, newest first."""
     by_key: dict[str, list[FeedItem]] = {}
     for it in items:
-        by_key.setdefault(it.tag or it.change.instrument, []).append(it)
+        by_key.setdefault(it.tag or _act_name(it.change.instrument), []).append(it)
     seed_tags = [r["tag"] for r in SEED_REGULATIONS]
     tagged = [t for t in seed_tags if t in by_key]
     untagged = sorted(
