@@ -9,6 +9,7 @@
     <h3><a href="/change/{{it.id}}">{{it.change.instrument}}</a></h3>
     <p>{{it.change.summary}}</p>
     <div class="meta">{% if it.decision == "applies" and it.todos %}<span>{{it.todos|length}} to-do{% if it.todos|length != 1 %}s{% endif %}{% if it.next_due %} · {% if it.in_force %}in force since {{it.next_due|d}}{% else %}next due {{it.next_due|d}}{% endif %}{% endif %}</span>{% elif it.decision == "applies" %}<span>No to-dos yet — see the obligations</span>{% elif it.decision == "unclear" %}<span>Answer one question to find out</span>{% endif %}<span class="chip">{{it.source_domain}}</span></div>
+    {% if it.collapsed_line %}<p class="muted collapsed">{{it.collapsed_line}}</p>{% endif %}
   </article>{% endfor %}</section>{% endfor %}
 {% if unchecked %}<section class="group" id="unchecked"><h2>Not checked against your profile yet</h2><p class="law">Your profile changed. The next crawl re-checks every change; to do it now run <code>regwatch crawl --stage classify</code>.</p>
   {% for ch in unchecked %}<article class="card item"><span class="muted">{{ch.created_at|d}}</span><h3><a href="/change/{{ch.id}}">{{ch.instrument}}</a></h3><p>{{ch.summary}}</p></article>{% endfor %}</section>{% endif %}

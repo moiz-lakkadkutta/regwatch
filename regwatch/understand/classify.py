@@ -161,6 +161,11 @@ def parse_payload(text: str) -> ClassifiedPayload:
         raise PayloadError(kind, detail) from e
 
 
+def _ref(change: RegChange) -> str:
+    """Log reference: the URL plus the instrument, which carries a long act's section label."""
+    return f"{change.document_url} [{change.instrument}]"
+
+
 def _parse_due(raw: str | None, change: RegChange, todo_text: str) -> date | None:
     """An ISO date among the change's effective dates, else None with a WARNING (never invented)."""
     if raw is None:
@@ -174,9 +179,7 @@ def _parse_due(raw: str | None, change: RegChange, todo_text: str) -> date | Non
     except ValueError:
         due = None
     if due is None or due not in change.effective_dates:
-        log.warning(
-            "classify: nulled invented due=%s url=%s todo=%r", raw, change.document_url, todo_text
-        )
+        log.warning("classify: nulled invented due=%s url=%s todo=%r", raw, _ref(change), todo_text)
         return None
     return due
 
@@ -199,9 +202,7 @@ def enforce(payload: ClassifiedPayload, change: RegChange) -> tuple[Applicabilit
     grounded_quotes = {" ".join(o.quote.split()) for o in change.obligations}
     if payload.decision == "does_not":
         if todos:
-            log.info(
-                "classify: dropped %d to-do(s) on does_not url=%s", len(todos), change.document_url
-            )
+            log.info("classify: dropped %d to-do(s) on does_not url=%s", len(todos), _ref(change))
         todos = []
     elif payload.decision == "unclear":
         first = [t for t in todos if " ".join(t.quote.split()) in grounded_quotes][:1]
@@ -210,13 +211,11 @@ def enforce(payload: ClassifiedPayload, change: RegChange) -> tuple[Applicabilit
                 "classify: kept %d of %d to-do(s) on unclear url=%s",
                 len(first),
                 len(todos),
-                change.document_url,
+                _ref(change),
             )
         todos = first
     if len(todos) > MAX_TODOS:
-        log.info(
-            "classify: truncated %d to-dos to %d url=%s", len(todos), MAX_TODOS, change.document_url
-        )
+        log.info("classify: truncated %d to-dos to %d url=%s", len(todos), MAX_TODOS, _ref(change))
         todos = todos[:MAX_TODOS]
     proposed = Applicability(decision=payload.decision, reasons=payload.reasons, todos=todos)
     rejected = proposed.ungrounded_todos(change)
@@ -246,6 +245,7 @@ class _Attempt:
     backend: LLMBackend
     ledger: ModelLedger
     url: str
+    instrument: str = ""
     usage: LLMUsage | None = None
     cost_usd: float = 0.0
     n_calls: int = 0
@@ -271,18 +271,19 @@ class _Attempt:
         )
         self.cost_usd += cost
         log.info(
-            "classify url=%s model=%s attempt=%d usage=%s cost=$%.4f",
+            "classify url=%s model=%s attempt=%d usage=%s cost=$%.4f instrument=%r",
             self.url,
             result.model,
             self.n_calls,
             f"{result.usage.prompt_tokens}/{result.usage.completion_tokens}",
             cost,
+            self.instrument,
         )
         return result.text
 
     def done(self, appl: Applicability | None, *, error: str | None) -> ClassifyResult:
         if appl is None:
-            log.warning("not classified (%s): %s", error, self.url)
+            log.warning("not classified (%s): %s [%s]", error, self.url, self.instrument)
         return ClassifyResult(
             applicability=appl,
             retried=self.retried,
@@ -312,7 +313,13 @@ def classify(
 ) -> ClassifyResult:
     """One (change, profile) → grounded Applicability or a failure; one retry; never raises."""
     messages = build_messages(change, profile)
-    attempt = _Attempt(settings=settings, backend=backend, ledger=ledger, url=change.document_url)
+    attempt = _Attempt(
+        settings=settings,
+        backend=backend,
+        ledger=ledger,
+        url=change.document_url,
+        instrument=change.instrument,
+    )
 
     try:
         reply = attempt.call(messages)
@@ -344,9 +351,9 @@ def classify(
     assert appl is not None
     attempt.dropped = rejected
     for t in rejected:
-        log.warning("classify: dropped ungrounded to-do %r url=%s", t.text, change.document_url)
+        log.warning("classify: dropped ungrounded to-do %r url=%s", t.text, _ref(change))
     if appl.decision == "applies" and not appl.todos:
-        log.warning("classify: applies with 0 grounded to-dos url=%s", change.document_url)
+        log.warning("classify: applies with 0 grounded to-dos url=%s", _ref(change))
     return attempt.done(appl, error=None)
 
 
@@ -402,7 +409,7 @@ def classify_all(
             continue
         # The grounding rule, enforced in code right before anything can be stored.
         if appl.ungrounded_todos(change):
-            log.error("classify: refusing to store ungrounded to-dos url=%s", change.document_url)
+            log.error("classify: refusing to store ungrounded to-dos url=%s", _ref(change))
             summary.n_failed += 1
             continue
         if result.retried:

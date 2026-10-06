@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -24,6 +24,7 @@ from regwatch.config import (
     EU_COUNTRIES,
     PLATFORMS,
     REGULATION_LABELS,
+    SECTION_SEP,
     SEED_REGULATIONS,
     SOURCE_DOMAINS,
     Settings,
@@ -88,6 +89,7 @@ class FeedItem:
     normalize_model: str
     classify_model: str
     cost_usd: float
+    collapsed_line: str = ""  # "N other provisions of <act> don't apply to you"; "" = none
 
 
 @dataclass(frozen=True)
@@ -209,12 +211,45 @@ def _item(row: FeedRow, done_keys: set[str], today: date) -> FeedItem:
     )
 
 
+def _act_name(instrument: str) -> str:
+    return instrument.split(SECTION_SEP)[0]
+
+
+def _collapse_line(act: str, n: int) -> str:
+    if n == 1:
+        return f"1 other provision of {act} doesn't apply to you"
+    return f"{n} other provisions of {act} don't apply to you"
+
+
+def _collapse_sections(ordered: list[FeedItem]) -> list[FeedItem]:
+    """Keep applies/unclear sections of a multi-change act; fold its does_not sections into one
+    count line on the act's last shown item. All-does_not acts keep one item (the rest counted).
+    Sections of one act are the changes of one document version: (document_url, content_hash),
+    so an older version of the same URL is never counted as a provision of the newer one."""
+    by_url: dict[tuple[str, str], list[FeedItem]] = {}
+    for it in ordered:
+        by_url.setdefault((it.change.document_url, it.content_hash), []).append(it)
+    drop: set[int] = set()
+    note: dict[int, str] = {}
+    for its in by_url.values():
+        hidden = [i for i in its if i.decision == "does_not"]
+        if len(its) < 2 or not hidden:
+            continue
+        shown = [i for i in its if i.decision != "does_not"]
+        if not shown:
+            shown, hidden = hidden[:1], hidden[1:]
+        act = _act_name(shown[-1].change.instrument)
+        drop.update(i.id for i in hidden)
+        note[shown[-1].id] = _collapse_line(act, len(hidden))
+    return [replace(i, collapsed_line=note.get(i.id, "")) for i in ordered if i.id not in drop]
+
+
 def _group(items: list[FeedItem]) -> list[FeedGroup]:
     """Tagged groups in SEED_REGULATIONS order, then untagged groups (keyed by instrument) by
     newest item; inside a group: applies → unclear → does_not, newest first."""
     by_key: dict[str, list[FeedItem]] = {}
     for it in items:
-        by_key.setdefault(it.tag or it.change.instrument, []).append(it)
+        by_key.setdefault(it.tag or _act_name(it.change.instrument), []).append(it)
     seed_tags = [r["tag"] for r in SEED_REGULATIONS]
     tagged = [t for t in seed_tags if t in by_key]
     untagged = sorted(
@@ -226,6 +261,7 @@ def _group(items: list[FeedItem]) -> list[FeedGroup]:
     for key in tagged + untagged:
         ordered = sorted(by_key[key], key=lambda i: i.created_at, reverse=True)
         ordered.sort(key=lambda i: DECISION_RANK.get(i.decision, len(DECISION_RANK)))
+        ordered = _collapse_sections(ordered)
         if key in seed_tags:
             groups.append(
                 FeedGroup(

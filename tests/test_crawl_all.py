@@ -228,3 +228,30 @@ def test_main_cli_prints_summary(
     assert rc == 0
     err = capsys.readouterr().err
     assert err.splitlines()[-1].startswith("classify: 0 changes · 0 apply")
+
+
+def test_seed_loads_several_sections_of_one_act_and_is_idempotent(tmp_path: Path) -> None:
+    """Seed idempotency is per (document_url, instrument): two sections of one act both load."""
+    custom = tmp_path / "s"
+    shutil.copytree(SEED_DIR, custom)
+    (custom / "change-002-eudr.json").unlink()
+    first = json.loads((custom / "change-001-withdrawal.json").read_text(encoding="utf-8"))
+    second = json.loads(json.dumps(first))
+    first["change"]["instrument"] = "Directive (EU) 2023/2673 — Article 1, point (3)"
+    second["change"]["instrument"] = "Directive (EU) 2023/2673 — Article 1, point (1)"
+    (custom / "change-001-withdrawal.json").write_text(json.dumps(first), encoding="utf-8")
+    (custom / "change-001b-withdrawal.json").write_text(json.dumps(second), encoding="utf-8")
+    settings = Settings(
+        REGWATCH_DB_URL=f"sqlite:///{tmp_path / 'seed.db'}", REGWATCH_SEED_DIR=str(custom)
+    )
+    assert seed(settings) == 2
+    assert seed(settings) == 0
+    with Session(make_engine(settings)) as s:
+        rows = s.exec(select(RegChangeRow).order_by(col(RegChangeRow.id))).all()
+        assert [r.instrument for r in rows] == [
+            "Directive (EU) 2023/2673 — Article 1, point (3)",
+            "Directive (EU) 2023/2673 — Article 1, point (1)",
+        ]
+        assert len({r.document_url for r in rows}) == 1
+        assert all(r.content_hash for r in rows)
+        assert len(s.exec(select(ApplicabilityRow)).all()) == 2
