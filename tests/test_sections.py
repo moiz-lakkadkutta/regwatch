@@ -146,3 +146,20 @@ def test_out_of_order_points_keep_article_whole(points: str) -> None:
     sections = split_act(md, min_chars=1, max_chars=1000)
     assert [s.label for s in sections] == ["Article 1"]
     assert _ws(sections[0].text) == _ws(md)
+
+
+def test_commission_act_has_adopted_this_regulation_skips_recitals() -> None:
+    md = (
+        "Whereas:\n\n(1) Recital text that must never be normalised.\n\n"
+        "HAS ADOPTED THIS REGULATION:\n\nArticle 1\n\nA.\n\nArticle 2\n\nB.\n"
+    )
+    sections = split_act(md, min_chars=1, max_chars=1000)
+    assert [s.label for s in sections] == ["Article 1", "Article 2"]
+    assert all("Recital text" not in s.text for s in sections)
+
+
+def test_blank_operative_body_falls_back_to_whole_markdown() -> None:
+    md = "Preamble words that matter.\n\nHAVE ADOPTED THIS DIRECTIVE:\n"
+    sections = split_act(md, min_chars=1, max_chars=1000)
+    assert sections and all(s.text.strip() for s in sections)
+    assert "Preamble words that matter." in sections[0].text

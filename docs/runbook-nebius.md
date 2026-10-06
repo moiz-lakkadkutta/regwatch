@@ -36,6 +36,12 @@ Cost line: the Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/
    run: ~45 Tavily credits (~$0.36 of the $25 grant) + Lightning/Ultra tokens < $1 at placeholder prices
    + ~2 min CPU. Expected logs: `seeded …` → `ingest: …` → `normalize: …` → `classify: …` →
    `crawl: …`; status COMPLETED.
+   **Upgrading an existing volume (act sections release).** `documents_needing_normalize` skips any
+   (url, hash) that already has a change, so a long EUR-Lex act stored whole is NOT re-split. The first
+   crawl after this release must run against a fresh DB volume, or first delete the affected acts'
+   rows (applicability first), e.g. for 2023/2673:
+   `sqlite3 regwatch.db "DELETE FROM applicabilityrow WHERE regchange_id IN (SELECT id FROM regchangerow WHERE document_url LIKE '%eur-lex.europa.eu%2023/2673%'); DELETE FROM regchangerow WHERE document_url LIKE '%eur-lex.europa.eu%2023/2673%';"`
+   (drop the `LIKE` filter to re-split every EUR-Lex act); the next crawl normalises them per section.
 8. **Negative check (free).** Create a Job without `env_secret` → status FAILED with
    `crawl: refusing to run — missing NEBIUS_API_KEY TAVILY_API_KEY` in the logs (exit 2; fixtures are
    never used).

@@ -20,7 +20,7 @@ from regwatch.schemas import Document
 INTRO_CAP = 500
 _EURLEX_HOST = "eur-lex.europa.eu"
 _ADOPTED = re.compile(
-    r"HAVE ADOPTED THIS (?:DIRECTIVE|REGULATION|DECISION)[^\n]*\n?", re.IGNORECASE
+    r"HA(?:VE|S) ADOPTED THIS (?:DIRECTIVE|REGULATION|DECISION)[^\n]*\n?", re.IGNORECASE
 )
 _HEADING = re.compile(r"^(?:Article (\d+[a-z]?)[ \t]*|(ANNEX\b.*?)[ \t]*)$", re.MULTILINE)
 _POINT = re.compile(
@@ -66,6 +66,8 @@ def split_act(markdown: str, *, max_chars: int = 15_000, min_chars: int = 3_000)
         return []
     adopted = _ADOPTED.search(markdown)
     body = markdown[adopted.end() :] if adopted else markdown
+    if not body.strip():  # nothing after the adoption line: split the whole text instead
+        body = markdown
     pieces = _merge(_top_level_pieces(body), min_chars, max_chars)
     sections: list[Section] = []
     for piece in pieces:
