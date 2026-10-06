@@ -88,3 +88,13 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   still frames every obligation as "for financial services" (the act's title), so Ultra answers `does_not` for a
   furniture shop (5/5 runs). A prompt rule ("judge scope from the provision, not the title") changed nothing with
   thinking off (3/3 runs) and was reverted. Guidance pages (help.shopify, IHK) restating Art. 11a classify `applies`.
+- (2026-10-06, act sections) Root cause of Directive (EU) 2023/2673 → `does_not`: one change per 106k-char amending act.
+  Lightning thinking-on (32k max_tokens, 107 s, 17.9k reasoning tokens) and Ultra as extractor (25 s, 9.7k tokens;
+  a second run hit 16k `finish_reason=length`) both still framed it as financial services. Normalising the Art. 11a
+  amendment point alone → `applies` 2/2; with sections, the act-title instrument still flipped Ultra to `does_not`
+  (0/2) until the stored instrument used the short id "Directive (EU) 2023/2673 — Article 1, point (3)" (2/2 applies).
+  Fifth live crawl with per-section acts (seed + `crawl --stage all`, fresh DB): 8 min 03 s, 40 Tavily credits,
+  29 documents → 60 changes (2023/2673: 10 of 12 sections; consolidated EUDR: 24 of 26); classify 25 apply /
+  22 don't / 13 unclear, 105 to-dos, 0 dropped; $0.1715 normalise + $0.3568 classify (PLACEHOLDER prices).
+  Art. 11a section → `applies`, 4 to-dos, due 2026-06-19; feed shows "7 other provisions of Directive (EU) 2023/2673
+  don't apply to you".
