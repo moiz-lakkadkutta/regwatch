@@ -559,3 +559,21 @@ def test_classify_fixture_quotes_match_normalize_fixtures() -> None:
             assert last.decision != "applies"  # R5: tag-merge doc is never an EUDR "applies"
         if last.decision != "applies":
             assert last.todos == []
+
+
+def test_log_lines_name_the_changes_instrument(caplog: pytest.LogCaptureFixture) -> None:
+    label = "Directive (EU) 2099/1 — Article 1, point (3)"
+    change = _change("eurlex-2023-1115").model_copy(update={"instrument": label})
+    settings = Settings()
+    with caplog.at_level(logging.INFO, logger="regwatch.understand.classify"):
+        classify(
+            change,
+            _profile(),
+            backend=_backend(),
+            settings=settings,
+            ledger=ModelLedger.for_classifier(settings),
+        )
+    calls = [r.getMessage() for r in caplog.records if r.getMessage().startswith("classify url=")]
+    assert calls and all(label in m for m in calls)
+    nulled = [r.getMessage() for r in caplog.records if "nulled invented due" in r.getMessage()]
+    assert nulled and all(label in nulled[0] for _ in nulled)
