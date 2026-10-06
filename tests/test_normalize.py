@@ -860,7 +860,9 @@ def test_act_metadata_falls_back_when_whole_act_call_fails(tmp_path: Path) -> No
     first_line = ACT_MARKDOWN.splitlines()[0][:120]
     assert len(backend.calls) == 5
     assert f"of {first_line}." in backend.calls[2][-1]["content"]
-    assert [c.instrument for c in result.changes] == [f"{first_line} — Article 1, point (1)"]
+    assert [c.instrument for c in result.changes] == [
+        "Directive (EU) 2099/1 — Article 1, point (1)"
+    ]
     assert result.changes[0].jurisdiction == "EU"
     assert result.changes[0].effective_dates == []
 
@@ -997,3 +999,58 @@ def test_backend_error_in_one_section_fails_the_whole_act_and_retries_next_crawl
         "backend:TimeoutError" in r.getMessage() and ACT_URL in r.getMessage()
         for r in caplog.records
     )
+
+
+@pytest.mark.parametrize(
+    ("title", "short"),
+    [
+        (
+            "Directive (EU) 2023/2673 of the European Parliament and of the Council of 22 November "
+            "2023 amending Directive 2011/83/EU as regards financial services contracts concluded "
+            "at a distance and repealing Directive 2002/65/EC",
+            "Directive (EU) 2023/2673",
+        ),
+        (
+            "REGULATION (EU) 2023/1115 OF THE EUROPEAN PARLIAMENT AND OF THE COUNCIL",
+            "Regulation (EU) 2023/1115",
+        ),
+        (
+            "COMMISSION IMPLEMENTING REGULATION (EU) 2025/2650 of 1 December 2025 laying down",
+            "Commission Implementing Regulation (EU) 2025/2650",
+        ),
+        (
+            "Commission delegated decision (EC) No 12/2009 on x",
+            "Commission Delegated Decision (EC) No 12/2009",
+        ),
+        ("Guidance note of the Board on online sales", "Guidance note"),
+        ("x" * 200, "x" * 80),
+    ],
+)
+def test_short_act_name(title: str, short: str) -> None:
+    assert norm.short_act_name(title) == short
+
+
+def test_section_instruments_use_the_short_act_name(tmp_path: Path) -> None:
+    settings = _act_settings(tmp_path)
+    whole = _payload(
+        [],
+        instrument="Directive (EU) 2099/1 of the European Parliament and of the Council of 1 May "
+        "2099 amending Directive 2011/83/EU as regards distance contracts",
+        effective_dates=["2026-06-19"],
+    )
+    replies = [
+        _reply(whole),
+        _reply(_section_payload([{"text": "Keep records.", "quote": ACT_QUOTE_1}])),
+        _reply(_section_payload([])),
+        _reply(_section_payload([])),
+    ]
+    backend = FixtureLLMBackend(_fixture_dir(tmp_path, ACT_URL, replies))
+    result = normalize_act(
+        _act_row().to_schema(),
+        backend=backend,
+        settings=settings,
+        ledger=ModelLedger.for_extractor(settings),
+    )
+    assert [c.instrument for c in result.changes] == [
+        "Directive (EU) 2099/1 — Article 1, point (1)"
+    ]

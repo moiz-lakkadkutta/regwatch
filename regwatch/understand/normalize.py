@@ -387,6 +387,34 @@ class ActResult:
         return sum(r.cost_usd for r in self.results)
 
 
+_ACT_ID = re.compile(
+    r"(?P<by>Commission )?(?P<kind>Delegated |Implementing )?"
+    r"(?P<type>Directive|Regulation|Decision)"
+    r" \((?P<body>EU|EC|EEC|Euratom)\) (?P<no>No )?(?P<num>\d{2,4}/\d+)",
+    re.IGNORECASE,
+)
+_SHORT_CAP = 80
+
+
+def short_act_name(instrument: str) -> str:
+    """A short act identifier for section instruments, e.g. 'Directive (EU) 2023/2673'. The full
+    official title steers the classifier ('… as regards financial services …'); the id does not.
+    No recognisable id: the instrument cut before ' of the ', capped at 80 characters."""
+    m = _ACT_ID.search(instrument)
+    if m:
+        body = m["body"].upper() if m["body"].lower() != "euratom" else "Euratom"
+        parts = [
+            (m["by"] or "").strip().capitalize(),
+            (m["kind"] or "").strip().capitalize(),
+            m["type"].capitalize(),
+        ]
+        head = " ".join(p for p in parts if p)
+        no = "No " if m["no"] else ""
+        return f"{head} ({body}) {no}{m['num']}"
+    cut = re.split(r" of the ", instrument, maxsplit=1, flags=re.IGNORECASE)[0]
+    return cut.strip()[:_SHORT_CAP]
+
+
 def _fallback_instrument(markdown: str) -> str:
     """The act's first non-blank markdown line (heading marks stripped), capped."""
     for line in markdown.splitlines():
@@ -434,6 +462,7 @@ def normalize_act(
         jurisdiction, dates = FALLBACK_JURISDICTION, []
         log.warning("act metadata from fallback (%s): %s", instrument, document.url)
 
+    short = short_act_name(instrument)
     changes: list[RegChange] = []
     sections: list[tuple[Section, NormalizeResult]] = []
     for section in split_act(document.markdown):
@@ -462,7 +491,7 @@ def normalize_act(
         changes.append(
             own.model_copy(
                 update={
-                    "instrument": f"{instrument}{SECTION_SEP}{section.label}",
+                    "instrument": f"{short}{SECTION_SEP}{section.label}",
                     "jurisdiction": (
                         jurisdiction
                         if own.jurisdiction.strip().lower() == "unclear"
