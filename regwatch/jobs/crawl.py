@@ -365,7 +365,33 @@ def crawl(
     time_range: str = "year",
     out: Path | None = DEFAULT_OUT,
 ) -> CrawlRunRow:
-    """Run one stage (or all) and return its `CrawlRunRow`.
+    """`run_crawl` without the in-memory normalize summary."""
+    run, _ = run_crawl(
+        settings,
+        stage=stage,
+        backend=backend,
+        llm_backend=llm_backend,
+        classify_backend=classify_backend,
+        llm_fixtures_dir=llm_fixtures_dir,
+        time_range=time_range,
+        out=out,
+    )
+    return run
+
+
+def run_crawl(
+    settings: Settings | None = None,
+    *,
+    stage: Stage = "all",
+    backend: TavilyBackend | None = None,
+    llm_backend: LLMBackend | None = None,
+    classify_backend: LLMBackend | None = None,
+    llm_fixtures_dir: Path | None = None,
+    time_range: str = "year",
+    out: Path | None = DEFAULT_OUT,
+) -> tuple[CrawlRunRow, NormalizeSummary | None]:
+    """Run one stage (or all); return its `CrawlRunRow` and, when normalize ran, its summary
+    (the row stores changes, not documents, so only the summary can print the normalize line).
 
     "ingest": search → extract → diff. "normalize": no ingest; Lightning over the DB. "classify":
     Ultra over the stored changes for the current profile. "all": the three on one row.
@@ -377,42 +403,39 @@ def crawl(
     settings = settings or Settings()
     if stage == "ingest":
         ingest = run_ingest(settings, backend=backend, time_range=time_range, out=out)
-        return _load_run(settings, ingest.run_id)
+        return _load_run(settings, ingest.run_id), None
     llm = llm_backend or make_llm_backend("live", settings, llm_fixtures_dir)
     classify_llm = classify_backend or llm
     if stage == "normalize":
-        _, run = run_normalize(settings, llm_backend=llm)
-        return run
+        summary, run = run_normalize(settings, llm_backend=llm)
+        return run, summary
     if stage == "classify":
         _, run = _classify_stage(settings, llm_backend=classify_llm)
-        return run
+        return run, None
     ingest = run_ingest(settings, backend=backend, time_range=time_range, out=out, stage="all")
-    run_normalize(settings, llm_backend=llm, run_id=ingest.run_id)
+    summary, _ = run_normalize(settings, llm_backend=llm, run_id=ingest.run_id)
     _, run = _classify_stage(settings, llm_backend=classify_llm, run_id=ingest.run_id)
-    return run
+    return run, summary
 
 
-def summary_lines(run: CrawlRunRow, out: Path | None) -> list[str]:
-    """The stderr lines for a finished run, rebuilt from its row (one per stage, plus a total for
-    `all`)."""
+def summary_lines(
+    run: CrawlRunRow, out: Path | None, normalize: NormalizeSummary | None = None
+) -> list[str]:
+    """The stderr lines for a finished run (one per stage, plus a total for `all`). The normalize
+    line is `normalize.line()` when the in-memory summary is given; rebuilt from the row alone it
+    reports changes, never documents (one long act stores several changes)."""
     lines: list[str] = []
     if run.stage in ("ingest", "all"):
         lines.append(IngestSummary.from_run(run, out).line())
     if run.stage in ("normalize", "all"):
-        n_ok = run.n_changes_new
-        lines.append(
-            NormalizeSummary(
-                n_docs=n_ok + run.n_normalize_failed,
-                n_ok=n_ok,
-                n_ok_first_try=n_ok - run.n_normalize_retried,
-                n_retried=run.n_normalize_retried,
-                n_failed=run.n_normalize_failed,
-                n_changes_new=run.n_changes_new,
-                cost_usd=run.model_cost_usd - run.classify_cost_usd,
-                prompt_tokens=0,
-                completion_tokens=0,
-            ).line()
-        )
+        if normalize is not None:
+            lines.append(normalize.line())
+        else:
+            lines.append(
+                f"normalize: {run.n_changes_new} new changes · {run.n_normalize_retried} "
+                f"retried · {run.n_normalize_failed} failed · "
+                f"${run.model_cost_usd - run.classify_cost_usd:.4f} model"
+            )
     if run.stage in ("classify", "all"):
         lines.append(
             ClassifySummary(
@@ -477,7 +500,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         out = args.out
     else:
         out = default_out(args.backend)
-    run = crawl(
+    run, normalize_summary = run_crawl(
         settings,
         stage=stage,
         backend=backend,
@@ -486,7 +509,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         time_range=args.time_range,
         out=out,
     )
-    for line in summary_lines(run, out):
+    for line in summary_lines(run, out, normalize_summary):
         print(line, file=sys.stderr)
     return 0
 

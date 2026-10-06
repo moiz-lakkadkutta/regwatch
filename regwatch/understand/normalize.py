@@ -288,31 +288,39 @@ def normalize(
     return _grounded(attempt, messages, document)
 
 
-def _grounded(
-    attempt: _Attempt, messages: list[dict[str, str]], document: Document
-) -> NormalizeResult:
-    """Call, parse, validate quotes on the FULL `document.markdown`; one retry at most."""
-    _, quotes_addendum, json_addendum = _prompt_sections()
+def _parsed(
+    attempt: _Attempt, messages: list[dict[str, str]], url: str
+) -> tuple[NormalizedPayload, str] | NormalizeResult:
+    """First call plus at most one invalid-JSON retry: (payload, reply) or a failure."""
+    _, _, json_addendum = _prompt_sections()
     try:
         reply = attempt.call(messages)
     except Exception as e:
         return attempt.fail(f"backend:{type(e).__name__}")
-
     try:
-        payload = parse_payload(reply)
+        return parse_payload(reply), reply
     except PayloadError as e:
         attempt.retried = True
-        retry = _retry_messages(
-            messages, reply, json_addendum.replace("{error}", e.detail), document.url
-        )
-        try:
-            reply = attempt.call(retry)
-        except Exception as exc:
-            return attempt.fail(f"backend:{type(exc).__name__}")
-        try:
-            payload = parse_payload(reply)
-        except PayloadError as e2:
-            return attempt.fail(e2.kind)
+        retry = _retry_messages(messages, reply, json_addendum.replace("{error}", e.detail), url)
+    try:
+        reply = attempt.call(retry)
+    except Exception as exc:
+        return attempt.fail(f"backend:{type(exc).__name__}")
+    try:
+        return parse_payload(reply), reply
+    except PayloadError as e2:
+        return attempt.fail(e2.kind)
+
+
+def _grounded(
+    attempt: _Attempt, messages: list[dict[str, str]], document: Document
+) -> NormalizeResult:
+    """Call, parse, validate quotes on the FULL `document.markdown`; one retry at most."""
+    _, quotes_addendum, _ = _prompt_sections()
+    parsed = _parsed(attempt, messages, document.url)
+    if isinstance(parsed, NormalizeResult):
+        return parsed
+    payload, reply = parsed
 
     change = to_regchange(payload, document.url)
     failed = offending_quotes(change, document.markdown)
@@ -364,7 +372,8 @@ class ActResult:
 
     @property
     def retried(self) -> bool:
-        return any(r.retried for r in self.results)
+        """Any section needed its retry (the metadata-only whole-act call does not count)."""
+        return any(r.retried for _, r in self.sections)
 
     @property
     def usage(self) -> LLMUsage:
@@ -387,16 +396,34 @@ def _fallback_instrument(markdown: str) -> str:
     return ""
 
 
+def _act_metadata(
+    document: Document, *, backend: LLMBackend, settings: Settings, ledger: ModelLedger
+) -> NormalizeResult:
+    """The whole-act call, metadata only: a change with instrument, jurisdiction and dates and NO
+    obligations (the model's are discarded unchecked, so they cost no quote retry). Fails only on
+    a backend error or a reply that is still unparseable after the JSON retry."""
+    messages, truncated = build_messages(document, max_chars=settings.normalize_max_chars)
+    attempt = _Attempt(
+        settings=settings, backend=backend, ledger=ledger, url=document.url, truncated=truncated
+    )
+    parsed = _parsed(attempt, messages, document.url)
+    if isinstance(parsed, NormalizeResult):
+        return parsed
+    change = to_regchange(parsed[0], document.url).model_copy(update={"obligations": []})
+    return attempt.done(change, error=None, dropped=[])
+
+
 def normalize_act(
     document: Document, *, backend: LLMBackend, settings: Settings, ledger: ModelLedger
 ) -> ActResult:
     """A long act → one grounded RegChange per section with obligations; never raises.
 
-    The whole-act call (`normalize`, truncated at `normalize_max_chars`) only supplies the
-    instrument, jurisdiction and dates; its obligations are discarded. Each `split_act` section
-    is then normalised on its own text, sequentially, with quotes validated against the FULL
-    markdown and the usual single retry. A section that fails or yields nothing is skipped."""
-    whole = normalize(document, backend=backend, settings=settings, ledger=ledger)
+    The whole-act call (`_act_metadata`, truncated at `normalize_max_chars`) only supplies the
+    instrument, jurisdiction and dates; its obligations are discarded without a quote check.
+    Each `split_act` section is then normalised on its own text, sequentially, with quotes
+    validated against the FULL markdown and the usual single retry. A section that fails or
+    yields nothing is skipped."""
+    whole = _act_metadata(document, backend=backend, settings=settings, ledger=ledger)
     if whole.change is not None:
         instrument = whole.change.instrument
         jurisdiction = whole.change.jurisdiction
@@ -444,11 +471,14 @@ def normalize_act(
                 }
             )
         )
-    log.info(
-        "act %s: %d sections, %d with grounded obligations",
+    n_failed = sum(r.change is None for _, r in sections)
+    log.log(
+        logging.WARNING if n_failed else logging.INFO,
+        "act %s: %d of %d sections stored, %d failed",
         document.url,
-        len(sections),
         len(changes),
+        len(sections),
+        n_failed,
     )
     return ActResult(changes=changes, whole=whole, sections=sections)
 
@@ -457,7 +487,7 @@ def normalize_act(
 class NormalizeSummary:
     """`n_retried` counts documents that were OK only after the retry; `n_failed` stored nothing.
     So n_docs == n_ok_first_try + n_retried + n_failed and n_ok == n_ok_first_try + n_retried.
-    A long act is one document: ok if ≥ 1 section stored (retried if any of its calls retried).
+    A long act is one document: ok if ≥ 1 section stored (retried if any section call retried).
     `n_changes_new` counts stored changes, so one per stored section of a long act."""
 
     n_docs: int

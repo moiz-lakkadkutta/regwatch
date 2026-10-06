@@ -21,7 +21,7 @@ from regwatch.db import (
     make_engine,
 )
 from regwatch.ingest.diff import content_hash
-from regwatch.jobs.crawl import crawl, main, seed
+from regwatch.jobs.crawl import crawl, main, seed, summary_lines
 from regwatch.schemas import Document
 from regwatch.understand import normalize as norm
 from regwatch.understand.llm_backend import FixtureLLMBackend, LLMResult, LLMUsage, ModelLedger
@@ -684,7 +684,7 @@ ACT_MARKDOWN = (
     "Article 3\n\n"
     "This Directive is addressed to the Member States.\n"
 )
-ACT_MIN_CHARS = 1_500
+ACT_MIN_CHARS = 2_800  # above every short EUR-Lex fixture (≤ 2,687), below this act
 
 
 def _act_settings(tmp_path: Path) -> Settings:
@@ -833,6 +833,9 @@ def test_section_with_ungrounded_quote_is_retried_then_dropped(
     assert summary.n_docs == 1 and summary.n_ok == 1 and summary.n_changes_new == 1
     assert summary.n_retried == 1 and summary.n_failed == 0
     assert any("Article 1, point (2)" in r.getMessage() for r in caplog.records)
+    assert any(
+        r.getMessage() == f"act {ACT_URL}: 1 of 3 sections stored, 1 failed" for r in caplog.records
+    )
     with Session(engine) as s:
         rows = s.exec(select(RegChangeRow)).all()
         assert [r.instrument for r in rows] == ["Directive (EU) 2099/1 — Article 1, point (1)"]
@@ -873,3 +876,84 @@ def test_act_with_no_grounded_section_fails_and_stores_nothing(tmp_path: Path) -
         summary = normalize_all(s, backend=backend, settings=settings)
         assert summary.n_failed == 1 and summary.n_ok == 0 and summary.n_changes_new == 0
         assert s.exec(select(RegChangeRow)).all() == []
+
+
+def test_whole_act_call_is_metadata_only_no_quote_retry(tmp_path: Path) -> None:
+    """The whole-act obligations are discarded, so a bad quote there costs no retry and the
+    model's instrument is still used (not the first-line fallback)."""
+    settings = _act_settings(tmp_path)
+    whole = _payload(
+        [{"text": "Offer a button.", "quote": BAD_QUOTE}],
+        instrument="Directive (EU) 2099/1",
+        jurisdiction="EU",
+        effective_dates=["2026-06-19"],
+    )
+    replies = [
+        _reply(whole),
+        _reply(_section_payload([{"text": "Keep records.", "quote": ACT_QUOTE_1}])),
+        _reply(_section_payload([])),
+        _reply(_section_payload([])),
+    ]
+    backend = FixtureLLMBackend(_fixture_dir(tmp_path, ACT_URL, replies))
+    result = normalize_act(
+        _act_row().to_schema(),
+        backend=backend,
+        settings=settings,
+        ledger=ModelLedger.for_extractor(settings),
+    )
+    assert len(backend.calls) == 1 + len(split_act(ACT_MARKDOWN))
+    assert not result.retried
+    assert [c.instrument for c in result.changes] == [
+        "Directive (EU) 2099/1 — Article 1, point (1)"
+    ]
+    assert result.changes[0].effective_dates == [date(2026, 6, 19)]
+
+
+def test_crawl_lines_count_a_long_act_as_one_document(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    db_url = f"sqlite:///{tmp_path / 'lines.db'}"
+    monkeypatch.setenv("REGWATCH_DB_URL", db_url)
+    monkeypatch.setenv("REGWATCH_ACT_SPLIT_MIN_CHARS", str(ACT_MIN_CHARS))
+    llm_dir = tmp_path / "llm"
+    shutil.copytree(LLM_FIXTURES_ROOT / "classify", llm_dir / "classify")
+    replies = [
+        _whole_act_reply(),
+        _reply(_section_payload([{"text": "Keep records.", "quote": ACT_QUOTE_1}])),
+        _reply(_section_payload([{"text": "Offer it.", "quote": ACT_QUOTE_2}])),
+        _reply(_section_payload([])),
+    ]
+    _fixture_dir(llm_dir, ACT_URL, replies)  # llm/normalize/one.json
+    with Session(make_engine(Settings(REGWATCH_DB_URL=db_url))) as s:
+        s.add(_act_row())
+        s.commit()
+    argv = ["--stage", "normalize", "--llm-backend", "fixtures", "--llm-fixtures-dir", str(llm_dir)]
+    assert main(argv) == 0
+    err = capsys.readouterr().err
+    assert "normalize: 1 documents · 1 ok first try (100%) · 0 retried · 0 failed · $" in err
+    with Session(make_engine(Settings(REGWATCH_DB_URL=db_url))) as s:
+        run = s.exec(select(CrawlRunRow).order_by(col(CrawlRunRow.id))).all()[-1]
+    assert run.n_changes_new == 2
+    # rebuilt from the row alone (no in-memory summary) the line never claims documents
+    (line,) = summary_lines(run, None)
+    assert line.startswith("normalize: 2 new changes · 0 retried · 0 failed · $")
+    # `--stage all`: the normalize line counts the act once, the crawl line its 2 changes
+    all_url = f"sqlite:///{tmp_path / 'all.db'}"
+    monkeypatch.setenv("REGWATCH_DB_URL", all_url)
+    for path in (LLM_FIXTURES_ROOT / "normalize").glob("*.json"):
+        shutil.copy(path, llm_dir / "normalize")
+    (llm_dir / "normalize" / "one.json").write_text(
+        json.dumps({"url": ACT_URL, "responses": replies}), encoding="utf-8"
+    )
+    with Session(make_engine(Settings(REGWATCH_DB_URL=all_url))) as s:
+        s.add(_act_row())
+        s.commit()
+    argv = ["--stage", "all", "--backend", "fixtures", "--llm-backend", "fixtures"]
+    assert main([*argv, "--llm-fixtures-dir", str(llm_dir), "--no-out"]) == 0
+    lines = [
+        line
+        for line in capsys.readouterr().err.splitlines()
+        if line.startswith(("normalize:", "crawl:"))
+    ]
+    assert lines[0].startswith("normalize: 17 documents · 15 ok first try (88%) · 1 retried")
+    assert lines[1].startswith("crawl: 16 new documents · 17 new changes · ")
