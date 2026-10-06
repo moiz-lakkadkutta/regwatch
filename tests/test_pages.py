@@ -612,35 +612,42 @@ ACT_NAME = "Directive (EU) 2023/2673"
 
 
 def _add_sections(
-    client: TestClient, url: str, decisions: list[str], tag: str = "withdrawal"
+    client: TestClient,
+    url: str,
+    decisions: list[str],
+    tag: str = "withdrawal",
+    *,
+    content_hash: str = "hash-act",
+    first: int = 1,
+    day: int = 10,
 ) -> None:
     import regwatch.app as appmod
 
     with session(appmod.engine) as s:
         prof = appmod.current_profile(s)
         assert prof is not None and prof.id is not None
-        s.add(
-            DocumentRow(
-                url=url,
-                content_hash="hash-act",
-                source_domain="eur-lex.europa.eu",
-                published_date="2023-11-28",
-                fetched_at=datetime(2026, 7, 1, 8, 0),
-                markdown="# Act\n\nQuote.\n",
-                regulation_tags=json.dumps([tag]),
-            )
+        doc = s.get(DocumentRow, url) or DocumentRow(
+            url=url,
+            content_hash=content_hash,
+            source_domain="eur-lex.europa.eu",
+            published_date="2023-11-28",
+            fetched_at=datetime(2026, 7, 1, 8, 0),
+            markdown="# Act\n\nQuote.\n",
+            regulation_tags=json.dumps([tag]),
         )
-        for n, decision in enumerate(decisions, start=1):
+        doc.content_hash = content_hash
+        s.add(doc)
+        for n, decision in enumerate(decisions, start=first):
             row = RegChangeRow(
                 document_url=url,
-                content_hash="hash-act",
+                content_hash=content_hash,
                 model="nvidia/Nemotron-3_5-Lightning",
                 instrument=f"{ACT_NAME} — Article {n}",
                 jurisdiction="EU",
                 summary=f"Section {n} summary.",
                 effective_dates="[]",
                 obligations=json.dumps([{"text": "Do it.", "quote": "Quote."}]),
-                created_at=datetime(2026, 7, 10, 9, n),
+                created_at=datetime(2026, 7, day, 9, n),
             )
             s.add(row)
             s.commit()
@@ -682,6 +689,30 @@ def test_feed_all_does_not_act_is_one_item_with_count(seed_client: TestClient) -
     _add_sections(seed_client, ACT_URL, ["does_not", "does_not", "does_not"])
     html = seed_client.get("/feed").text
     assert html.count(f"{ACT_NAME} — Article") == 1
+    assert f"2 other provisions of {ACT_NAME} don&#39;t apply to you" in html
+
+
+def test_feed_old_version_does_not_is_not_counted_against_new_version(
+    seed_client: TestClient,
+) -> None:
+    _add_sections(seed_client, ACT_URL, ["does_not"], content_hash="hash-old", day=1)
+    _add_sections(seed_client, ACT_URL, ["applies"], content_hash="hash-new", first=2, day=10)
+    html = seed_client.get("/feed").text
+    assert f"{ACT_NAME} — Article 2" in html
+    assert "other provision" not in html
+
+
+def test_feed_collapse_counts_only_the_newest_versions_sections(seed_client: TestClient) -> None:
+    _add_sections(seed_client, ACT_URL, ["does_not"], content_hash="hash-old", day=1)
+    _add_sections(
+        seed_client,
+        ACT_URL,
+        ["applies", "does_not", "does_not"],
+        content_hash="hash-new",
+        first=2,
+        day=10,
+    )
+    html = seed_client.get("/feed").text
     assert f"2 other provisions of {ACT_NAME} don&#39;t apply to you" in html
 
 

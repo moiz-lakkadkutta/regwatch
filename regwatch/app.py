@@ -223,10 +223,12 @@ def _collapse_line(act: str, n: int) -> str:
 
 def _collapse_sections(ordered: list[FeedItem]) -> list[FeedItem]:
     """Keep applies/unclear sections of a multi-change act; fold its does_not sections into one
-    count line on the act's last shown item. All-does_not acts keep one item (the rest counted)."""
-    by_url: dict[str, list[FeedItem]] = {}
+    count line on the act's last shown item. All-does_not acts keep one item (the rest counted).
+    Sections of one act are the changes of one document version: (document_url, content_hash),
+    so an older version of the same URL is never counted as a provision of the newer one."""
+    by_url: dict[tuple[str, str], list[FeedItem]] = {}
     for it in ordered:
-        by_url.setdefault(it.change.document_url, []).append(it)
+        by_url.setdefault((it.change.document_url, it.content_hash), []).append(it)
     drop: set[int] = set()
     note: dict[int, str] = {}
     for its in by_url.values():
