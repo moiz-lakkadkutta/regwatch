@@ -245,6 +245,7 @@ class _Attempt:
     backend: LLMBackend
     ledger: ModelLedger
     url: str
+    instrument: str = ""
     usage: LLMUsage | None = None
     cost_usd: float = 0.0
     n_calls: int = 0
@@ -270,18 +271,19 @@ class _Attempt:
         )
         self.cost_usd += cost
         log.info(
-            "classify url=%s model=%s attempt=%d usage=%s cost=$%.4f",
+            "classify url=%s model=%s attempt=%d usage=%s cost=$%.4f instrument=%r",
             self.url,
             result.model,
             self.n_calls,
             f"{result.usage.prompt_tokens}/{result.usage.completion_tokens}",
             cost,
+            self.instrument,
         )
         return result.text
 
     def done(self, appl: Applicability | None, *, error: str | None) -> ClassifyResult:
         if appl is None:
-            log.warning("not classified (%s): %s", error, self.url)
+            log.warning("not classified (%s): %s [%s]", error, self.url, self.instrument)
         return ClassifyResult(
             applicability=appl,
             retried=self.retried,
@@ -311,7 +313,13 @@ def classify(
 ) -> ClassifyResult:
     """One (change, profile) → grounded Applicability or a failure; one retry; never raises."""
     messages = build_messages(change, profile)
-    attempt = _Attempt(settings=settings, backend=backend, ledger=ledger, url=_ref(change))
+    attempt = _Attempt(
+        settings=settings,
+        backend=backend,
+        ledger=ledger,
+        url=change.document_url,
+        instrument=change.instrument,
+    )
 
     try:
         reply = attempt.call(messages)
