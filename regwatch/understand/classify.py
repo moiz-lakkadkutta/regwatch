@@ -196,7 +196,9 @@ def enforce(payload: ClassifiedPayload, change: RegChange) -> tuple[Applicabilit
         due = _parse_due(draft.due, change, draft.text)
         if draft.due is not None and due is None:
             nulled += 1
-        todos.append(Todo(text=draft.text, due=due, quote=draft.quote, citation_url=_ref(change)))
+        todos.append(
+            Todo(text=draft.text, due=due, quote=draft.quote, citation_url=change.document_url)
+        )
     grounded_quotes = {" ".join(o.quote.split()) for o in change.obligations}
     if payload.decision == "does_not":
         if todos:
