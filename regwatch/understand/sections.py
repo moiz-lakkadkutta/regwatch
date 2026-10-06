@@ -147,22 +147,28 @@ def _cap(piece: _Piece, max_chars: int) -> list[Section]:
 
 
 def _pack(text: str, budget: int) -> list[str]:
-    """Greedy-pack paragraphs into parts of at most `budget` chars; hard-cut oversize paragraphs."""
+    """Greedy-pack paragraphs into parts of at most `budget` chars; hard-cut oversize paragraphs.
+
+    Never returns a blank part.
+    """
     parts: list[str] = []
     current = ""
-    for token in _BLANK.split(text):
-        if not token.strip() and not current:
-            continue
-        while len(token) > budget:  # a single paragraph longer than the budget
-            if current:
-                parts.append(current.strip())
-                current = ""
-            parts.append(token[:budget].strip())
-            token = token[budget:]
-        if len(current) + len(token) > budget and current:
+
+    def flush() -> None:
+        nonlocal current
+        if current.strip():
             parts.append(current.strip())
-            current = ""
-        current += token
-    if current.strip():
-        parts.append(current.strip())
+        current = ""
+
+    for token in _BLANK.split(text):
+        while len(token) > budget:  # a single paragraph longer than the budget
+            flush()
+            if token[:budget].strip():
+                parts.append(token[:budget].strip())
+            token = token[budget:]
+        if len(current) + len(token) > budget:
+            flush()
+        if token.strip() or current:  # drop separators that would start a part
+            current += token
+    flush()
     return parts

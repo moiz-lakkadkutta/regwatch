@@ -10,7 +10,7 @@ import pytest
 
 from regwatch.config import Settings
 from regwatch.schemas import Document
-from regwatch.understand.sections import INTRO_CAP, is_long_act, split_act
+from regwatch.understand.sections import INTRO_CAP, _pack, is_long_act, split_act
 
 FIXTURE = Path(__file__).parent / "fixtures" / "acts" / "dir-2023-2673.md"
 INTRO = (
@@ -118,3 +118,31 @@ def test_is_long_act(url: str, size: int, expected: bool) -> None:
         source_domain=("eur-lex.europa.eu" if "eur-lex" in url else "help.shopify.com"),
     )
     assert is_long_act(doc, Settings()) is expected
+
+
+def test_pack_never_emits_blank_parts() -> None:
+    assert _pack("a" * 10 + "\n\n" + "b" * 9, 10) == ["a" * 10, "b" * 9]
+    assert _pack("a" * 10 + "\n\n" + "b" * 10 + "\n\n" + "c", 10) == ["a" * 10, "b" * 10, "c"]
+
+
+def test_split_act_paragraphs_near_max_have_no_blank_sections() -> None:
+    paras = "\n\n".join(chr(97 + i) * 98 for i in range(8))
+    md = (
+        "Article 1\n\nDirective X is amended as follows:\n\n"
+        f"(1)the following Article is inserted: {paras}\n\n(2)in Article 5, point (a) is deleted;\n"
+    )
+    for max_chars in (100, 101, 102, 200):
+        for s in split_act(md, min_chars=10, max_chars=max_chars):
+            assert s.text.strip()
+            assert not s.text.strip().endswith("amended as follows:"), s.label
+
+
+@pytest.mark.parametrize(
+    "points",
+    ["(2)in Article 5, x;\n\n(3)in Article 6, y;", "(1)in Article 5, x;\n\n(3)in Article 6, y;"],
+)
+def test_out_of_order_points_keep_article_whole(points: str) -> None:
+    md = f"Article 1\n\nDirective X is amended as follows:\n\n{points}\n"
+    sections = split_act(md, min_chars=1, max_chars=1000)
+    assert [s.label for s in sections] == ["Article 1"]
+    assert _ws(sections[0].text) == _ws(md)
