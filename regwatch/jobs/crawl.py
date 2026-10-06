@@ -257,7 +257,8 @@ def _classify_stage(
 
 
 def seed(settings: Settings | None = None) -> int:
-    """Load the recorded seed run. Idempotent: skips changes whose document_url already exists.
+    """Load the recorded seed run. Idempotent: skips changes whose (document_url, instrument)
+    already exists, so several sections of one act (`"<act> — <label>"`) all load once.
 
     Upserts examples/seed-run/documents.jsonl first (by url + content hash) so each seed change
     carries the content_hash of its source document and `--stage normalize` leaves it alone.
@@ -297,7 +298,10 @@ def seed(settings: Settings | None = None) -> int:
             doc = s.get(DocumentRow, change.document_url)
             content_hash = doc.content_hash if doc is not None else ""
             existing = s.exec(
-                select(RegChangeRow).where(RegChangeRow.document_url == change.document_url)
+                select(RegChangeRow).where(
+                    RegChangeRow.document_url == change.document_url,
+                    RegChangeRow.instrument == change.instrument,
+                )
             ).first()
             if existing is not None:
                 if not existing.content_hash and content_hash:
