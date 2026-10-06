@@ -37,6 +37,8 @@ class Settings(BaseSettings):
     # Characters of markdown sent to the extractor; quotes are still validated on the full text.
     # 200k keeps late articles of long acts (2023/2673 Art. 11a sits at ~66k of ~106k chars).
     normalize_max_chars: int = Field(default=200_000, alias="REGWATCH_NORMALIZE_MAX_CHARS")
+    # EUR-Lex acts longer than this are split per article / amendment point before normalising.
+    act_split_min_chars: int = Field(default=20_000, alias="REGWATCH_ACT_SPLIT_MIN_CHARS")
     normalize_concurrency: int = Field(default=4, alias="REGWATCH_NORMALIZE_CONCURRENCY")
     # Lightning reasons by default and writes the trace into `content`, exhausting max_tokens
     # before any JSON; off unless set (sent as chat_template_kwargs.enable_thinking).
