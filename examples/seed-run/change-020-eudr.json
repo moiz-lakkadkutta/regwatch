@@ -1,0 +1,42 @@
+{
+  "created_at": "2026-10-06T11:41:28.116508+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.004847,
+  "tavily_credits": 1,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
+    "instrument": "Regulation (EU) 2023/1115 — Article 27",
+    "jurisdiction": "EU",
+    "summary": "Customs and competent authorities must cooperate and exchange information to ensure effective market checks for relevant products. This applies to all operators and traders covered by the Regulation.",
+    "effective_dates": [
+      "2026-12-30",
+      "2027-06-30"
+    ],
+    "obligations": [
+      {
+        "text": "Cooperate and exchange information with customs and competent authorities.",
+        "quote": "To enable the risk-based approach referred to in Article 16(5) for relevant products entering or leaving the market and to ensure that checks are effective and carried out in accordance with this Regulation, the Commission, competent authorities and customs authorities shall cooperate closely and exchange information."
+      },
+      {
+        "text": "Cooperate with customs authorities in accordance with Regulation (EU) No 952/2013.",
+        "quote": "Customs authorities and competent authorities shall cooperate in accordance with Article 47(2) of Regulation (EU) No 952/2013 and exchange information necessary for the fulfilment of their functions under this Regulation, including through electronic means."
+      },
+      {
+        "text": "Communicate confidential information to the competent authority of the Member State where the operator is established.",
+        "quote": "The customs authorities may communicate, in accordance with Article 12(1) of Regulation (EU) No 952/2013, confidential information acquired by the customs authorities in the course of performing their duties, or provided to the customs authorities on a confidential basis, to the competent authority of the Member State in which the operator, downstream operator, trader or authorised representative is established."
+      },
+      {
+        "text": "Communicate received information to competent authorities of other Member States.",
+        "quote": "Where the competent authorities have received information in accordance with this Article, those competent authorities may communicate that information to competent authorities of other Member States in accordance with Article 21(3)."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "does_not",
+    "reasons": [
+      "The obligations in Article 27 are addressed to customs authorities, competent authorities, and the Commission, requiring them to cooperate and exchange information.",
+      "Your shop sells wooden furniture and leather goods — both relevant products under the Regulation — and is established in Germany, but this article imposes no duties on operators or traders like you."
+    ],
+    "todos": []
+  }
+}

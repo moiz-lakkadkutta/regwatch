@@ -10,6 +10,7 @@ from regwatch.jobs.crawl import SEED_DIR
 from regwatch.schemas import Profile, RegChange
 from regwatch.understand.classify import classify
 from regwatch.understand.llm_backend import LiveLLMBackend, ModelLedger
+from tests.conftest import ART_11A
 
 
 @pytest.mark.live
@@ -17,7 +18,13 @@ def test_classify_seed_withdrawal_change_live() -> None:
     settings = Settings()
     if not settings.nebius_api_key:
         pytest.skip("NEBIUS_API_KEY is empty")
-    payload = json.loads((SEED_DIR / "change-001-withdrawal.json").read_text(encoding="utf-8"))
+    # the withdrawal button: new Art. 11a of 2011/83/EU, recorded as a section of 2023/2673
+    (path,) = [
+        p
+        for p in sorted(SEED_DIR.glob("change-*.json"))
+        if json.loads(p.read_text(encoding="utf-8"))["change"]["instrument"] == ART_11A
+    ]
+    payload = json.loads(path.read_text(encoding="utf-8"))
     change = RegChange.model_validate(payload["change"])
     profile = Profile.model_validate_json((SEED_DIR / "profile.json").read_text(encoding="utf-8"))
     ledger = ModelLedger.for_classifier(settings)

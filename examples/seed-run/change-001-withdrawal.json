@@ -1,26 +1,42 @@
 {
-  "created_at": "2026-06-01T09:00:00+00:00",
+  "created_at": "2026-10-06T11:39:53.440738+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.06,
-  "tavily_credits": 6,
+  "cost_usd": 0.002955,
+  "tavily_credits": 2,
   "change": {
-    "document_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj",
-    "instrument": "Directive (EU) 2023/2673 — withdrawal function (DE: § 356a BGB)",
-    "jurisdiction": "EU; transposed in Germany as § 356a BGB",
-    "summary": "Online stores selling to EU consumers must offer a clearly labelled, two-step electronic withdrawal function and confirm receipt on a durable medium. Applies to contracts concluded from 19 June 2026.",
-    "effective_dates": ["2026-06-19"],
+    "document_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj",
+    "instrument": "Directive (EU) 2023/2673 — Article 1, point (1)",
+    "jurisdiction": "EU",
+    "summary": "Distance sellers of financial services must apply only specific consumer protection articles to initial agreements or the first in a new series after one year. The amended Directive 2011/83/EU applies selectively to financial services contracts.",
+    "effective_dates": [
+      "2026-06-19"
+    ],
     "obligations": [
-      {"text": "Provide a withdrawal function on the online interface.", "quote": "the trader shall ensure that the consumer can also exercise the right of withdrawal by means of a withdrawal function"},
-      {"text": "Label it clearly and make it two-step (fill in, then confirm).", "quote": "The withdrawal function shall be labelled with the words 'withdraw contract here' or a corresponding unambiguous formulation in an easily legible manner"},
-      {"text": "Send an acknowledgement on a durable medium.", "quote": "the trader shall communicate to the consumer without undue delay an acknowledgement of receipt of the withdrawal on a durable medium"}
+      {
+        "text": "Apply only selected consumer protection articles to distance financial services contracts.",
+        "quote": "only Articles 1 and 2, Article 3(2), (5) and(6), Article 4, Article 6a, Article 8(6), Article 11a, Articles 16a to 16e, Article 19, Articles 21 to 23, Article 24(1) and(6), Articles 25 to 27 and Article 29 shall apply."
+      },
+      {
+        "text": "Apply only to the initial agreement when successive operations of the same nature occur.",
+        "quote": "where contracts referred to in the first subparagraph comprise an initial service agreement followed by successive operations, or a series of separate operations, of the same nature, performed over time, the provisions referred to in the first subparagraph shall apply only to the initial agreement."
+      },
+      {
+        "text": "Apply only to the first operation when no initial service agreement exists but same-nature operations occur between parties.",
+        "quote": "In the event that there is no initial service agreement but the successive operations, or separate operations, of the same nature performed over time are performed between the same contractual parties, Articles 16a and 16d shall apply only to the first operation."
+      },
+      {
+        "text": "Deem next operation as first in a new series if more than one year passes.",
+        "quote": "Where, however, no operation of the same nature is performed for more than one year, the next operation will be deemed to be the first in a new series of operations and, accordingly, Articles 16a and 16d shall apply."
+      }
     ]
   },
   "applicability": {
-    "decision": "applies",
-    "reasons": ["You sell to consumers in 10 EU countries, so the EU consumer-rights rules apply to your distance contracts.", "Your business is established in Germany, where the rule is § 356a BGB and is in force since 19 June 2026."],
-    "todos": [
-      {"text": "Add a labelled, two-step withdrawal button to your storefront", "due": "2026-06-19", "quote": "the trader shall ensure that the consumer can also exercise the right of withdrawal by means of a withdrawal function", "citation_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj"},
-      {"text": "Send an automatic confirmation email when a customer uses it", "due": "2026-06-19", "quote": "the trader shall communicate to the consumer without undue delay an acknowledgement of receipt of the withdrawal on a durable medium", "citation_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj"}
-    ]
+    "decision": "does_not",
+    "reasons": [
+      "The regulation covers distance sellers of financial services and applies only to financial services contracts.",
+      "Your shop sells furniture, wooden goods, and leather goods — physical products, not financial services.",
+      "Since you do not offer financial services, the obligations do not bind you."
+    ],
+    "todos": []
   }
 }

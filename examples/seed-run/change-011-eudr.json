@@ -1,0 +1,48 @@
+{
+  "created_at": "2026-10-06T11:41:28.105479+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.009231,
+  "tavily_credits": 2,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
+    "instrument": "Regulation (EU) 2023/1115 — Article 3",
+    "jurisdiction": "EU",
+    "summary": "Operators and downstream operators may not place or make available relevant commodities or products on the EU market unless they are deforestation-free, produced in accordance with the producing country's legislation, and covered by a due diligence statement or simplified declaration. This applies to all operators and downstream operators placing relevant commodities or products on the market.",
+    "effective_dates": [
+      "2026-12-30",
+      "2027-06-30"
+    ],
+    "obligations": [
+      {
+        "text": "Do not place relevant commodities on the market unless they have been produced in accordance with the relevant legislation of the country of production.",
+        "quote": "they have been produced in accordance with the relevant legislation of the country of production;"
+      },
+      {
+        "text": "Do not place relevant commodities on the market unless they are covered by a due diligence statement or a simplified declaration.",
+        "quote": "they are covered by a due diligence statement or a simplified declaration, as required by the relevant provisions of this Regulation."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "applies",
+    "reasons": [
+      "You sell wooden furniture and leather goods, which fall under the regulation's wood and cattle commodity categories.",
+      "Your shop is based in Germany and ships to multiple EU countries, so you are placing these products on the EU market.",
+      "The regulation requires you to verify legal production and submit a due diligence statement for each product."
+    ],
+    "todos": [
+      {
+        "text": "Ask your suppliers for proof that wood and leather were produced legally in their country of origin",
+        "due": "2026-12-30",
+        "quote": "they have been produced in accordance with the relevant legislation of the country of production;",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Set up a due diligence system to collect geolocation data and risk assessments for wood and leather products, and prepare a due diligence statement or simplified declaration",
+        "due": "2026-12-30",
+        "quote": "they are covered by a due diligence statement or a simplified declaration, as required by the relevant provisions of this Regulation.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      }
+    ]
+  }
+}

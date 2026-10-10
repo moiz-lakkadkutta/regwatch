@@ -64,12 +64,14 @@ uv run regwatch serve
 ```
 
 With keys: copy `.env.example` to `.env`, set `TAVILY_API_KEY=` and `NEBIUS_API_KEY=`, then
-`uv run regwatch crawl` (live search + extract + both models; writes `examples/seed-run/documents.jsonl`).
+`uv run regwatch crawl` (live search + extract + both models; writes nothing to `examples/seed-run`).
+The demo seed is recorded from such a crawl with `uv run regwatch record-seed --url … [--exclude …]`
+(grounded changes only; undated to-dos skipped; the crawl's Tavily credits carried into the footer).
 Schema changes are not migrated — delete a stale local `regwatch.db` first.
 
 ## Deploy on Nebius
 
-The public URL serves the recorded run in `examples/seed-run` (to be re-recorded from a live crawl before freeze); the daily Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database and is expected to prove in its logs that a second pass adds nothing (verified offline by `tests/test_crawl_all.py::test_crawl_all_twice_is_idempotent`) — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
+The public URL serves the recorded run in `examples/seed-run` (recorded with `regwatch record-seed` from the sixth live crawl: 4 documents, 29 changes, 40 Tavily credits); the daily Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database and is expected to prove in its logs that a second pass adds nothing (verified offline by `tests/test_crawl_all.py::test_crawl_all_twice_is_idempotent`) — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
 
 One image, two modes (`ops/entrypoint.sh serve|crawl`; `crawl` exits 2 without both keys and never uses
 fixtures). Console values: `ops/serverless-endpoint.yaml`, `ops/serverless-job.yaml`; daily schedule:
@@ -99,7 +101,7 @@ dropped and the withdrawal function stays; everything else is unchanged.
 ## Status / what's not done
 
 - Live deploy (Endpoint + Job) pending Moiz's keys and console session — `docs/runbook-nebius.md`.
-- Live Tavily and Token Factory numbers pending; `examples/seed-run` still to be re-recorded from a live crawl.
+- Live Tavily and Token Factory numbers pending in this README (see FEEDBACK.md); `examples/seed-run` is recorded from a live crawl (`regwatch record-seed`).
 - Open issues: `docs/issues.md`.
 
 ## Seed regulations

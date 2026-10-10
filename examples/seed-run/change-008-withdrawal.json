@@ -1,0 +1,29 @@
+{
+  "created_at": "2026-10-06T11:39:53.447544+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.003472,
+  "tavily_credits": 2,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj",
+    "instrument": "Directive (EU) 2023/2673 — Article 1, point (7)",
+    "jurisdiction": "EU",
+    "summary": "Amends Annex I of Directive 2011/83/EU to update financial services contract rules for distance selling. The amendment applies to distance and off-premises contracts within the scope of the directive.",
+    "effective_dates": [
+      "2026-06-19"
+    ],
+    "obligations": [
+      {
+        "text": "Amend Annex I of Directive 2011/83/EU in accordance with Annex I to this Directive.",
+        "quote": "Annex I is amended in accordance with Annex I to this Directive."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "does_not",
+    "reasons": [
+      "The regulation amends financial services contract rules for distance selling, but you sell furniture and leather goods, not financial services.",
+      "The sole obligation is a legislative instruction to amend an annex, not a requirement that binds a goods retailer like your shop."
+    ],
+    "todos": []
+  }
+}

@@ -5,8 +5,8 @@ new document) and `--stage classify` (Ultra → grounded Applicability per chang
 profile) each work end to end with a `CrawlRunRow`; `--stage all` runs the three on one row. `seed`
 loads `Settings.seed_dir` (`REGWATCH_SEED_DIR`, default examples/seed-run): *.json and
 documents.jsonl, so the demo URL is never empty.
-`examples/seed-run/documents.jsonl` is only written by a LIVE ingest by default; fixture runs write
-nothing unless `--out` is given.
+No crawl writes `examples/seed-run` by default: `regwatch record-seed` owns the seed; ingest writes a
+documents.jsonl only where `--out` points.
 """
 
 from __future__ import annotations
@@ -46,7 +46,7 @@ from regwatch.understand.normalize import NormalizeSummary, normalize_all
 log = logging.getLogger(__name__)
 
 SEED_DIR = DEFAULT_SEED_DIR  # tests import it; `seed()` itself reads `settings.seed_dir`
-DEFAULT_OUT = SEED_DIR / "documents.jsonl"
+DEFAULT_OUT = SEED_DIR / "documents.jsonl"  # the seed's documents (record-seed writes it)
 Stage = Literal["all", "ingest", "normalize", "classify"]
 STAGES: tuple[Stage, ...] = ("all", "ingest", "normalize", "classify")
 
@@ -97,11 +97,6 @@ def _display_path(path: Path) -> str:
         return str(path)
 
 
-def default_out(backend: str) -> Path | None:
-    """Only a LIVE ingest records examples/seed-run/documents.jsonl by default (R1, demo safety)."""
-    return DEFAULT_OUT if backend == "live" else None
-
-
 def write_documents_jsonl(docs: Sequence[Document], out: Path) -> None:
     """One Document per line, sorted by url, without `fetched_at` so re-runs are byte-identical."""
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -131,7 +126,7 @@ def run_ingest(
     *,
     backend: TavilyBackend | None = None,
     time_range: str = "year",
-    out: Path | None = DEFAULT_OUT,
+    out: Path | None = None,
     stage: Stage = "ingest",
 ) -> IngestSummary:
     """Search → extract → diff. Persists a `CrawlRunRow` with the Tavily credits used."""
@@ -363,7 +358,7 @@ def crawl(
     classify_backend: LLMBackend | None = None,
     llm_fixtures_dir: Path | None = None,
     time_range: str = "year",
-    out: Path | None = DEFAULT_OUT,
+    out: Path | None = None,
 ) -> CrawlRunRow:
     """`run_crawl` without the in-memory normalize summary."""
     run, _ = run_crawl(
@@ -388,7 +383,7 @@ def run_crawl(
     classify_backend: LLMBackend | None = None,
     llm_fixtures_dir: Path | None = None,
     time_range: str = "year",
-    out: Path | None = DEFAULT_OUT,
+    out: Path | None = None,
 ) -> tuple[CrawlRunRow, NormalizeSummary | None]:
     """Run one stage (or all); return its `CrawlRunRow` and, when normalize ran, its summary
     (the row stores changes, not documents, so only the summary can print the normalize line).
@@ -471,9 +466,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--out",
         type=Path,
         default=None,
-        help="documents.jsonl path (default: examples/seed-run/documents.jsonl for --backend live)",
+        help="write the ingested documents.jsonl here (default: nothing is written)",
     )
-    parser.add_argument("--no-out", action="store_true", help="do not write documents.jsonl")
+    parser.add_argument(
+        "--no-out", action="store_true", help="do not write documents.jsonl (the default)"
+    )
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, stream=sys.stderr)
     settings = Settings()
@@ -493,13 +490,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             classify_llm = make_llm_backend(
                 "fixtures", settings, args.llm_fixtures_dir, stage="classify"
             )
-    out: Path | None
-    if args.no_out:
-        out = None
-    elif args.out is not None:
-        out = args.out
-    else:
-        out = default_out(args.backend)
+    out: Path | None = None if args.no_out else args.out
     run, normalize_summary = run_crawl(
         settings,
         stage=stage,

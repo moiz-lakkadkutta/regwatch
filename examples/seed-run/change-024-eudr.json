@@ -1,0 +1,66 @@
+{
+  "created_at": "2026-10-06T11:41:28.120487+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.00393,
+  "tavily_credits": 1,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
+    "instrument": "Regulation (EU) 2023/1115 — Article 33",
+    "jurisdiction": "EU",
+    "summary": "The Commission must set up and maintain an information system by 30 December 2024 to collect due diligence statements. It must provide specific functions for operator registration, statement tracking, and data sharing with customs and authorities.",
+    "effective_dates": [
+      "2024-12-30"
+    ],
+    "obligations": [
+      {
+        "text": "Register operators and traders in the Union information system.",
+        "quote": "registration of operators and traders and their authorised representatives in the Union"
+      },
+      {
+        "text": "Include EORI numbers for operators placing products under customs procedures.",
+        "quote": "for operators placing relevant products under the customs procedure ‘release for free circulation’ or ‘export’, the Economic Operators Registration and Identification (EORI) number established pursuant to Article 9 of Regulation (EU) No 952/2013, shall be included in their registration profile"
+      },
+      {
+        "text": "Register due diligence statements and assign reference numbers.",
+        "quote": "registration of due diligence statements including the communication to the operator concerned of a reference number for each due diligence statement submitted through the information system"
+      },
+      {
+        "text": "Register simplified declarations for micro or small primary operators.",
+        "quote": "registration of simplified declarations submitted by micro or small primary operators and assignment of a declaration identifier to the operator concerned"
+      },
+      {
+        "text": "Convert data to identify geolocation where possible.",
+        "quote": "the conversion of data from relevant systems to identify the geolocation"
+      },
+      {
+        "text": "Register outcomes of checks on due diligence statements.",
+        "quote": "registration of the outcome of checks on due diligence statements"
+      },
+      {
+        "text": "Interconnect with customs through the European Single Window Environment.",
+        "quote": "interconnection with customs through the European Union Single Window Environment for Customs, in accordance with Article 28"
+      },
+      {
+        "text": "Provide relevant information to support risk-profiling for checks.",
+        "quote": "provision of relevant information to support the risk-profiling for the plan of checks referred to in Article 16(5)"
+      },
+      {
+        "text": "Facilitate administrative assistance and cooperation between authorities.",
+        "quote": "facilitation of administrative assistance and cooperation between competent authorities, and between competent authorities and the Commission, to exchange information and data"
+      },
+      {
+        "text": "Support communication between authorities and operators for implementation.",
+        "quote": "support communication between competent authorities and operators, downstream operators and traders for the purposes of implementation of this Regulation"
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "does_not",
+    "reasons": [
+      "The text covers obligations for the European Commission to set up and maintain an information system for due diligence statements.",
+      "Your shop is a furniture and leather goods seller based in Germany, not the Commission.",
+      "The obligations are for the Commission to register operators, handle due diligence statements, interconnect with customs, and support authority communication — they do not impose direct duties on you as a seller."
+    ],
+    "todos": []
+  }
+}

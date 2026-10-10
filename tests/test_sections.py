@@ -107,6 +107,14 @@ def test_blank_input_has_no_sections() -> None:
         ("https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023L2673", 100_000, True),
         ("https://eur-lex.europa.eu/eli/dir/2023/2673/oj", 5_000, False),
         ("https://help.shopify.com/en/manual/x", 100_000, False),
+        # guidance summaries of an act are never the act itself
+        (
+            "https://eur-lex.europa.eu/EN/legal-content/summary/"
+            "fighting-deforestation-and-forest-degradation.html",
+            100_000,
+            False,
+        ),
+        ("https://eur-lex.europa.eu/legal-content/summary/withdrawal.html", 100_000, False),
     ],
 )
 def test_is_long_act(url: str, size: int, expected: bool) -> None:

@@ -1,0 +1,57 @@
+{
+  "created_at": "2026-10-06T11:41:28.126744+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.004257,
+  "tavily_credits": 1,
+  "change": {
+    "document_url": "https://help.shopify.com/en/manual/compliance/legal/eu-right-of-withdrawal",
+    "instrument": "EU Directive 2023/2673",
+    "jurisdiction": "EU",
+    "summary": "Online merchants selling to EU customers must provide a clearly visible electronic withdrawal function by June 19, 2026, allowing customers to cancel purchases within the cooling-off period. The directive applies to any business selling goods, services, or digital content to EU consumers.",
+    "effective_dates": [
+      "2026-06-19"
+    ],
+    "obligations": [
+      {
+        "text": "Provide a clearly visible electronic withdrawal function on your store.",
+        "quote": "you need to provide a clearly visible electronic withdrawal function, such as a button or link, that customers can use to exercise their withdrawal right directly from your store."
+      },
+      {
+        "text": "Enable two-step confirmation when a customer exercises the withdrawal right.",
+        "quote": "After a customer clicks a withdrawal button or link, they confirm the withdrawal and provide their name and the details of the contract or order they're canceling."
+      },
+      {
+        "text": "Send automatic withdrawal confirmation to the customer on a durable medium.",
+        "quote": "Your store needs to send a confirmation of the withdrawal request to the customer on a durable medium, such as email."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "applies",
+    "reasons": [
+      "Your shop is established in Germany and ships to ten EU countries, so you sell to EU consumers.",
+      "You sell physical goods — furniture, wooden goods, and leather goods — which fall under the directive's scope of goods sold to EU consumers.",
+      "The directive requires any business selling goods to EU consumers to provide an electronic withdrawal function by June 19, 2026."
+    ],
+    "todos": [
+      {
+        "text": "Add a clearly visible withdrawal button or link to your storefront",
+        "due": "2026-06-19",
+        "quote": "you need to provide a clearly visible electronic withdrawal function, such as a button or link, that customers can use to exercise their withdrawal right directly from your store.",
+        "citation_url": "https://help.shopify.com/en/manual/compliance/legal/eu-right-of-withdrawal"
+      },
+      {
+        "text": "Set up a two-step confirmation flow where customers confirm withdrawal and enter their name and order details",
+        "due": "2026-06-19",
+        "quote": "After a customer clicks a withdrawal button or link, they confirm the withdrawal and provide their name and the details of the contract or order they're canceling.",
+        "citation_url": "https://help.shopify.com/en/manual/compliance/legal/eu-right-of-withdrawal"
+      },
+      {
+        "text": "Configure automatic email confirmation to customers when they submit a withdrawal request",
+        "due": "2026-06-19",
+        "quote": "Your store needs to send a confirmation of the withdrawal request to the customer on a durable medium, such as email.",
+        "citation_url": "https://help.shopify.com/en/manual/compliance/legal/eu-right-of-withdrawal"
+      }
+    ]
+  }
+}

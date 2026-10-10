@@ -1,0 +1,78 @@
+{
+  "created_at": "2026-10-06T11:41:28.114323+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.010337,
+  "tavily_credits": 1,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
+    "instrument": "Regulation (EU) 2023/1115 — Article 17 – Article 24",
+    "jurisdiction": "EU",
+    "summary": "Competent authorities must identify high-risk products and suspend their market placement within 72 hours for perishable goods, extendable by three-day periods. Operators and downstream actors must perform due diligence checks and take corrective action to bring non-compliance to an end.",
+    "effective_dates": [
+      "2026-12-30",
+      "2027-06-30"
+    ],
+    "obligations": [
+      {
+        "text": "Identify high-risk situations and register them in the information system.",
+        "quote": "Competent authorities shall identify situations where relevant products present such high risk of non-compliance with Article 3 that they require immediate action by competent authorities before those relevant products are placed or made available on the market or exported. Competent authorities shall register such identified situations in the information system referred to in Article 33."
+      },
+      {
+        "text": "Suspend placement of high-risk products within 72 hours for perishable goods.",
+        "quote": "The suspensions referred to in paragraph 2 of this Article shall end within three working days or within 72 hours in the case of perishable relevant products, starting from the moment when the high risk of non-compliance is identified in the information system referred to in Article 33."
+      },
+      {
+        "text": "Require customs authorities to suspend release for free circulation or export of high-risk products.",
+        "quote": "require customs authorities to suspend the release for free circulation or export of those relevant products under Article 26(7)."
+      },
+      {
+        "text": "Take immediate interim measures to suspend market placement upon detection of non-compliance.",
+        "quote": "Member States shall provide for the possibility for their competent authorities to take immediate interim measures, including the seizure of the relevant commodities or relevant products, or the suspension of the placing or making available on the market or the export of the relevant commodities or relevant products, when potential non-compliance with this Regulation has been detected on the basis of any of the following:"
+      },
+      {
+        "text": "Require operators to take corrective action to end non-compliance within a reasonable period.",
+        "quote": "where competent authorities establish that an operator, downstream operator or trader has not complied with this Regulation or that a relevant product placed or made available on the market or exported is non-compliant, they shall without delay require the operator, downstream operator or trader to take appropriate and proportionate corrective action to bring the non-compliance to an end within a specified and reasonable period of time."
+      },
+      {
+        "text": "Rectify formal non-compliance or prevent market placement of non-compliant products.",
+        "quote": "rectifying any formal non-compliance, in particular with the requirements of Chapter 2;"
+      },
+      {
+        "text": "Withdraw or recall non-compliant products from the market immediately.",
+        "quote": "withdrawing or recalling the relevant product immediately;"
+      },
+      {
+        "text": "Address shortcomings in the due diligence system to prevent further non-compliance.",
+        "quote": "the operator, downstream operator or trader shall address any shortcomings in the due diligence system with a view to preventing the risk of further non-compliance with this Regulation."
+      },
+      {
+        "text": "Secure application of corrective action if operator fails to comply within specified period.",
+        "quote": "If the operator, downstream operator or trader fails to take corrective action as referred to in paragraph 2 within the period of time specified by the competent authority under paragraph 1, or where non-compliance as referred to in paragraph 1 persists, after that period of time competent authorities shall secure application of the required corrective action referred to in paragraph 2 by all means available to them under the law of the Member State concerned."
+      },
+      {
+        "text": "Make public annual information on application of the Regulation by 30 April.",
+        "quote": "By 30 April of each year, Member States shall make available to the public and to the Commission information on the application of this Regulation during the previous calendar year."
+      },
+      {
+        "text": "Commission shall publish Union-wide overview of Regulation application by 30 October each year.",
+        "quote": "By 30 October of each year, the Commission services shall make publicly available a Union-wide overview of the application of this Regulation based on the data submitted by the Member States under paragraph 1."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "applies",
+    "reasons": [
+      "applies because you sell wooden furniture and leather goods, which fall under the EU Deforestation Regulation's coverage of wood and cattle-derived products, and you are established in Germany.",
+      "The regulation's enforcement provisions (Articles 17–24) bind you as an operator who places relevant products on the EU market.",
+      "While most obligations in this change target competent authorities, you must address any shortcomings in your due diligence system to prevent non-compliance."
+    ],
+    "todos": [
+      {
+        "text": "Review your due diligence system for shortcomings and fix any gaps to prevent future non-compliance",
+        "due": "2027-06-30",
+        "quote": "the operator, downstream operator or trader shall address any shortcomings in the due diligence system with a view to preventing the risk of further non-compliance with this Regulation.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      }
+    ]
+  }
+}

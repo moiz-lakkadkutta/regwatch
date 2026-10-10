@@ -1,0 +1,86 @@
+{
+  "created_at": "2026-10-06T11:39:53.443955+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.003119,
+  "tavily_credits": 2,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj",
+    "instrument": "Directive (EU) 2023/2673 — Article 1, point (4) (part 1)",
+    "jurisdiction": "EU",
+    "summary": "Traders must provide comprehensive pre-contractual information to consumers before they are bound by distance financial service contracts. Failure to comply may result in a 12-month withdrawal period and burden of proof on the trader.",
+    "effective_dates": [
+      "2026-06-19"
+    ],
+    "obligations": [
+      {
+        "text": "Provide consumer with identity and main business of trader before contract conclusion.",
+        "quote": "the trader shall provide the consumer, in a clear and comprehensible manner, with the following information: (a)the identity and the main business of the trader and, where applicable, the identity and the main business of the trader on whose behalf he is acting;"
+      },
+      {
+        "text": "Provide consumer with geographical address and contact details of trader.",
+        "quote": "the geographical address at which the trader is established as well as the trader’s telephone number and email address, or details of any other means of communication offered by the trader and, where applicable, those of the trader on whose behalf he is acting; all those means of communication offered by the trader shall enable the consumer to contact the trader quickly and to communicate with him efficiently and guarantee that the consumer can keep any written correspondence with the trader on a durable medium;"
+      },
+      {
+        "text": "Provide consumer with relevant contact details for complaints.",
+        "quote": "relevant contact details enabling the consumer to address any complaints to the trader, and, where applicable, to the trader on whose behalf he or she is acting;"
+      },
+      {
+        "text": "Provide consumer with description of main characteristics of financial service.",
+        "quote": "a description of the main characteristics of the financial service;"
+      },
+      {
+        "text": "Provide consumer with total price including all fees and taxes.",
+        "quote": "the total price to be paid by the consumer to the trader for the financial service, including all related fees, charges and expenses, and all taxes paid via the trader or, when an exact price cannot be indicated, the basis for the calculation of the price enabling the consumer to verify it;"
+      },
+      {
+        "text": "Provide consumer with information on consequences of late or missed payments.",
+        "quote": "where applicable, information on the consequences of late or missed payments;"
+      },
+      {
+        "text": "Provide consumer with notice if price was personalised via automated decision-making.",
+        "quote": "where applicable, that the price was personalised on the basis of automated decision-making;"
+      },
+      {
+        "text": "Provide consumer with notice of special risks and that historical performances are not indicators for future performances.",
+        "quote": "where applicable, a notice indicating that the financial service is related to instruments involving special risks related to their specific features or the operations to be executed or whose price depends on fluctuations in the financial markets outside the trader’s control and a notice indicating that historical performances are not indicators for future performances;"
+      },
+      {
+        "text": "Inform consumer of right of withdrawal period and conditions.",
+        "quote": "the existence or absence of a right of withdrawal and, where the right of withdrawal exists, information on the withdrawal period and the conditions for exercising that right including information on the amount which the consumer may be required to pay, as well as the consequences of non-exercise of that right;"
+      },
+      {
+        "text": "Inform consumer of minimum duration of contract for permanent or recurrent services.",
+        "quote": "the minimum duration of the distance contract in the case of financial services to be performed permanently or recurrently;"
+      },
+      {
+        "text": "Inform consumer of rights to terminate contract early and any penalties.",
+        "quote": "information on any rights the parties might have to terminate the contract early or unilaterally by virtue of the terms of the distance contract, including any penalties imposed under the contract in such cases;"
+      },
+      {
+        "text": "Provide practical instructions for exercising right of withdrawal.",
+        "quote": "practical instructions and procedures for exercising the right of withdrawal in accordance with Article 16b(1), indicating, inter alia, the trader’s telephone number and email address or details of other means of communication relevant to the sending of the withdrawal statement and, for financial services contracts concluded by means of an online interface, information about the existence and placement of the withdrawal function referred to in Article 11a;"
+      },
+      {
+        "text": "Inform consumer of applicable law and competent court.",
+        "quote": "any contractual clause on the law applicable to the distance contract and/or on the competent court;"
+      },
+      {
+        "text": "Inform consumer of language(s) for contractual terms and communication.",
+        "quote": "in which language, or languages, the contractual terms and conditions, and the prior information referred to in this Article, are supplied, and furthermore in which language, or languages, the trader, with the agreement of the consumer, undertakes to communicate during the duration of the distance contract;"
+      },
+      {
+        "text": "Inform consumer of out-of-court complaint and redress mechanism.",
+        "quote": "where applicable, the possibility of having recourse to an out-of-court complaint and redress mechanism, to which the trader is subject, and the methods for having access to it;"
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "does_not",
+    "reasons": [
+      "The regulation covers pre-contractual information requirements for distance financial service contracts.",
+      "Your shop sells furniture, wooden goods, and leather goods — physical products, not financial services.",
+      "None of the obligations apply to a trader that does not offer financial services to consumers."
+    ],
+    "todos": []
+  }
+}

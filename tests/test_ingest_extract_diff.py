@@ -12,7 +12,8 @@ from regwatch.db import DocumentRow, make_engine
 from regwatch.ingest.diff import content_hash, upsert_documents
 from regwatch.ingest.extract import EXTRACT_BATCH, batched, extract_documents
 from regwatch.ingest.search import Hit, search_all
-from regwatch.ingest.tavily_backend import CreditLedger, FixtureTavilyBackend, normalize_url
+from regwatch.ingest.tavily_backend import CreditLedger, normalize_url
+from regwatch.jobs.crawl import read_documents_jsonl
 from regwatch.schemas import Document, RegChange
 from tests.fakes import RecordingBackend
 
@@ -140,21 +141,20 @@ def test_upsert_new_changed_unchanged(fake_backend: RecordingBackend, tmp_path: 
         assert json.loads(row.regulation_tags) == edited.regulation_tags
 
 
-def test_core_fixtures_contain_seed_quotes(
-    fixtures_root: Path, manifest: list[dict[str, Any]]
-) -> None:
-    backend = FixtureTavilyBackend(fixtures_root)
-    by_url = {m["url"]: m for m in manifest}
+def test_seed_quotes_are_verbatim_in_recorded_documents() -> None:
+    """Every seed obligation quote is in the recorded source document (documents.jsonl)."""
+    markdown = {d.url: d.markdown for d in read_documents_jsonl(SEED_DIR / "documents.jsonl")}
     change_files = sorted(SEED_DIR.glob("change-*.json"))
     assert len(change_files) >= 2
     for path in change_files:
         change = RegChange.model_validate(json.loads(path.read_text(encoding="utf-8"))["change"])
-        entry = by_url[change.document_url]
-        assert entry["kind"] == "core" and entry["expected_decision"] == "applies"
-        resp = backend.extract(urls=[change.document_url])
-        assert resp["failed_results"] == []
-        markdown = resp["results"][0]["raw_content"]
-        assert change.validate_quotes(markdown) == []
+        assert change.obligations
+        assert change.validate_quotes(markdown[change.document_url]) == []
+
+
+def test_fixture_bodies_are_substantial(
+    fixtures_root: Path, manifest: list[dict[str, Any]]
+) -> None:
     for m in manifest:
         body = (fixtures_root / "extract" / f"{m['id']}.md").read_text(encoding="utf-8")
         if m["kind"] == "core":

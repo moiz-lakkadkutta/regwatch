@@ -98,3 +98,9 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   22 don't / 13 unclear, 105 to-dos, 0 dropped; $0.1715 normalise + $0.3568 classify (PLACEHOLDER prices).
   Art. 11a section → `applies`, 4 to-dos, due 2026-06-19; feed shows "7 other provisions of Directive (EU) 2023/2673
   don't apply to you".
+- (2026-10-10, demo seed re-recorded) `examples/seed-run` is now recorded from the sixth live crawl (run6 DB,
+  40 Tavily credits, $0.5283 model) by the new `regwatch record-seed` instead of hand: 4 URLs (2023/2673 /oj/eng,
+  consolidated 2023/1115, help.shopify EU right of withdrawal, IHK Pfalz) with `--exclude` for the stale
+  "Regulation (EU) 2023/1115 — Article 11 – Article 15" and "… — ANNEX II" sections →
+  `record-seed: 4 documents · 29 changes · 7 skipped → examples/seed-run` (5 skipped for an undated to-do,
+  2 excluded). Every quote is verbatim in the recorded document; the feed footer shows the crawl's 40 credits.

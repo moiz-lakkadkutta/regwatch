@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from regwatch.config import EU_COUNTRIES
 from regwatch.db import current_profile, session
 from regwatch.schemas import Profile
+from tests.conftest import ART_11A, SEED_CHANGES, seed_change_id
 
 SEED_DIR = Path(__file__).resolve().parent.parent / "examples" / "seed-run"
 
@@ -23,7 +24,7 @@ def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
     importlib.reload(appmod)
     from regwatch.jobs.crawl import seed
 
-    assert seed() == 2
+    assert seed() == SEED_CHANGES
     assert seed() == 0  # idempotent
     return TestClient(appmod.app)
 
@@ -70,7 +71,7 @@ def test_month_view_marks_overdue_and_toggles(client: TestClient) -> None:
 
 
 def test_change_detail_has_quotes_and_source(client: TestClient) -> None:
-    r = client.get("/change/1")
+    r = client.get(f"/change/{seed_change_id(ART_11A)}")
     assert r.status_code == 200
     assert "withdrawal function" in r.text and "eur-lex.europa.eu" in r.text
 

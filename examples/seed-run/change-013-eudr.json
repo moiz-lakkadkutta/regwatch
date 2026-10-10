@@ -1,0 +1,77 @@
+{
+  "created_at": "2026-10-06T11:41:28.108493+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.013317,
+  "tavily_credits": 1,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
+    "instrument": "Regulation (EU) 2023/1115 — Article 5",
+    "jurisdiction": "EU",
+    "summary": "Non-SME downstream operators and traders must register in the EU information system before placing relevant products on the market. All downstream operators and traders must collect and keep supplier and customer information for at least five years and provide it to authorities upon request.",
+    "effective_dates": [
+      "2026-12-30",
+      "2027-06-30"
+    ],
+    "obligations": [
+      {
+        "text": "Place or make available relevant products only if in possession of required information.",
+        "quote": "Downstream operators and traders shall place or make available on the market or export relevant products only if they are in possession of the information required under paragraph 3."
+      },
+      {
+        "text": "Collect and keep supplier and customer information relating to relevant products.",
+        "quote": "Downstream operators and traders shall collect and keep the following information relating to the relevant products they intend to place or make available on the market or export: (a) the name, registered trade name or registered trade mark, the postal address, the email address and, if available, a web address of the operators, downstream operators, or the traders who have supplied the relevant products to them, as well as, only in the event that their supplier is an operator, the reference numbers of the due diligence statements or the declaration identifiers associated to those products; (b) the name, registered trade name or registered trade mark, the postal address, the email address and, if available, a web address of the downstream operators, or the traders to whom they have supplied the relevant products."
+      },
+      {
+        "text": "Keep collected information for at least five years and provide it to competent authorities upon request.",
+        "quote": "Downstream operators and traders shall keep the information referred to in paragraph 3 for at least five years from the date of the placing or making available on the market or export, and shall provide that information to the competent authorities upon request."
+      },
+      {
+        "text": "Immediately inform competent authorities if a placed product is at risk of non-compliance.",
+        "quote": "Downstream operators and traders that obtain or are made aware of relevant new information, including substantiated concerns, indicating that a relevant product that they have placed or made available on the market is at risk of not complying with this Regulation shall immediately inform the competent authorities of the Member States in which they placed or made available on the market the relevant product as well as downstream operators and traders to whom they supplied the relevant product. In the case of exports, downstream operators shall inform the competent authority of the Member State which is the country of production."
+      },
+      {
+        "text": "Offer all necessary assistance to competent authorities to facilitate checks under Article 19.",
+        "quote": "Downstream operators and traders shall offer all necessary assistance to the competent authorities to facilitate the carrying out of the checks under Article 19, including access to premises and the making available of documentation and records."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "applies",
+    "reasons": [
+      "Applies because you are established in Germany, ship to multiple EU countries, and sell wooden furniture and leather goods, which are relevant products under the EU Deforestation Regulation.",
+      "As a downstream trader placing these products on the EU market, you must collect and retain supplier and customer information, keep it for five years, and cooperate with authorities."
+    ],
+    "todos": [
+      {
+        "text": "Verify you have supplier due diligence statements or declaration identifiers before listing any wood or leather products",
+        "due": "2026-12-30",
+        "quote": "Downstream operators and traders shall place or make available on the market or export relevant products only if they are in possession of the information required under paragraph 3.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Set up a system to record supplier details (name, address, email, web, due diligence reference) and customer details (name, address, email, web) for each wood and leather product",
+        "due": "2026-12-30",
+        "quote": "Downstream operators and traders shall collect and keep the following information relating to the relevant products they intend to place or make available on the market or export: (a) the name, registered trade name or registered trade mark, the postal address, the email address and, if available, a web address of the operators, downstream operators, or the traders who have supplied the relevant products to them, as well as, only in the event that their supplier is an operator, the reference numbers of the due diligence statements or the declaration identifiers associated to those products; (b) the name, registered trade name or registered trade mark, the postal address, the email address and, if available, a web address of the downstream operators, or the traders to whom they have supplied the relevant products.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Create a secure archive to retain supplier and customer records for five years from each sale and be ready to share with authorities",
+        "due": "2026-12-30",
+        "quote": "Downstream operators and traders shall keep the information referred to in paragraph 3 for at least five years from the date of the placing or making available on the market or export, and shall provide that information to the competent authorities upon request.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Establish a process to notify the relevant national authority and your business customers promptly if you learn a wood or leather product may violate the regulation",
+        "due": "2026-12-30",
+        "quote": "Downstream operators and traders that obtain or are made aware of relevant new information, including substantiated concerns, indicating that a relevant product that they have placed or made available on the market is at risk of not complying with this Regulation shall immediately inform the competent authorities of the Member States in which they placed or made available on the market the relevant product as well as downstream operators and traders to whom they supplied the relevant product. In the case of exports, downstream operators shall inform the competent authority of the Member State which is the country of production.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Prepare to grant authorities access to your premises and records for compliance checks",
+        "due": "2026-12-30",
+        "quote": "Downstream operators and traders shall offer all necessary assistance to the competent authorities to facilitate the carrying out of the checks under Article 19, including access to premises and the making available of documentation and records.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      }
+    ]
+  }
+}

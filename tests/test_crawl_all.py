@@ -3,11 +3,12 @@ import logging
 import re
 import shutil
 from pathlib import Path
+from typing import Any
 
 import pytest
 from sqlmodel import Session, col, select
 
-from regwatch.config import Settings
+from regwatch.config import SEED_REGULATIONS, Settings
 from regwatch.db import (
     ApplicabilityRow,
     CrawlRunRow,
@@ -17,10 +18,18 @@ from regwatch.db import (
     make_engine,
     regchanges_needing_classify,
 )
-from regwatch.jobs.crawl import SEED_DIR, crawl, main, seed, summary_lines
+from regwatch.ingest.tavily_backend import TavilyBackend
+from regwatch.jobs.crawl import SEED_DIR, crawl, main, read_documents_jsonl, seed, summary_lines
 from regwatch.schemas import Profile
 from regwatch.understand.llm_backend import FixtureLLMBackend
-from tests.conftest import LLM_FIXTURES_ROOT
+from tests.conftest import (
+    ART_11A,
+    LLM_FIXTURES_ROOT,
+    SEED_CHANGES,
+    SEED_FILES,
+    seed_file,
+    seed_payload,
+)
 from tests.fakes import RecordingBackend
 
 
@@ -48,7 +57,7 @@ def _backends() -> tuple[FixtureLLMBackend, FixtureLLMBackend]:
     )
 
 
-def _crawl_all(settings: Settings, tavily: RecordingBackend, out: Path) -> CrawlRunRow:
+def _crawl_all(settings: Settings, tavily: TavilyBackend, out: Path) -> CrawlRunRow:
     normalize_llm, classify_llm = _backends()
     return crawl(
         settings,
@@ -157,20 +166,72 @@ def test_stage_classify_without_profile_is_a_no_op(
         assert s.exec(select(ApplicabilityRow)).all() == []
 
 
+SEED_SHOPIFY = "https://help.shopify.com/en/manual/compliance/legal/eu-right-of-withdrawal"
+
+
+class _WithSeedDocument:
+    """The fixture corpus plus one recorded seed document, found and extracted unchanged."""
+
+    def __init__(self, inner: RecordingBackend, url: str) -> None:
+        self.inner = inner
+        self.url = url
+        (self.doc,) = [
+            d for d in read_documents_jsonl(SEED_DIR / "documents.jsonl") if d.url == url
+        ]
+        self.withdrawal_query = next(
+            r["query"] for r in SEED_REGULATIONS if r["tag"] == "withdrawal"
+        )
+
+    def search(self, **kw: Any) -> dict[str, Any]:
+        resp = self.inner.search(**kw)
+        if kw["query"] == self.withdrawal_query and kw["include_domains"] == ["help.shopify.com"]:
+            hit = {"title": "EU right of withdrawal", "url": self.url, "content": "", "score": 0.9}
+            resp = {**resp, "results": [*resp["results"], hit]}
+        return resp
+
+    def extract(self, **kw: Any) -> dict[str, Any]:
+        urls = [u for u in kw["urls"] if u != self.url]
+        resp = self.inner.extract(**{**kw, "urls": urls})
+        if len(urls) < len(kw["urls"]):
+            page = {"url": self.url, "raw_content": self.doc.markdown, "images": []}
+            resp = {**resp, "results": [*resp["results"], page]}
+        return resp
+
+
 def test_seed_then_crawl_all_leaves_seed_changes_alone(
     tmp_settings: Settings, fake_backend: RecordingBackend, tmp_path: Path
 ) -> None:
-    assert seed(tmp_settings) == 2
-    run = _crawl_all(tmp_settings, fake_backend, tmp_path / "docs.jsonl")
-    # the two seed documents are unchanged and already classified for the seed profile
-    assert (run.n_docs_new, run.n_docs_unchanged) == (14, 2)
-    assert run.n_changes_new == 13 and run.n_classified == 13 and run.n_applies == 1
+    assert seed(tmp_settings) == SEED_CHANGES
+    with Session(make_engine(tmp_settings)) as s:
+        seed_hashes = {d.url: d.content_hash for d in s.exec(select(DocumentRow)).all()}
+        n_seed_shopify = len(
+            s.exec(select(RegChangeRow).where(RegChangeRow.document_url == SEED_SHOPIFY)).all()
+        )
+    assert n_seed_shopify >= 1
+    backend = _WithSeedDocument(fake_backend, SEED_SHOPIFY)
+    run = _crawl_all(tmp_settings, backend, tmp_path / "docs.jsonl")
+    # the re-ingested seed document is unchanged, so it is neither normalised nor classified
+    # again; only the 16 fixture documents are new
+    assert run.n_docs_unchanged >= 1
+    assert (run.n_docs_new, run.n_docs_unchanged) == (16, 1)
+    assert run.n_changes_new == 15 and run.n_classified == 15 and run.n_applies == 3
+    recorded_costs = sorted(seed_payload(p)["cost_usd"] for p in SEED_FILES)
     with Session(make_engine(tmp_settings)) as s:
         rows = s.exec(select(ApplicabilityRow)).all()
-        assert len(rows) == 15
-        assert sum(r.model == "nvidia/Nemotron-3-Ultra-550b-a55b" for r in rows) == 15
-        seed_rows = [r for r in rows if r.cost_usd in (0.06, 0.07)]
-        assert len(seed_rows) == 2  # untouched, still carrying the recorded seed cost
+        assert len(rows) == SEED_CHANGES + 15
+        assert all(r.model == "nvidia/Nemotron-3-Ultra-550b-a55b" for r in rows)
+        seed_ids = [
+            c.id for c in s.exec(select(RegChangeRow).where(RegChangeRow.model == "seed")).all()
+        ]
+        assert len(seed_ids) == SEED_CHANGES
+        seed_rows = [r for r in rows if r.regchange_id in seed_ids]
+        # untouched, still carrying the recorded seed cost
+        assert sorted(r.cost_usd for r in seed_rows) == recorded_costs
+        for url, content_hash in seed_hashes.items():
+            doc = s.get(DocumentRow, url)
+            assert doc is not None and doc.content_hash == content_hash
+        shopify = s.exec(select(RegChangeRow).where(RegChangeRow.document_url == SEED_SHOPIFY))
+        assert [c.model for c in shopify.all()] == ["seed"] * n_seed_shopify  # no new change
     assert seed(tmp_settings) == 0
 
 
@@ -178,16 +239,19 @@ def test_seed_honours_seed_dir_setting(tmp_path: Path) -> None:
     """`seed()` reads Settings.seed_dir (REGWATCH_SEED_DIR), not a path relative to the package."""
     custom = tmp_path / "s"
     shutil.copytree(SEED_DIR, custom)
-    (custom / "change-002-eudr.json").unlink()
+    for path in custom.glob("change-*.json"):
+        if path.name != seed_file(ART_11A).name:
+            path.unlink()
     settings = Settings(
         REGWATCH_DB_URL=f"sqlite:///{tmp_path / 'seed.db'}", REGWATCH_SEED_DIR=str(custom)
     )
     assert settings.seed_dir == custom
     assert seed(settings) == 1
     assert seed(settings) == 0
+    n_docs = len((SEED_DIR / "documents.jsonl").read_text(encoding="utf-8").splitlines())
     with Session(make_engine(settings)) as s:
-        assert len(s.exec(select(RegChangeRow)).all()) == 1
-        assert len(s.exec(select(DocumentRow)).all()) == 2  # documents.jsonl still has both
+        assert [r.instrument for r in s.exec(select(RegChangeRow)).all()] == [ART_11A]
+        assert len(s.exec(select(DocumentRow)).all()) == n_docs  # documents.jsonl unchanged
     assert Settings(REGWATCH_DB_URL="sqlite://").seed_dir == SEED_DIR
 
 
@@ -234,13 +298,10 @@ def test_seed_loads_several_sections_of_one_act_and_is_idempotent(tmp_path: Path
     """Seed idempotency is per (document_url, instrument): two sections of one act both load."""
     custom = tmp_path / "s"
     shutil.copytree(SEED_DIR, custom)
-    (custom / "change-002-eudr.json").unlink()
-    first = json.loads((custom / "change-001-withdrawal.json").read_text(encoding="utf-8"))
-    second = json.loads(json.dumps(first))
-    first["change"]["instrument"] = "Directive (EU) 2023/2673 — Article 1, point (3)"
-    second["change"]["instrument"] = "Directive (EU) 2023/2673 — Article 1, point (1)"
-    (custom / "change-001-withdrawal.json").write_text(json.dumps(first), encoding="utf-8")
-    (custom / "change-001b-withdrawal.json").write_text(json.dumps(second), encoding="utf-8")
+    point_1 = seed_file("Directive (EU) 2023/2673 — Article 1, point (1)")
+    for path in custom.glob("change-*.json"):
+        if path.name not in (seed_file(ART_11A).name, point_1.name):
+            path.unlink()
     settings = Settings(
         REGWATCH_DB_URL=f"sqlite:///{tmp_path / 'seed.db'}", REGWATCH_SEED_DIR=str(custom)
     )
@@ -249,8 +310,8 @@ def test_seed_loads_several_sections_of_one_act_and_is_idempotent(tmp_path: Path
     with Session(make_engine(settings)) as s:
         rows = s.exec(select(RegChangeRow).order_by(col(RegChangeRow.id))).all()
         assert [r.instrument for r in rows] == [
-            "Directive (EU) 2023/2673 — Article 1, point (3)",
             "Directive (EU) 2023/2673 — Article 1, point (1)",
+            ART_11A,
         ]
         assert len({r.document_url for r in rows}) == 1
         assert all(r.content_hash for r in rows)

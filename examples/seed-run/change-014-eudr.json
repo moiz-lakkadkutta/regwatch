@@ -1,0 +1,55 @@
+{
+  "created_at": "2026-10-06T11:41:28.109971+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.00858,
+  "tavily_credits": 1,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
+    "instrument": "Regulation (EU) 2023/1115 — Article 6 – Article 8",
+    "jurisdiction": "EU",
+    "summary": "Operators must submit due diligence statements or simplified declarations through authorised representatives, and all operators must exercise due diligence before placing products on the market. The rules apply to any operator placing relevant products on the EU market.",
+    "effective_dates": [
+      "2026-12-30",
+      "2027-06-30"
+    ],
+    "obligations": [
+      {
+        "text": "Mandate an authorised representative to submit due diligence or simplified declarations.",
+        "quote": "Operators may mandate an authorised representative to submit the due diligence statement pursuant to Article 4(2) or to submit a simplified declaration pursuant to Article 4a(2) on their behalf."
+      },
+      {
+        "text": "Provide a copy of the mandate to competent authorities upon request.",
+        "quote": "The authorised representative shall, upon request, provide a copy of the mandate in an official language of the Union to the competent authorities and a copy in an official language of the Member State in which the due diligence statement or the simplified declaration is handled or, where that is not possible, in English."
+      },
+      {
+        "text": "Natural persons or microenterprises may mandate the next downstream operator as authorised representative.",
+        "quote": "An operator that is a natural person or a microenterprise may mandate the next downstream operator or trader further down the supply chain that is not a natural person or a microenterprise to act as an authorised representative."
+      },
+      {
+        "text": "Exercise due diligence before placing relevant products on the market or exporting them.",
+        "quote": "Prior to placing relevant products on the market or exporting them, operators shall exercise due diligence with regard to all relevant products."
+      },
+      {
+        "text": "Collect information, data and documents needed to fulfil Article 9 requirements.",
+        "quote": "the collection of information, data and documents needed to fulfil the requirements set out in Article 9;"
+      },
+      {
+        "text": "Conduct risk assessment measures as referred to in Article 10.",
+        "quote": "risk assessment measures as referred to in Article 10;"
+      },
+      {
+        "text": "Implement risk mitigation measures as referred to in Article 11.",
+        "quote": "risk mitigation measures as referred to in Article 11."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "unclear",
+    "reasons": [
+      "We couldn't tell from your profile whether you are an 'operator' who places wood and leather products on the EU market for the first time (e.g., as importer or manufacturer) or a downstream trader, because the obligations only bind operators.",
+      "Your company size (microenterprise, SME, or large) determines which deadlines apply and whether you can use simplified due diligence or mandate a downstream operator as representative.",
+      "Since you sell furniture/wooden goods and leather goods — both listed as relevant products — the regulation would apply if you are the operator."
+    ],
+    "todos": []
+  }
+}
