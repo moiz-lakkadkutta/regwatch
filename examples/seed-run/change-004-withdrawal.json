@@ -1,0 +1,67 @@
+{
+  "created_at": "2026-10-06T11:39:53.443135+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.005644,
+  "tavily_credits": 0,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj",
+    "instrument": "Directive (EU) 2023/2673 — Article 1, point (3)",
+    "jurisdiction": "EU",
+    "summary": "Online merchants selling distance contracts must provide a continuously available withdrawal function labelled \"withdraw from contract here\" and a confirmation function labelled \"confirm withdrawal\". They must also enable consumers to submit withdrawal statements and send acknowledgement of receipt. These rules apply to distance contracts concluded via an online interface.",
+    "effective_dates": [
+      "2026-06-19"
+    ],
+    "obligations": [
+      {
+        "text": "Ensure the withdrawal function is continuously available throughout the withdrawal period.",
+        "quote": "The withdrawal function shall be continuously available throughout the withdrawal period."
+      },
+      {
+        "text": "Display the withdrawal function prominently and make it easily accessible to the consumer.",
+        "quote": "It shall be prominently displayed on the online interface and easily accessible to the consumer."
+      },
+      {
+        "text": "Enable the consumer to send an online withdrawal statement with required information.",
+        "quote": "The withdrawal function shall enable the consumer to send an online withdrawal statement informing the trader of his or her decision to withdraw from the contract. That online withdrawal statement shall enable the consumer to easily provide or confirm the following information: (a)his or her name; (b)details identifying the contract from which he or she wishes to withdraw; (c)details of the electronic means by which the confirmation of the withdrawal will be sent to the consumer."
+      },
+      {
+        "text": "Send acknowledgement of receipt of the withdrawal on a durable medium after the consumer activates the confirmation function.",
+        "quote": "Once the consumer activates the confirmation function, the trader shall send to the consumer an acknowledgement of receipt of the withdrawal on a durable medium, including its content and the date and time of its submission, without undue delay."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "applies",
+    "reasons": [
+      "Applies because you run an online shop on Shopify from Germany and sell furniture and leather goods to consumers across the EU.",
+      "The directive covers distance contracts concluded via an online interface, which is exactly how your store operates.",
+      "As a trader selling to consumers, you must provide the withdrawal and confirmation functions described."
+    ],
+    "todos": [
+      {
+        "text": "Add a withdrawal button that stays visible and working for the full 14-day withdrawal period",
+        "due": "2026-06-19",
+        "quote": "The withdrawal function shall be continuously available throughout the withdrawal period.",
+        "citation_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj"
+      },
+      {
+        "text": "Place the withdrawal button in a prominent, easy-to-find spot on every page of your storefront",
+        "due": "2026-06-19",
+        "quote": "It shall be prominently displayed on the online interface and easily accessible to the consumer.",
+        "citation_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj"
+      },
+      {
+        "text": "Build a withdrawal form that lets the customer enter their name, identify the order, and choose how to receive the confirmation",
+        "due": "2026-06-19",
+        "quote": "The withdrawal function shall enable the consumer to send an online withdrawal statement informing the trader of his or her decision to withdraw from the contract. That online withdrawal statement shall enable the consumer to easily provide or confirm the following information: (a)his or her name; (b)details identifying the contract from which he or she wishes to withdraw; (c)details of the electronic means by which the confirmation of the withdrawal will be sent to the consumer.",
+        "citation_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj"
+      },
+      {
+        "text": "Set up an automatic email that sends the withdrawal receipt with content, date and time as soon as the customer confirms",
+        "due": "2026-06-19",
+        "quote": "Once the consumer activates the confirmation function, the trader shall send to the consumer an acknowledgement of receipt of the withdrawal on a durable medium, including its content and the date and time of its submission, without undue delay.",
+        "citation_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj"
+      }
+    ]
+  }
+}

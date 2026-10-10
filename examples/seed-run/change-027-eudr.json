@@ -1,0 +1,34 @@
+{
+  "created_at": "2026-10-06T11:41:28.121130+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.002716,
+  "tavily_credits": 0,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
+    "instrument": "Regulation (EU) 2023/1115 — Article 34",
+    "jurisdiction": "EU",
+    "summary": "The Commission must complete a simplification review by 30 April 2026 and a general review by 30 June 2030, then every five years. These reviews evaluate the Regulation's impact on deforestation, trade, and small operators, and may lead to legislative proposals.",
+    "effective_dates": [
+      "2026-04-30",
+      "2030-06-30"
+    ],
+    "obligations": [
+      {
+        "text": "Carry out a simplification review by 30 April 2026.",
+        "quote": "By 30 April 2026, the Commission shall carry out a simplification review of this Regulation and on this basis present a report to the European Parliament and to the Council accompanied, where appropriate, by a legislative proposal."
+      },
+      {
+        "text": "Carry out a general review by 30 June 2030 and every five years thereafter.",
+        "quote": "By 30 June 2030 and at least every five years thereafter, the Commission shall carry out a general review of this Regulation and shall present a report to the European Parliament and the Council accompanied, if appropriate, by a legislative proposal."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "does_not",
+    "reasons": [
+      "The obligations are addressed to the European Commission, requiring it to carry out simplification and general reviews of the Regulation.",
+      "Your shop is a seller of furniture, wooden goods and leather goods, not the Commission, so no obligation binds you."
+    ],
+    "todos": []
+  }
+}

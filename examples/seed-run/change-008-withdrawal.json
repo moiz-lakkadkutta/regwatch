@@ -1,0 +1,29 @@
+{
+  "created_at": "2026-10-06T11:39:53.446609+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.003236,
+  "tavily_credits": 0,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj",
+    "instrument": "Directive (EU) 2023/2673 — Article 1, point (6)",
+    "jurisdiction": "EU",
+    "summary": "By 19 December 2025, Member States must notify the Commission of any regulatory choices made under specific articles of Directive 2011/83/EU and any subsequent changes. This obligation applies to Member States exercising regulatory choices for distance and financial services contracts.",
+    "effective_dates": [
+      "2025-12-19"
+    ],
+    "obligations": [
+      {
+        "text": "Inform the Commission of regulatory choices by 19 December 2025.",
+        "quote": "Where a Member State makes use of any of the regulatory choices referred to in Article 3(4), Article 6(7), Article 6(8), Article 7(4), Article 8(6), Article 9(1a) and(3), Article 16, second and third paragraphs, Article 16a(2) and(9), Article 16b(7) and Article 16e, it shall inform the Commission thereof by 19 December 2025, as well as of any subsequent changes."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "does_not",
+    "reasons": [
+      "The obligation is addressed to Member States (national governments), not to individual sellers or shops.",
+      "Your shop is a private business established in Germany selling furniture and leather goods, not a Member State exercising regulatory choices under Directive 2011/83/EU."
+    ],
+    "todos": []
+  }
+}

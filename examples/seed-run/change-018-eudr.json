@@ -1,0 +1,91 @@
+{
+  "created_at": "2026-10-06T11:41:28.112919+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.012129,
+  "tavily_credits": 0,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
+    "instrument": "Regulation (EU) 2023/1115 — Article 11 – Article 15",
+    "jurisdiction": "EU",
+    "summary": "Operators must adopt risk mitigation procedures and maintain a due diligence system, including annual reviews and public reporting for non-SMEs, to ensure relevant products placed on the market comply with the Regulation. These obligations apply to operators placing relevant products on the market or exporting them.",
+    "effective_dates": [
+      "2024-12-30"
+    ],
+    "obligations": [
+      {
+        "text": "Adopt risk mitigation procedures prior to placing products on the market",
+        "quote": "the operator shall, prior to placing the relevant products on the market or exporting them, adopt risk mitigation procedures and measures that are adequate to achieve no or only a negligible risk"
+      },
+      {
+        "text": "Implement policies, controls and procedures to mitigate risks of non-compliance",
+        "quote": "Operators shall have in place adequate and proportionate policies, controls and procedures to mitigate and manage effectively the risks of non-compliance of relevant products identified"
+      },
+      {
+        "text": "Document and review risk mitigation decisions annually",
+        "quote": "The decisions on risk mitigation procedures and measures shall be documented, reviewed at least on an annual basis and made available by the operators to the competent authorities upon request"
+      },
+      {
+        "text": "Establish and keep up to date a due diligence framework",
+        "quote": "In order to exercise due diligence in accordance with Article 8, operators shall establish and keep up to date a framework of procedures and measures to ensure that the relevant products they place on the market or export comply with Article 3"
+      },
+      {
+        "text": "Review the due diligence system at least once a year",
+        "quote": "Operators shall review the due diligence system at least once a year"
+      },
+      {
+        "text": "Publicly report on due diligence system annually (non-SMEs)",
+        "quote": "Operators who do not fall within the categories of SMEs, including microenterprises, or natural persons shall, on an annual basis, publicly report as widely as possible, including via the internet, on their due diligence system"
+      },
+      {
+        "text": "Keep due diligence documentation for at least five years",
+        "quote": "Operators shall keep for at least five years all documentation related to due diligence, such as all records, measures and procedures pursuant to Article 8"
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "applies",
+    "reasons": [
+      "Applies because you are established in Germany and ship to multiple EU countries, and you sell furniture/wooden goods and leather goods which are relevant products under the EU Deforestation Regulation.",
+      "As an operator placing these products on the EU market, you must adopt risk mitigation procedures, a due diligence system, and keep documentation for five years.",
+      "The obligation to publicly report annually only applies if you are not an SME, which we cannot confirm from your profile."
+    ],
+    "todos": [
+      {
+        "text": "Adopt risk mitigation procedures and measures before placing any wood or leather products on the market",
+        "due": "2024-12-30",
+        "quote": "the operator shall, prior to placing the relevant products on the market or exporting them, adopt risk mitigation procedures and measures that are adequate to achieve no or only a negligible risk",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Put in place policies, controls and procedures to mitigate and manage risks of non-compliance for your wood and leather products",
+        "due": "2024-12-30",
+        "quote": "Operators shall have in place adequate and proportionate policies, controls and procedures to mitigate and manage effectively the risks of non-compliance of relevant products identified",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Document your risk mitigation decisions and review them at least once a year",
+        "due": "2024-12-30",
+        "quote": "The decisions on risk mitigation procedures and measures shall be documented, reviewed at least on an annual basis and made available by the operators to the competent authorities upon request",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Establish and maintain a due diligence framework to ensure your wood and leather products comply with the regulation",
+        "due": "2024-12-30",
+        "quote": "In order to exercise due diligence in accordance with Article 8, operators shall establish and keep up to date a framework of procedures and measures to ensure that the relevant products they place on the market or export comply with Article 3",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Review your due diligence system at least once a year",
+        "due": "2024-12-30",
+        "quote": "Operators shall review the due diligence system at least once a year",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Keep all due diligence documentation for at least five years",
+        "due": "2024-12-30",
+        "quote": "Operators shall keep for at least five years all documentation related to due diligence, such as all records, measures and procedures pursuant to Article 8",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      }
+    ]
+  }
+}

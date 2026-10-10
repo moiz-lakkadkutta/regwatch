@@ -1,0 +1,47 @@
+{
+  "created_at": "2026-10-06T11:41:28.118722+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.003294,
+  "tavily_credits": 0,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
+    "instrument": "Regulation (EU) 2023/1115 — Article 30",
+    "jurisdiction": "EU",
+    "summary": "The Commission and Member States must coordinate with producer countries to address deforestation and forest degradation. This applies to all operators and traders placing relevant products on the EU market.",
+    "effective_dates": [
+      "2026-12-30",
+      "2027-06-30"
+    ],
+    "obligations": [
+      {
+        "text": "Engage in coordinated approach with producer countries on deforestation",
+        "quote": "Within their respective spheres of competence, the Commission, on behalf of the Union, and interested Member States shall engage in a coordinated approach with producer countries and parts thereof that are concerned by this Regulation, in particular those classified as high risk in accordance with Article 29 through existing and future partnerships, and other relevant cooperation mechanisms to jointly address the root causes of deforestation and forest degradation."
+      },
+      {
+        "text": "Ensure full participation of all stakeholders in partnerships",
+        "quote": "Partnerships and cooperation shall allow the full participation of all stakeholders, including civil society, indigenous peoples, local communities, women, the private sector including microenterprises and other SMEs, and smallholders."
+      },
+      {
+        "text": "Promote development of integrated land use planning processes",
+        "quote": "Partnerships and cooperation shall promote the development of integrated land use planning processes, relevant legislation of producer countries, multi-stakeholder processes, fiscal or commercial incentives and other pertinent tools to improve forest and biodiversity conservation, sustainable management and restoration of forests, tackle the conversion of forests and vulnerable ecosystems to other land uses, optimise gains for the landscape, tenure security, agriculture productivity and competitiveness, and the transparency of supply chains, strengthen the rights of forest-dependent communities, including smallholders, local communities, and indigenous peoples, whose rights are set out in the UN Declaration on the Rights of Indigenous Peoples, and ensure public access to forest management documents and other relevant information."
+      },
+      {
+        "text": "Engage in international discussion on policies to halt deforestation",
+        "quote": "Within their respective spheres of competence, the Commission, on behalf of the Union, or Member States, or both, shall engage in international bilateral and multilateral discussion on policies and actions to halt deforestation and forest degradation, including in multilateral fora such as CBD, FAO, UN Convention to Combat Desertification, UN Environment Assembly, UN Forum on Forests, UNFCCC, WTO, G7 and G20."
+      },
+      {
+        "text": "Promote adoption of ambitious requirements by major consuming countries",
+        "quote": "Within their respective spheres of competence, the Commission, on behalf of the Union, and interested Member States shall engage in dialogue and cooperation with other major consuming countries, to promote the adoption of ambitious requirements to minimise such countries’ contribution to deforestation and forest degradation, and a global level playing field."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "does_not",
+    "reasons": [
+      "The quoted obligations are all addressed to the Commission and Member States, not to operators or traders like your shop.",
+      "Your shop sells wooden furniture and leather goods and ships across the EU, but Article 30 only requires EU institutions to coordinate with producer countries and engage in international discussions.",
+      "No obligation in this list asks a seller to change their storefront, collect documents, or alter their supply-chain processes."
+    ],
+    "todos": []
+  }
+}

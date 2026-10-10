@@ -1,0 +1,75 @@
+{
+  "created_at": "2026-10-06T11:41:28.115027+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.003671,
+  "tavily_credits": 0,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
+    "instrument": "Regulation (EU) 2023/1115 — Article 25",
+    "jurisdiction": "EU",
+    "summary": "EU Member States must set penalties for infringements by operators and traders, ensuring they are effective, proportionate, and dissuasive. They must notify the Commission of these rules and any changes.",
+    "effective_dates": [
+      "2026-12-30",
+      "2027-06-30"
+    ],
+    "obligations": [
+      {
+        "text": "Lay down rules on penalties applicable to infringements by operators, downstream operators and traders.",
+        "quote": "Member States shall lay down rules on penalties applicable to infringements of this Regulation by operators, downstream operators and traders and shall take all measures necessary to ensure that they are implemented."
+      },
+      {
+        "text": "Ensure penalties are effective, proportionate and dissuasive.",
+        "quote": "The penalties provided for in paragraph 1 shall be effective, proportionate and dissuasive."
+      },
+      {
+        "text": "Impose fines proportionate to environmental damage and value of relevant commodities, calculating level to effectively deprive responsible persons of economic benefits.",
+        "quote": "fines proportionate to the environmental damage and the value of the relevant commodities or relevant products concerned, calculating the level of such fines in such way as to ensure that they effectively deprive those responsible of the economic benefits derived from their infringements"
+      },
+      {
+        "text": "Gradually increase fine levels for repeated infringements.",
+        "quote": "gradually increasing the level of such fines for repeated infringements"
+      },
+      {
+        "text": "Set maximum fine amount of at least 4% of operator's total annual Union-wide turnover for legal persons.",
+        "quote": "in the case of a legal person, the maximum amount of such a fine shall be at least 4% of the operator’s, downstream operator’s or trader’s total annual Union-wide turnover in the financial year preceding the fining decision"
+      },
+      {
+        "text": "Increase fines to exceed potential economic benefit gained from infringement.",
+        "quote": "shall be increased, where necessary, to exceed the potential economic benefit gained"
+      },
+      {
+        "text": "Confiscate relevant products from operator, downstream operator and/or trader.",
+        "quote": "confiscation of the relevant products concerned from the operator, downstream operator and/or trader"
+      },
+      {
+        "text": "Confiscate revenues gained from transactions with relevant products.",
+        "quote": "confiscation of revenues gained by the operator, downstream operator and/or trader from a transaction with the relevant products concerned"
+      },
+      {
+        "text": "Temporarily exclude from public procurement processes and public funding for maximum 12 months.",
+        "quote": "temporary exclusion for a maximum period of 12 months from public procurement processes and from access to public funding, including tendering procedures, grants and concessions"
+      },
+      {
+        "text": "Temporarily prohibit placing or making available on the market or exporting relevant commodities and products in case of serious or repeated infringements.",
+        "quote": "temporary prohibition from placing or making available on the market or exporting relevant commodities and relevant products, in the event of a serious infringement or of repeated infringements"
+      },
+      {
+        "text": "Prohibit exercising simplified due diligence set out in Article 13 in case of serious or repeated infringements.",
+        "quote": "prohibition from exercising the simplified due diligence set out in Article 13 in the event of a serious infringement or of repeated infringements"
+      },
+      {
+        "text": "Notify Commission of final judgments against legal persons within 30 days of judgment becoming final.",
+        "quote": "Member States shall notify the Commission of final judgments against legal persons for infringements of this Regulation and the penalties imposed on them, within 30 days from the date on which the judgments become final"
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "does_not",
+    "reasons": [
+      "The obligations in Article 25 are addressed to EU Member States — they must lay down penalty rules, set fine levels, confiscate products, and notify the Commission.",
+      "Your shop is an operator/trader selling furniture, wooden goods and leather goods, which are relevant products under the Deforestation Regulation, but this Article creates no direct obligations for you as a seller.",
+      "You still need to comply with the Regulation's due-diligence and reporting requirements (Articles 8–13), but Article 25 itself only binds national authorities."
+    ],
+    "todos": []
+  }
+}

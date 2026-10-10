@@ -1,0 +1,47 @@
+{
+  "created_at": "2026-10-06T11:41:28.121780+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.00642,
+  "tavily_credits": 0,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
+    "instrument": "Regulation (EU) 2023/1115 — Article 35 – Article 38",
+    "jurisdiction": "EU",
+    "summary": "The Commission may adopt delegated acts under conditions set out in Article 35, with a five-year period from 29 June 2023. Regulation (EU) No 995/2010 is repealed from 30 December 2026, but continues for certain existing timber products until 31 December 2029. Most provisions apply from 30 December 2026, with a delayed application date of 30 June 2027 for certain small operators established by 31 December 2024.",
+    "effective_dates": [
+      "2026-12-30",
+      "2027-06-30"
+    ],
+    "obligations": [
+      {
+        "text": "Consult experts designated by Member States before adopting delegated acts.",
+        "quote": "Before adopting a delegated act, the Commission shall consult experts designated by each Member State in accordance with the principles laid down in the Interinstitutional Agreement of 13 April 2016 on Better Law-Making."
+      },
+      {
+        "text": "Notify delegated acts simultaneously to the European Parliament and the Council after adoption.",
+        "quote": "As soon as it adopts a delegated act, the Commission shall notify it simultaneously to the European Parliament and to the Council."
+      },
+      {
+        "text": "Ensure no objection is expressed by the European Parliament or the Council within two months of notification for a delegated act to enter into force.",
+        "quote": "A delegated act adopted pursuant to Article 34(1) shall enter into force only if no objection has been expressed either by the European Parliament or by the Council within a period of two months of notification of that act to the European Parliament and the Council or if, before the expiry of that period, the European Parliament and the Council have both informed the Commission that they will not object."
+      },
+      {
+        "text": "Articles 3 to 13, Articles 16 to 24 and Articles 26, 31 and 32 shall apply from 30 December 2026.",
+        "quote": "Subject to paragraph 3 of this Article, Articles 3 to 13, Articles 16 to 24 and Articles 26, 31 and 32 shall apply from 30 December 2026."
+      },
+      {
+        "text": "Articles referred to in paragraph 2 of Article 38 shall apply from 30 June 2027 for operators established by 31 December 2024.",
+        "quote": "Except as regards the products covered by the Annex to Regulation (EU)No 995/2010, for operators, whether natural persons or micro- or small undertakings within the meaning of Article 3(1) or Article 3(2), first subparagraph, respectively, of Directive 2013/34/EU, irrespective of their legal form, who were established as such by 31 December 2024, the Articles referred to in paragraph 2 of this Article shall apply from 30 June 2027."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "does_not",
+    "reasons": [
+      "The obligations you received are addressed to the European Commission (consulting experts, notifying acts, handling objections) or simply state when certain articles take effect.",
+      "They do not impose any duty on you as a seller of wooden furniture.",
+      "Your shop sells wooden goods and ships within the EU, so the regulation may affect you, but the specific obligations listed here are not yours to act on."
+    ],
+    "todos": []
+  }
+}
