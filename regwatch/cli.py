@@ -30,6 +30,10 @@ def record_seed(
     out: Annotated[
         Path | None, typer.Option(help="Seed directory (default: REGWATCH_SEED_DIR).")
     ] = None,
+    exclude: Annotated[
+        list[str] | None,
+        typer.Option("--exclude", help="Exact instrument to leave out (repeat for several)."),
+    ] = None,
 ) -> None:
     """Record chosen documents of a crawl in the DB (REGWATCH_DB_URL) as the demo seed."""
     import logging
@@ -41,7 +45,9 @@ def record_seed(
     logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
     settings = Settings()
     try:
-        summary = _record(settings, url, out if out is not None else settings.seed_dir)
+        summary = _record(
+            settings, url, out if out is not None else settings.seed_dir, exclude=exclude or []
+        )
     except RecordError as e:
         print(f"record-seed: refused — {e}", file=sys.stderr)
         raise typer.Exit(code=1) from e

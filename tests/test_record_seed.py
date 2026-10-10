@@ -11,7 +11,14 @@ from typer.testing import CliRunner
 
 from regwatch.cli import app
 from regwatch.config import Settings
-from regwatch.db import ApplicabilityRow, DocumentRow, ProfileRow, RegChangeRow, make_engine
+from regwatch.db import (
+    ApplicabilityRow,
+    CrawlRunRow,
+    DocumentRow,
+    ProfileRow,
+    RegChangeRow,
+    make_engine,
+)
 from regwatch.jobs.crawl import seed
 from regwatch.jobs.record import RecordError, record_seed
 
@@ -144,6 +151,17 @@ def crawl_db(tmp_path: Path) -> Settings:
         _appl(s, prof.id, ihk, "unclear", [_todo(ONLY_SKIPPED, "Der Button kommt.", due=None)])
         nc = _change(s, NOT_CHOSEN, "Regulation (EU) 2023/1115", "Operators shall.")
         _appl(s, prof.id, nc, "applies", [_todo(NOT_CHOSEN, "Operators shall.")])
+        # the source crawl: the latest stage "all" run (40 credits), not older or other stages
+        for stage, credits in (("all", 7), ("all", 40), ("normalize", 99)):
+            s.add(
+                CrawlRunRow(
+                    started_at=datetime(2026, 10, 6, 11, 0),
+                    finished_at=datetime(2026, 10, 6, 11, 45),
+                    stage=stage,
+                    tavily_credits=credits,
+                )
+            )
+        s.commit()
     return settings
 
 
@@ -182,7 +200,8 @@ def test_record_seed_writes_documents_changes_and_profile(crawl_db: Settings) ->
     ]
     assert first["created_at"] == "2026-10-02T09:00:00+00:00"
     assert first["model"] == "nvidia/Nemotron-3-Ultra-550b-a55b"
-    assert (first["cost_usd"], first["tavily_credits"]) == (0.0123, 0)
+    # the source crawl's 40 Tavily credits, apportioned over the 3 recorded changes
+    assert (first["cost_usd"], first["tavily_credits"]) == (0.0123, 14)
     assert first["change"] == {
         "document_url": ACT,
         "instrument": "Directive (EU) 2023/2673 — Article 1, point (3)",
@@ -205,6 +224,7 @@ def test_record_seed_writes_documents_changes_and_profile(crawl_db: Settings) ->
     }
     shop = json.loads((out / "change-003-shopify.json").read_text(encoding="utf-8"))
     assert shop["change"]["document_url"] == SHOP
+    assert (second["tavily_credits"], shop["tavily_credits"]) == (13, 13)
 
     profile = json.loads((out / "profile.json").read_text(encoding="utf-8"))
     assert profile == {
@@ -374,3 +394,102 @@ def test_cli_record_seed_defaults_to_settings_seed_dir(
     result = CliRunner().invoke(app, ["record-seed", "--url", SHOP])
     assert result.exit_code == 0, result.output
     assert (crawl_db.seed_dir / "change-001-shopify.json").exists()
+
+
+def test_record_seed_without_a_stage_all_run_records_zero_credits(
+    crawl_db: Settings, caplog: pytest.LogCaptureFixture
+) -> None:
+    with Session(make_engine(crawl_db)) as s:
+        for run in s.exec(select(CrawlRunRow).where(CrawlRunRow.stage == "all")).all():
+            s.delete(run)
+        s.commit()
+    with caplog.at_level(logging.WARNING, logger="regwatch.jobs.record"):
+        record_seed(crawl_db, URLS, crawl_db.seed_dir)
+    assert any('no stage "all" crawl run' in r.getMessage() for r in caplog.records)
+    credits = [
+        json.loads(p.read_text(encoding="utf-8"))["tavily_credits"]
+        for p in sorted(crawl_db.seed_dir.glob("change-*.json"))
+    ]
+    assert credits == [0, 0, 0]
+
+
+def test_seeded_footer_shows_the_source_crawls_credits(
+    crawl_db: Settings, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import importlib
+
+    from fastapi.testclient import TestClient
+
+    record_seed(crawl_db, URLS, crawl_db.seed_dir)
+    monkeypatch.setenv("REGWATCH_DB_URL", f"sqlite:///{tmp_path / 'footer.db'}")
+    monkeypatch.setenv("REGWATCH_SEED_DIR", str(crawl_db.seed_dir))
+    import regwatch.app as appmod
+
+    appmod = importlib.reload(appmod)
+    assert seed() == 3
+    html = TestClient(appmod.app).get("/feed").text
+    assert "Showing the recorded seed run" in html
+    assert "40 Tavily credits used when it was recorded" in html
+
+
+def test_record_seed_excludes_named_instruments(
+    crawl_db: Settings, caplog: pytest.LogCaptureFixture
+) -> None:
+    out = crawl_db.seed_dir
+    point_1 = "Directive (EU) 2023/2673 — Article 1, point (1)"
+    with caplog.at_level(logging.WARNING, logger="regwatch.jobs.record"):
+        summary = record_seed(crawl_db, URLS, out, exclude=[point_1])
+    assert (summary.n_documents, summary.n_changes, summary.n_skipped) == (2, 2, 4)
+    assert sorted(p.name for p in out.glob("change-*.json")) == [
+        "change-001-withdrawal.json",
+        "change-002-shopify.json",
+    ]
+    instruments = [
+        json.loads(p.read_text(encoding="utf-8"))["change"]["instrument"]
+        for p in sorted(out.glob("change-*.json"))
+    ]
+    assert point_1 not in instruments
+    assert any(point_1 in r.getMessage() and "excluded" in r.getMessage() for r in caplog.records)
+
+
+@pytest.mark.parametrize(
+    "exclude",
+    [
+        "Directive (EU) 2023/2673 — Article 1, point (9)",  # a typo matches nothing
+        "Directive (EU) 2023/2673 — Article 1",  # exact match only, never a prefix
+        "Regulation (EU) 2023/1115",  # a change of a URL that was not chosen
+    ],
+)
+def test_record_seed_refuses_an_exclude_that_matches_nothing(
+    crawl_db: Settings, exclude: str
+) -> None:
+    before = _write_sentinel(crawl_db.seed_dir)
+    with pytest.raises(RecordError, match="matches no change"):
+        record_seed(crawl_db, URLS, crawl_db.seed_dir, exclude=[exclude])
+    assert _files(crawl_db.seed_dir) == before
+
+
+def test_record_seed_refuses_a_todo_citing_another_url(crawl_db: Settings) -> None:
+    with Session(make_engine(crawl_db)) as s:
+        ch = s.exec(select(RegChangeRow).where(RegChangeRow.document_url == SHOP)).one()
+        appl = s.exec(select(ApplicabilityRow).where(ApplicabilityRow.regchange_id == ch.id)).one()
+        appl.todos = json.dumps([_todo(ACT, SHOP_Q)])  # grounded quote, wrong citation
+        s.add(appl)
+        s.commit()
+    before = _write_sentinel(crawl_db.seed_dir)
+    with pytest.raises(RecordError, match="not the source"):
+        record_seed(crawl_db, URLS, crawl_db.seed_dir)
+    assert _files(crawl_db.seed_dir) == before
+
+
+def test_cli_record_seed_exclude(crawl_db: Settings, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("REGWATCH_DB_URL", crawl_db.db_url)
+    out = crawl_db.seed_dir
+    args = ["record-seed", "--out", str(out), "--url", ACT, "--url", SHOP]
+    point_1 = "Directive (EU) 2023/2673 — Article 1, point (1)"
+    result = CliRunner().invoke(app, [*args, "--exclude", point_1])
+    assert result.exit_code == 0, result.output
+    assert f"record-seed: 2 documents · 2 changes · 3 skipped → {out}" in result.output
+    result = CliRunner().invoke(app, [*args, "--exclude", "No such instrument"])
+    assert result.exit_code == 1
+    assert "No such instrument" in result.output

@@ -2,9 +2,17 @@
 
 For each chosen URL: its DocumentRow → documents.jsonl, and every RegChangeRow for the document's
 current content hash, with its ApplicabilityRow for the current profile → change-NNN-<slug>.json
-(the payload `seed()` loads). Changes with no applicability, or with a to-do without a due date, are
-skipped with a WARNING — never given invented dates. Nothing is written when a URL is missing from
-the DB or any candidate change fails grounding.
+(the payload `seed()` loads). Changes with no applicability, with a to-do without a due date, or
+named by `--exclude` (exact instrument) are skipped with a WARNING — never given invented dates.
+Nothing is written when a URL is missing from the DB, an exclude matches no candidate change, or any
+candidate change fails grounding.
+
+Tavily credits: live applicabilities carry `tavily_credits=0` (credits are spent per crawl, on
+the `CrawlRunRow`). So that the seeded feed footer ("N Tavily credits used when it was recorded",
+the sum over the seeded applicabilities) shows the source crawl's real number, the credits of the
+latest stage "all" run in the DB are apportioned over the recorded change files'
+`tavily_credits` (integer split, the remainder on the first files; the payload keys stay the
+same). No such run → 0 and a WARNING.
 """
 
 from __future__ import annotations
@@ -24,6 +32,7 @@ from sqlmodel import Session, col, select
 from regwatch.config import Settings
 from regwatch.db import (
     ApplicabilityRow,
+    CrawlRunRow,
     DocumentRow,
     RegChangeRow,
     current_profile,
@@ -77,12 +86,28 @@ def _read_profile(path: Path) -> Profile | None:
         return None
 
 
-def _payload(ch: RegChangeRow, ap: ApplicabilityRow) -> dict[str, Any]:
+def apportion(total: int, n: int) -> list[int]:
+    """`total` split into `n` integers that sum to it; the remainder goes to the first ones."""
+    base, rest = divmod(total, n) if n else (0, 0)
+    return [base + (1 if i < rest else 0) for i in range(n)]
+
+
+def _source_crawl_credits(s: Session) -> int:
+    run = s.exec(
+        select(CrawlRunRow).where(CrawlRunRow.stage == "all").order_by(col(CrawlRunRow.id).desc())
+    ).first()
+    if run is None:
+        log.warning('record-seed: no stage "all" crawl run in the DB — recording 0 Tavily credits')
+        return 0
+    return run.tavily_credits
+
+
+def _payload(ch: RegChangeRow, ap: ApplicabilityRow, credits: int) -> dict[str, Any]:
     return {
         "created_at": _iso(ch.created_at),
         "model": ap.model,
         "cost_usd": ap.cost_usd,
-        "tavily_credits": ap.tavily_credits,
+        "tavily_credits": credits,
         "change": ch.to_schema().model_dump(mode="json"),
         "applicability": ap.to_schema().model_dump(mode="json"),
     }
@@ -105,7 +130,7 @@ def _grounding_errors(doc: DocumentRow, ch: RegChangeRow, ap: ApplicabilityRow |
 
 
 def _collect(
-    s: Session, urls: Sequence[str]
+    s: Session, urls: Sequence[str], exclude: Sequence[str]
 ) -> tuple[list[DocumentRow], list[tuple[DocumentRow, RegChangeRow, ApplicabilityRow]], int]:
     profile = current_profile(s)
     if profile is None or profile.id is None:
@@ -117,6 +142,7 @@ def _collect(
     kept: list[tuple[DocumentRow, RegChangeRow, ApplicabilityRow]] = []
     n_skipped = 0
     errors: list[str] = []
+    unmatched = set(exclude)
     for url in sorted(set(urls)):
         doc = s.get(DocumentRow, url)
         assert doc is not None
@@ -136,6 +162,11 @@ def _collect(
                 .order_by(col(ApplicabilityRow.id).desc())
             ).first()
             errors += [f"{ch.instrument} ({url}): {e}" for e in _grounding_errors(doc, ch, ap)]
+            if ch.instrument in exclude:
+                unmatched.discard(ch.instrument)
+                log.warning("record-seed: skip %s (%s): excluded by --exclude", ch.instrument, url)
+                n_skipped += 1
+                continue
             if ap is None:
                 log.warning(
                     "record-seed: skip %s (%s): no applicability for the profile",
@@ -156,6 +187,9 @@ def _collect(
             docs.append(doc)
         else:
             log.warning("record-seed: dropped %s: no recordable changes left", url)
+    if unmatched:
+        names = ", ".join(repr(x) for x in sorted(unmatched))
+        raise RecordError(f"--exclude matches no change of the chosen URLs: {names}")
     if errors:
         raise RecordError("grounding failed:\n" + "\n".join(errors))
     if not kept:
@@ -163,11 +197,15 @@ def _collect(
     return docs, kept, n_skipped
 
 
-def record_seed(settings: Settings, urls: Sequence[str], out: Path) -> RecordSummary:
-    """Record `urls` from the DB in `settings` into `out`. Raises RecordError, writing nothing."""
+def record_seed(
+    settings: Settings, urls: Sequence[str], out: Path, *, exclude: Sequence[str] = ()
+) -> RecordSummary:
+    """Record `urls` from the DB in `settings` into `out`, leaving out the changes whose instrument
+    is in `exclude`. Raises RecordError, writing nothing."""
     engine = make_engine(settings)
     with Session(engine) as s:
-        docs, kept, n_skipped = _collect(s, urls)
+        docs, kept, n_skipped = _collect(s, urls, exclude)
+        credits = apportion(_source_crawl_credits(s), len(kept))
         profile = current_profile(s)
         assert profile is not None
         db_profile = profile.to_schema()
@@ -176,7 +214,7 @@ def record_seed(settings: Settings, urls: Sequence[str], out: Path) -> RecordSum
         for n, (doc, ch, ap) in enumerate(kept, start=1):
             tag = regulation_tag_for(doc)
             slug = _safe(tag) if tag else host_slug(doc.url)
-            body = json.dumps(_payload(ch, ap), indent=2, ensure_ascii=False) + "\n"
+            body = json.dumps(_payload(ch, ap, credits[n - 1]), indent=2, ensure_ascii=False) + "\n"
             files.append((f"change-{n:03d}-{slug}.json", body))
         documents = [d.to_schema() for d in docs]
 
