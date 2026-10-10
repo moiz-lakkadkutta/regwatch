@@ -31,6 +31,7 @@ from regwatch.db import (
     regulation_tag_for,
 )
 from regwatch.jobs.crawl import write_documents_jsonl
+from regwatch.schemas import Profile
 
 log = logging.getLogger(__name__)
 
@@ -67,6 +68,13 @@ def _safe(text: str) -> str:
 def _iso(dt: datetime) -> str:
     """Stored datetimes are naive UTC; the seed files carry an explicit offset."""
     return (dt if dt.tzinfo is not None else dt.replace(tzinfo=UTC)).isoformat()
+
+
+def _read_profile(path: Path) -> Profile | None:
+    try:
+        return Profile.model_validate_json(path.read_text(encoding="utf-8"))
+    except ValueError:
+        return None
 
 
 def _payload(ch: RegChangeRow, ap: ApplicabilityRow) -> dict[str, Any]:
@@ -162,7 +170,8 @@ def record_seed(settings: Settings, urls: Sequence[str], out: Path) -> RecordSum
         docs, kept, n_skipped = _collect(s, urls)
         profile = current_profile(s)
         assert profile is not None
-        profile_json = json.dumps(profile.to_schema().model_dump(), ensure_ascii=False) + "\n"
+        db_profile = profile.to_schema()
+        profile_json = json.dumps(db_profile.model_dump(), ensure_ascii=False) + "\n"
         files: list[tuple[str, str]] = []
         for n, (doc, ch, ap) in enumerate(kept, start=1):
             tag = regulation_tag_for(doc)
@@ -174,8 +183,15 @@ def record_seed(settings: Settings, urls: Sequence[str], out: Path) -> RecordSum
     out.mkdir(parents=True, exist_ok=True)
     for stale in out.glob("change-*.json"):
         stale.unlink()
-    if not (out / "profile.json").exists():
-        (out / "profile.json").write_text(profile_json, encoding="utf-8")
+    profile_path = out / "profile.json"
+    if not profile_path.exists():
+        profile_path.write_text(profile_json, encoding="utf-8")
+    elif _read_profile(profile_path) != db_profile:
+        log.warning(
+            "record-seed: kept %s, but it differs from the DB profile the changes were "
+            "classified for",
+            profile_path,
+        )
     write_documents_jsonl(documents, out / "documents.jsonl")
     for name, body in files:
         (out / name).write_text(body, encoding="utf-8")

@@ -228,15 +228,29 @@ def test_record_seed_warns_for_each_skipped_change(
     assert any("§ 356a BGB — IHK Pfalz guidance" in w for w in warnings)
     assert any(ONLY_SKIPPED in w and "dropped" in w for w in warnings)
     assert not any("— old" in w for w in warnings)  # an older content hash is not a candidate
+    assert not any("profile.json" in w for w in warnings)  # written from the DB profile
 
 
-def test_record_seed_leaves_existing_profile_and_replaces_change_files(crawl_db: Settings) -> None:
+def test_record_seed_matching_profile_json_is_not_flagged(
+    crawl_db: Settings, caplog: pytest.LogCaptureFixture
+) -> None:
+    record_seed(crawl_db, URLS, crawl_db.seed_dir)
+    with caplog.at_level(logging.WARNING, logger="regwatch.jobs.record"):
+        record_seed(crawl_db, URLS, crawl_db.seed_dir)
+    assert not any("profile.json" in r.getMessage() for r in caplog.records)
+
+
+def test_record_seed_leaves_existing_profile_and_replaces_change_files(
+    crawl_db: Settings, caplog: pytest.LogCaptureFixture
+) -> None:
     out = crawl_db.seed_dir
     out.mkdir(parents=True)
     (out / "profile.json").write_text('{"keep": "me"}\n', encoding="utf-8")
     (out / "change-009-stale.json").write_text("{}", encoding="utf-8")
     (out / "notes.txt").write_text("untouched", encoding="utf-8")
-    record_seed(crawl_db, URLS, out)
+    with caplog.at_level(logging.WARNING, logger="regwatch.jobs.record"):
+        record_seed(crawl_db, URLS, out)
+    assert any("profile.json" in r.getMessage() for r in caplog.records)  # kept, but flagged
     assert (out / "profile.json").read_text(encoding="utf-8") == '{"keep": "me"}\n'
     assert not (out / "change-009-stale.json").exists()
     assert (out / "notes.txt").read_text(encoding="utf-8") == "untouched"
