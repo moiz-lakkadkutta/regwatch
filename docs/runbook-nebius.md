@@ -48,7 +48,9 @@ Cost line: the Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/
 8. **Negative check (free).** Create a Job without `env_secret` → status FAILED with
    `crawl: refusing to run — missing NEBIUS_API_KEY TAVILY_API_KEY` in the logs (exit 2; fixtures are
    never used).
-9. **Job #2 (idempotency acceptance).** Expected `… (0 new, 0 changed, N unchanged) …` and
+9. **Job #2 (idempotency acceptance).** Each Job gets a fresh /tmp DB seeded from the image, so "0 new" only holds
+   once the seed contains everything the crawl finds; on 2026-10-10 Job #1 showed the seed documents as `4 unchanged`
+   instead and Job #2 was not run. Expected `… (0 new, 0 changed, N unchanged) …` and
    `0 new changes · 0 classified`. If Job #1 found new documents: re-record the seed locally —
    crawl with keys into a scratch DB (`REGWATCH_DB_URL=sqlite:////tmp/live.db uv run regwatch crawl
    --stage all`; a crawl never writes `examples/seed-run`), check `/feed`, then

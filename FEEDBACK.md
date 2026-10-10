@@ -125,3 +125,13 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   First requests: /healthz, /feed, /month all 200 in ~0.25 s; logs show `seeded 29 change(s)` then uvicorn.
   The smallest cpu-d3 preset in eu-west2 is 2vcpu-8gb (plan assumed 4vcpu-16gb). `--container-port 8000/http` from our
   notes is not the CLI's syntax (`8000`). The Serverless AI CLI has `--dry-run` — worth surfacing in the docs.
+- (2026-10-10, Serverless Job, eu-west2) MysteryBox secret `regwatch-keys` created with
+  `nebius mysterybox secret create --secret-version-payload '[{"key":…,"string_value":…}]'` (payload schema only in
+  `--help`); Job env via `--env-secret NEBIUS_API_KEY=regwatch-keys` (selector = secret name, env var = payload key) —
+  worked first time. Job #1 (`--dry-run` first; cpu-d3 2vcpu-8gb, 32 GiB, `--args crawl`): CLI blocked 531 s until
+  COMPLETED; `ingest: 56 documents (52 new, 0 changed, 4 unchanged) · 52 Tavily credits · 14 searches · 4 extracts`,
+  `normalize: 52 documents · 27 ok first try · 15 retried · 10 failed · $0.0501`, `classify: 47 changes · 19 apply ·
+  21 don't · 7 unclear · 58 to-dos (0 dropped) · $0.1964`. `nebius ai job logs` returns only the last 100 lines by
+  default, so the `seeded …` line was cut. Negative check (no `--env-secret`): FAILED after 204 s with
+  `crawl: refusing to run — missing NEBIUS_API_KEY TAVILY_API_KEY`, CLI error "Job failed before startup completed"
+  (code 9) — the message is misleading, the container did start and exit 2.

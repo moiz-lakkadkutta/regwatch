@@ -71,7 +71,7 @@ Schema changes are not migrated — delete a stale local `regwatch.db` first.
 
 ## Deploy on Nebius
 
-The public URL serves the recorded run in `examples/seed-run` (recorded with `regwatch record-seed` from the sixth live crawl: 4 documents, 29 changes, 40 Tavily credits); the daily Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database and is expected to prove in its logs that a second pass adds nothing (verified offline by `tests/test_crawl_all.py::test_crawl_all_twice_is_idempotent`) — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
+The public URL serves the recorded run in `examples/seed-run` (recorded with `regwatch record-seed` from the sixth live crawl: 4 documents, 29 changes, 40 Tavily credits); the Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database — Job #1 on 2026-10-10 re-ingested the 4 seed documents as unchanged and left them alone (52 new documents, 47 new changes, 52 Tavily credits, $0.2464 in model tokens; a second pass over one database adding nothing is verified offline by `tests/test_crawl_all.py::test_crawl_all_twice_is_idempotent`) — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
 
 One image, two modes (`ops/entrypoint.sh serve|crawl`; `crawl` exits 2 without both keys and never uses
 fixtures). Console values: `ops/serverless-endpoint.yaml`, `ops/serverless-job.yaml`; daily schedule:

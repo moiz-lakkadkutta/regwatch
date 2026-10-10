@@ -10,8 +10,9 @@ the sixth live crawl · Token Factory catalog prices set (Lightning $0.06 / $0.2
 live crawl ≈ $0.41 + 40 Tavily credits). **Tests:** 289 passed, 4 live deselected.
 
 **Endpoint cost approved by Moiz 2026-10-10 (~$8–15 through submission).** **Live:** https://port8000-x8f9rz0wxq15br2.tunnel.applications.eu-west2.nebius.cloud (Serverless Endpoint `regwatch-web`,
-cpu-d3 2vcpu-8gb, eu-west2, image `95c3b73`). **Pending:** daily Job (SecretStash `regwatch-keys`, runbook 7–10;
-`daily-crawl` workflow disabled until its secrets exist) ·
+cpu-d3 2vcpu-8gb, eu-west2, image `95c3b73`). **Job #1 (2026-10-10):** COMPLETED in Nebius with keys from MysteryBox `regwatch-keys` — 52 new documents, 47 changes,
+52 Tavily credits, $0.25 model; a Job without the secret FAILED with `crawl: refusing to run` (exit ≠ 0).
+**Pending:** daily schedule (service account + 4 repo secrets; `daily-crawl` workflow disabled) ·
 video (Oct 25–26) · clean-machine dry run (Oct 27) · Devpost submission (closes Oct 30, 10:00 PDT).
 
 **Asks for Moiz:** keys into SecretStash `regwatch-keys` · one console session for runbook steps 1–10 · `REGWATCH_REPORT_EMAIL`.
