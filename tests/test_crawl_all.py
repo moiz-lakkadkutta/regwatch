@@ -3,11 +3,12 @@ import logging
 import re
 import shutil
 from pathlib import Path
+from typing import Any
 
 import pytest
 from sqlmodel import Session, col, select
 
-from regwatch.config import Settings
+from regwatch.config import SEED_REGULATIONS, Settings
 from regwatch.db import (
     ApplicabilityRow,
     CrawlRunRow,
@@ -17,7 +18,8 @@ from regwatch.db import (
     make_engine,
     regchanges_needing_classify,
 )
-from regwatch.jobs.crawl import SEED_DIR, crawl, main, seed, summary_lines
+from regwatch.ingest.tavily_backend import TavilyBackend
+from regwatch.jobs.crawl import SEED_DIR, crawl, main, read_documents_jsonl, seed, summary_lines
 from regwatch.schemas import Profile
 from regwatch.understand.llm_backend import FixtureLLMBackend
 from tests.conftest import (
@@ -55,7 +57,7 @@ def _backends() -> tuple[FixtureLLMBackend, FixtureLLMBackend]:
     )
 
 
-def _crawl_all(settings: Settings, tavily: RecordingBackend, out: Path) -> CrawlRunRow:
+def _crawl_all(settings: Settings, tavily: TavilyBackend, out: Path) -> CrawlRunRow:
     normalize_llm, classify_llm = _backends()
     return crawl(
         settings,
@@ -164,16 +166,54 @@ def test_stage_classify_without_profile_is_a_no_op(
         assert s.exec(select(ApplicabilityRow)).all() == []
 
 
+SEED_SHOPIFY = "https://help.shopify.com/en/manual/compliance/legal/eu-right-of-withdrawal"
+
+
+class _WithSeedDocument:
+    """The fixture corpus plus one recorded seed document, found and extracted unchanged."""
+
+    def __init__(self, inner: RecordingBackend, url: str) -> None:
+        self.inner = inner
+        self.url = url
+        (self.doc,) = [
+            d for d in read_documents_jsonl(SEED_DIR / "documents.jsonl") if d.url == url
+        ]
+        self.withdrawal_query = next(
+            r["query"] for r in SEED_REGULATIONS if r["tag"] == "withdrawal"
+        )
+
+    def search(self, **kw: Any) -> dict[str, Any]:
+        resp = self.inner.search(**kw)
+        if kw["query"] == self.withdrawal_query and kw["include_domains"] == ["help.shopify.com"]:
+            hit = {"title": "EU right of withdrawal", "url": self.url, "content": "", "score": 0.9}
+            resp = {**resp, "results": [*resp["results"], hit]}
+        return resp
+
+    def extract(self, **kw: Any) -> dict[str, Any]:
+        urls = [u for u in kw["urls"] if u != self.url]
+        resp = self.inner.extract(**{**kw, "urls": urls})
+        if len(urls) < len(kw["urls"]):
+            page = {"url": self.url, "raw_content": self.doc.markdown, "images": []}
+            resp = {**resp, "results": [*resp["results"], page]}
+        return resp
+
+
 def test_seed_then_crawl_all_leaves_seed_changes_alone(
     tmp_settings: Settings, fake_backend: RecordingBackend, tmp_path: Path
 ) -> None:
     assert seed(tmp_settings) == SEED_CHANGES
     with Session(make_engine(tmp_settings)) as s:
         seed_hashes = {d.url: d.content_hash for d in s.exec(select(DocumentRow)).all()}
-    run = _crawl_all(tmp_settings, fake_backend, tmp_path / "docs.jsonl")
-    # the fixture corpus shares no URL with the recorded (live) seed: only fixture documents are
-    # normalised and classified; the seed changes are already classified for the seed profile
-    assert (run.n_docs_new, run.n_docs_unchanged) == (16, 0)
+        n_seed_shopify = len(
+            s.exec(select(RegChangeRow).where(RegChangeRow.document_url == SEED_SHOPIFY)).all()
+        )
+    assert n_seed_shopify >= 1
+    backend = _WithSeedDocument(fake_backend, SEED_SHOPIFY)
+    run = _crawl_all(tmp_settings, backend, tmp_path / "docs.jsonl")
+    # the re-ingested seed document is unchanged, so it is neither normalised nor classified
+    # again; only the 16 fixture documents are new
+    assert run.n_docs_unchanged >= 1
+    assert (run.n_docs_new, run.n_docs_unchanged) == (16, 1)
     assert run.n_changes_new == 15 and run.n_classified == 15 and run.n_applies == 3
     recorded_costs = sorted(seed_payload(p)["cost_usd"] for p in SEED_FILES)
     with Session(make_engine(tmp_settings)) as s:
@@ -190,6 +230,8 @@ def test_seed_then_crawl_all_leaves_seed_changes_alone(
         for url, content_hash in seed_hashes.items():
             doc = s.get(DocumentRow, url)
             assert doc is not None and doc.content_hash == content_hash
+        shopify = s.exec(select(RegChangeRow).where(RegChangeRow.document_url == SEED_SHOPIFY))
+        assert [c.model for c in shopify.all()] == ["seed"] * n_seed_shopify  # no new change
     assert seed(tmp_settings) == 0
 
 
