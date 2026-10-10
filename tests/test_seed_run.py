@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 import pytest
 
 from regwatch.config import CATEGORIES, EU_COUNTRIES, PLATFORMS, SOURCE_DOMAINS
+from regwatch.ingest.tavily_backend import allowed_domain
 from regwatch.schemas import Applicability, Profile, RegChange
 
 SEED_DIR = Path(__file__).resolve().parent.parent / "examples" / "seed-run"
@@ -33,7 +34,9 @@ def test_seed_changes_are_grounded(path: Path) -> None:
     assert appl.ungrounded_todos(change) == []
     assert all(o.quote.strip() for o in change.obligations)
     assert all(t.citation_url == change.document_url for t in appl.todos)
-    assert urlparse(change.document_url).hostname in SOURCE_DOMAINS
+    # the ingest allow-list rule (exact host or subdomain, e.g. www.ihk.de → ihk.de)
+    assert allowed_domain(change.document_url) in SOURCE_DOMAINS
+    assert urlparse(change.document_url).scheme == "https"
     assert all(t.due is not None for t in appl.todos)
 
 
