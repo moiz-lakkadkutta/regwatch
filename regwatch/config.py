@@ -27,12 +27,12 @@ class Settings(BaseSettings):
         default="nvidia/Nemotron-3_5-Lightning", alias="REGWATCH_EXTRACTOR_MODEL"
     )
     db_url: str = Field(default="sqlite:///regwatch.db", alias="REGWATCH_DB_URL")
-    # USD per million tokens for the extractor model. PLACEHOLDERS — confirm against Token Factory pricing.
+    # USD per million tokens for the extractor model — Token Factory catalog price, checked 2026-10-10.
     extractor_price_in_per_mtok: float = Field(
-        default=0.20, alias="REGWATCH_EXTRACTOR_PRICE_IN_PER_MTOK"
+        default=0.06, alias="REGWATCH_EXTRACTOR_PRICE_IN_PER_MTOK"
     )
     extractor_price_out_per_mtok: float = Field(
-        default=0.60, alias="REGWATCH_EXTRACTOR_PRICE_OUT_PER_MTOK"
+        default=0.24, alias="REGWATCH_EXTRACTOR_PRICE_OUT_PER_MTOK"
     )
     # Characters of markdown sent to the extractor; quotes are still validated on the full text.
     # 200k keeps late articles of long acts (2023/2673 Art. 11a sits at ~66k of ~106k chars).
@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     # Lightning reasons by default and writes the trace into `content`, exhausting max_tokens
     # before any JSON; off unless set (sent as chat_template_kwargs.enable_thinking).
     extractor_thinking: bool = Field(default=False, alias="REGWATCH_EXTRACTOR_THINKING")
-    # USD per million tokens for the classifier model. PLACEHOLDERS — confirm against Token Factory pricing.
+    # USD per million tokens for the classifier model — Token Factory catalog price, checked 2026-10-10.
     classifier_price_in_per_mtok: float = Field(
         default=1.00, alias="REGWATCH_CLASSIFIER_PRICE_IN_PER_MTOK"
     )

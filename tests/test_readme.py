@@ -1,6 +1,6 @@
 """README truth constraints: the credit and search figures it quotes are derived from the fixture
-ingest (so they cannot drift from the code), every offline figure is labelled as such in the same
-sentence, the stack is named above the fold, and no marketing words slip in."""
+ingest (so they cannot drift from the code), every offline or live figure is labelled as such in the
+same sentence, the stack is named above the fold, and no marketing words slip in."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ def test_readme_quotes_the_fixture_crawl_figures(tmp_settings: Settings) -> None
     usd_lines = [ln for ln in lines if "$0.0" in ln]
     assert usd_lines
     for ln in usd_lines:
-        assert "placeholder" in ln.lower() or "offline" in ln.lower(), ln
+        assert "live" in ln.lower() or "offline" in ln.lower(), ln
 
     assert "AI-powered" not in text and "we think" not in text.lower()
     assert "<endpoint-url>" in text and "set on deploy" in text

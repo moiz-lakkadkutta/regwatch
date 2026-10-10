@@ -79,19 +79,19 @@ fixtures). Console values: `ops/serverless-endpoint.yaml`, `ops/serverless-job.y
 
 ## Costs and measurement
 
-All figures below are offline fixture replays (Tavily row: the crawl above; model rows: the per-stage
-replays recorded in FEEDBACK.md, Oct 19/20 — a full crawl after `seed` costs $0.0345 at the placeholder
-prices); **no live call has been made yet — live figures pending** and will replace this block.
+Live figures come from the sixth live crawl (2026-10-06: `seed` + `crawl --stage all` on a fresh database), priced at
+the Token Factory catalog prices checked 2026-10-10 (Lightning $0.06 / $0.24, Ultra $1.00 / $3.00 per Mtok). Offline
+figures are fixture replays and are labelled as such.
 
-| Item | Offline figure | Basis |
+| Item | Figure | Basis |
 |---|---|---|
-| Tavily credits per crawl | 36, offline (14 searches, 1 extract of 16 URLs) | documented pricing: 2 per advanced search, 2 per 5 URLs extracted |
-| Lightning tokens, 16 documents | 17,330 prompt / 3,900 completion, 18 calls | $0.0058 offline, at PLACEHOLDER $0.20 / $0.60 per Mtok |
-| Ultra tokens, 15 changes + 1 retry | 26,200 prompt / 3,490 completion, 16 calls | $0.0367 offline, at PLACEHOLDER $1.00 / $3.00 per Mtok |
-| Grounding | quotes verbatim first try 20/22; ungrounded to-dos after retry 0 | `validate_quotes`, `ungrounded_todos` |
+| Tavily credits per crawl | 40 live (14 searches, 2 extracts); 36 offline (14 searches, 1 extract of 16 URLs) | `usage` on every Tavily response; documented pricing for the offline row |
+| Lightning (normalise), 29 documents → 60 changes | 682,890 prompt / 58,210 completion tokens, 115 calls | $0.0549 live |
+| Ultra (classify), 60 changes | 102,279 prompt / 84,830 completion tokens, 61 calls | $0.3568 live |
+| Full crawl | 8 min 03 s | $0.4117 live in model tokens + 40 Tavily credits |
+| Grounding | live: 105 to-dos stored, 0 ungrounded; offline: quotes verbatim first try 20/22 | `validate_quotes`, `ungrounded_todos` |
 
-Prices live in `Settings` (`.env.example`) and are placeholders until confirmed on the Token Factory
-pricing page. Tooling friction with numbers: `FEEDBACK.md`.
+Prices live in `Settings` (`.env.example`). Tooling friction with numbers: `FEEDBACK.md`.
 
 ## Scope cut
 

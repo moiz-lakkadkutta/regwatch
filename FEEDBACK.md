@@ -104,3 +104,8 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   "Regulation (EU) 2023/1115 — Article 11 – Article 15" and "… — ANNEX II" sections →
   `record-seed: 4 documents · 29 changes · 7 skipped → examples/seed-run` (5 skipped for an undated to-do,
   2 excluded). Every quote is verbatim in the recorded document; the feed footer shows the crawl's 40 credits.
+- (2026-10-10, prices) Token Factory catalog (`tokenfactory.nebius.com/model-catalog.md`, no date on the page):
+  Nemotron 3.5 Lightning $0.06 in / $0.24 out per Mtok, Nemotron 3 Ultra $1.00 / $3.00 — our Lightning placeholders
+  ($0.20 / $0.60) overstated normalise cost ~3×. Sixth live crawl re-priced from its usage log: Lightning 115 calls,
+  682,890 / 58,210 tokens → $0.0549 (was shown as $0.1715); Ultra 61 calls, 102,279 / 84,830 → $0.3568; full crawl
+  $0.4117 + 40 Tavily credits — ~87% of model spend is Ultra classify (one call per act section).

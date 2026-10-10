@@ -1,11 +1,19 @@
 # Status — Oct 24 freeze (offline)
 
 **Days merged:** Oct 17 `83ce7ed` · 18 `2cec1c3` · 19 `f831474` · 20 `16474d0` · 21 `2266495` · 22 `9a02a38` · 23 `37a80bc` · 24 `ebe8246`.
-**Tests:** 136 → 141 passed, 4 live deselected. **Live (2026-10-01): 4/4 live tests passed** with real keys (FEEDBACK.md); all other credit/token/USD figures are still fixture replay.
 
-**Pending:** live keys · Endpoint + Job deploy (`docs/runbook-nebius.md`) · video (Oct 25–26) · clean-machine dry run (Oct 27).
+**Since the freeze (2026-10-01 → 10-10, merged to `main`, pushed to github.com/moiz-lakkadkutta/regwatch):** live keys in
+use (4/4 live tests pass) · crawl scope fix (allow-list path rule, en/de filter, content dedupe, concurrent normalise) ·
+Lightning `enable_thinking=false` + 200k input cap · long EU acts normalised per article/amendment point (2023/2673
+Art. 11a → applies) with the feed collapsing non-applying provisions · `regwatch record-seed` + demo seed recorded from
+the sixth live crawl · Token Factory catalog prices set (Lightning $0.06 / $0.24, Ultra $1.00 / $3.00 per Mtok; a full
+live crawl ≈ $0.41 + 40 Tavily credits). **Tests:** 289 passed, 4 live deselected.
 
-**Asks for Moiz:** `TAVILY_API_KEY` + `NEBIUS_API_KEY` (local `.env` + SecretStash `regwatch-keys`) · confirm the four model prices (`Settings`, PLACEHOLDER) · approve Endpoint cost above the $5 gate (~$8–15 for Oct 23–28) or pick the smallest preset · one console session for runbook steps 1–10 · `REGWATCH_REPORT_EMAIL`.
+**Pending:** Endpoint + Job deploy (`docs/runbook-nebius.md`; `daily-crawl` workflow disabled until its secrets exist) ·
+video (Oct 25–26) · clean-machine dry run (Oct 27) · Devpost submission (closes Oct 30, 10:00 PDT).
+
+**Asks for Moiz:** keys into SecretStash `regwatch-keys` · approve Endpoint cost above the $5 gate (~$8–15) or pick the
+smallest preset · one console session for runbook steps 1–10 · `REGWATCH_REPORT_EMAIL`.
 
 **Top 5 open issues** (`docs/issues.md`): failed-normalize doc re-selected every crawl · `_todo_key` collision on shared quotes (one seed change has it) · unverified nebius CLI / `--args` syntax. The seed is recorded from a live crawl (`regwatch record-seed`: 4 documents, 29 changes, live Ultra applicabilities).
 
