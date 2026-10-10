@@ -16,9 +16,10 @@ from regwatch.jobs.crawl import (
     read_documents_jsonl,
     run_ingest,
     seed,
+    write_documents_jsonl,
 )
 from regwatch.understand.llm_backend import FixtureLLMBackend
-from tests.conftest import LLM_FIXTURES_ROOT
+from tests.conftest import LLM_FIXTURES_ROOT, SEED_CHANGES, SEED_FILES, seed_payload
 from tests.fakes import RecordingBackend
 
 
@@ -77,10 +78,13 @@ def test_documents_jsonl_deterministic(
         == {"url", "content_hash", "published_date", "markdown", "source_domain", "regulation_tags"}
         for p in payloads
     )
-    # the committed file (R1: only the two official eur-lex texts) is a subset of the fixture run
-    seed_lines = DEFAULT_OUT.read_text(encoding="utf-8").splitlines()
-    assert len(seed_lines) == 2
-    assert all(line in lines for line in seed_lines)
+    # the committed file (R1: recorded by `regwatch record-seed` from a live crawl) has the
+    # same line format, byte for byte, as a fresh write of its own documents
+    seed_bytes = DEFAULT_OUT.read_bytes()
+    assert seed_bytes
+    rewritten = tmp_path / "seed.jsonl"
+    write_documents_jsonl(read_documents_jsonl(DEFAULT_OUT), rewritten)
+    assert rewritten.read_bytes() == seed_bytes
     docs = read_documents_jsonl(out1)
     assert [d.url for d in docs] == urls
 
@@ -150,8 +154,9 @@ def test_stage_all_runs_end_to_end(
 
 def test_seed_loads_documents_jsonl_idempotently(tmp_settings: Settings) -> None:
     n_lines = len(DEFAULT_OUT.read_text(encoding="utf-8").splitlines())
-    assert n_lines == 2  # R1: only the official eur-lex texts ship with the demo
-    assert seed(tmp_settings) == 2
+    sources = {seed_payload(p)["change"]["document_url"] for p in SEED_FILES}
+    assert n_lines == len(sources)  # R1: only the sources of seed changes ship with the demo
+    assert seed(tmp_settings) == SEED_CHANGES
     assert _count(tmp_settings, DocumentRow) == n_lines
     with Session(make_engine(tmp_settings)) as s:
         row = s.exec(select(DocumentRow).order_by(DocumentRow.url)).first()
@@ -175,7 +180,7 @@ def test_feed_footer_shows_last_crawl(
     importlib.reload(appmod)
     settings = Settings(REGWATCH_DB_URL=db_url)
     run_ingest(settings, backend=fake_backend, out=tmp_path / "docs.jsonl")
-    assert seed(settings) == 2
+    assert seed(settings) == SEED_CHANGES
     r = TestClient(appmod.app).get("/feed")
     assert r.status_code == 200
     assert "Last crawl" in r.text

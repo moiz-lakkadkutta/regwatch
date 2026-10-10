@@ -16,12 +16,37 @@ from sqlmodel import select
 
 from regwatch.config import REGULATION_LABELS
 from regwatch.db import ApplicabilityRow, DocumentRow, RegChangeRow, TodoStateRow, session
+from tests.conftest import ART_11A, SEED_CHANGES, SEED_FILES, seed_change_id, seed_payload
 
 TODAY = date(2026, 9, 14)
 WITHDRAWAL = REGULATION_LABELS["withdrawal"]
 EUDR = REGULATION_LABELS["eudr"]
 OVERDUE_19 = 'in force since <time datetime="2026-06-19">19 June 2026</time>'
-OVERDUE_30 = 'in force since <time datetime="2026-06-30">30 June 2026</time>'
+
+
+def _seed_todos() -> list[tuple[str, date]]:
+    """(file slug = regulation tag, due) of every to-do of an `applies` seed change."""
+    out: list[tuple[str, date]] = []
+    for path in SEED_FILES:
+        appl = seed_payload(path)["applicability"]
+        if appl["decision"] == "applies":
+            tag = path.stem.split("-", 2)[2]
+            out += [(tag, date.fromisoformat(t["due"])) for t in appl["todos"]]
+    return out
+
+
+SEED_TODOS = _seed_todos()
+N_OPEN = len(SEED_TODOS)  # the recorded seed has no undated to-do (test_seed_run)
+N_IN_FORCE = sum(due < TODAY for _, due in SEED_TODOS)
+N_UNCLEAR = sum(seed_payload(p)["applicability"]["decision"] == "unclear" for p in SEED_FILES)
+N_WITHDRAWAL_19 = SEED_TODOS.count(("withdrawal", date(2026, 6, 19)))
+NEXT_EFFECTIVE = min(
+    date.fromisoformat(d)
+    for p in SEED_FILES
+    if seed_payload(p)["applicability"]["decision"] == "applies"
+    for d in seed_payload(p)["change"]["effective_dates"]
+    if date.fromisoformat(d) >= TODAY
+)
 
 
 def _reload_frozen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str) -> Any:
@@ -36,11 +61,11 @@ def _reload_frozen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str) -
 
 @pytest.fixture()
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
-    """The recorded seed run: two applies changes, four to-dos, all in force before TODAY."""
+    """The recorded seed run: in-force withdrawal and EUDR to-dos, EUDR to-dos coming up."""
     appmod = _reload_frozen(tmp_path, monkeypatch, "month.db")
     from regwatch.jobs.crawl import seed
 
-    assert seed() == 2
+    assert seed() == SEED_CHANGES
     return TestClient(appmod.app)
 
 
@@ -143,24 +168,36 @@ def _subline(html: str) -> str:
     return html.split('<p class="muted">')[1].split("</p>")[0]
 
 
+def _unique_key(html: str) -> str:
+    """A to-do key shown once (one stored quote can back two to-dos; toggling marks both)."""
+    keys = _keys(html)
+    return next(k for k in keys if keys.count(k) == 1)
+
+
 # ---------- 1–2: buckets on the seed run and on added rows ----------
 
 
-def test_seed_both_groups_in_force(client: TestClient) -> None:
+def test_seed_in_force_and_coming_up(client: TestClient) -> None:
+    assert N_IN_FORCE and N_IN_FORCE < N_OPEN and N_WITHDRAWAL_19 >= 4
     html = client.get("/month").text
     assert html.count("<h2>Already in force</h2>") == 1
+    assert html.count("<h2>Coming up</h2>") == 1
     assert "The rule already applies — do these now." in html
-    assert html.count(OVERDUE_19) == 2
-    assert html.count(OVERDUE_30) == 2
-    assert html.count('class="pill overdue"') == 4
-    assert "Coming up" not in html
+    in_force = html[html.index("<h2>Already in force</h2>") : html.index("<h2>Coming up</h2>")]
+    coming_up = html[html.index("<h2>Coming up</h2>") :]
+    # the withdrawal button (Art. 11a) is in force since 19 June 2026 — four to-dos
+    assert in_force.count(OVERDUE_19) == N_WITHDRAWAL_19
+    assert in_force.count(f'href="/change/{seed_change_id(ART_11A)}">' + WITHDRAWAL) == 4
+    assert EUDR in in_force and EUDR in coming_up
+    assert 'due <time datetime="2026-12-30">30 December 2026</time>' in coming_up
+    assert "pill overdue" not in coming_up
+    assert html.count('class="pill overdue"') == N_IN_FORCE
     assert "Due this month" not in html
+    assert "No fixed date" not in html
     assert "Nothing due" not in html
-    assert _subline(html) == "September 2026 · 4 open · 0 done · 0 unclear"
+    assert _subline(html) == f"September 2026 · {N_OPEN} open · 0 done · {N_UNCLEAR} unclear"
     # R5: every row links its change and its source
-    assert html.count('href="/change/1">' + WITHDRAWAL) == 2
-    assert html.count('href="/change/2">' + EUDR) == 2
-    assert html.count('rel="noopener">source</a>') == 4
+    assert html.count('rel="noopener">source</a>') == N_OPEN
 
 
 def test_buckets_and_order(client: TestClient) -> None:
@@ -213,15 +250,17 @@ def test_buckets_and_order(client: TestClient) -> None:
     assert 'due <time datetime="2027-01-01">1 January 2027</time>' in html
     assert "pill overdue" not in html[html.index("<h2>Due this month</h2>") :]
     assert "no fixed date — see the obligation" in html
-    assert html.count('class="pill overdue"') == 4
+    assert html.count('class="pill overdue"') == N_IN_FORCE
     unclear = html[html.index("<h2>One question decides these</h2>") :]
     assert "Do you import the goods yourself or buy from an EU wholesaler?" in unclear
     assert EUDR in unclear
     assert 'href="/profile">Update your profile</a>' in unclear
     assert ">Details</a>" in unclear
     assert 'class="todo' not in unclear
-    assert html.count('class="todo') == 7
-    assert _subline(html) == "September 2026 · 7 open · 0 done · 1 unclear"
+    assert html.count('class="todo') == N_OPEN + 3
+    assert _subline(html) == (
+        f"September 2026 · {N_OPEN + 3} open · 0 done · {N_UNCLEAR + 1} unclear"
+    )
     assert "Nothing due" not in html
 
 
@@ -369,7 +408,7 @@ def test_empty_profile_copy(empty_client: TestClient) -> None:
 
 
 def test_toggle_plain_post_303(client: TestClient) -> None:
-    key = _keys(client.get("/month").text)[0]
+    key = _unique_key(client.get("/month").text)
     r = client.post(f"/todo/{key}/toggle", follow_redirects=False)
     assert r.status_code == 303
     assert r.headers["location"] == "/month"
@@ -380,20 +419,20 @@ def test_toggle_plain_post_303(client: TestClient) -> None:
 
 
 def test_toggle_hx_returns_fragment(client: TestClient) -> None:
-    key = _keys(client.get("/month").text)[0]
+    key = _unique_key(client.get("/month").text)
     r = client.post(f"/todo/{key}/toggle", headers={"HX-Request": "true"})
     assert r.status_code == 200
     assert r.text.lstrip().startswith('<section id="month-list"')
     assert "<html" not in r.text and "htmx.org" not in r.text
     assert "<h2>Done (1)</h2>" in r.text
-    assert "3 open · 1 done" in r.text
+    assert f"{N_OPEN - 1} open · 1 done" in r.text
     assert 'class="todo done"' in r.text
 
 
 def test_toggle_persists_and_reverts(client: TestClient) -> None:
     import regwatch.app as appmod
 
-    key = _keys(client.get("/month").text)[0]
+    key = _unique_key(client.get("/month").text)
     client.post(f"/todo/{key}/toggle", follow_redirects=False)
     with session(appmod.engine) as s:
         rows = s.exec(select(TodoStateRow)).all()
@@ -405,21 +444,23 @@ def test_toggle_persists_and_reverts(client: TestClient) -> None:
     assert [(t.todo_key, t.done) for t in rows] == [(key, False)]
     html = client.get("/month").text
     assert "Done (" not in html and 'class="todo done"' not in html
-    assert _subline(html) == "September 2026 · 4 open · 0 done · 0 unclear"
+    assert _subline(html) == f"September 2026 · {N_OPEN} open · 0 done · {N_UNCLEAR} unclear"
 
 
 def test_all_done_shows_empty_state(client: TestClient) -> None:
-    keys = _keys(client.get("/month").text)
-    assert len(set(keys)) == 4
+    keys = list(dict.fromkeys(_keys(client.get("/month").text)))  # toggle each key once
+    assert len(keys) >= 4
     for key in keys:
         client.post(f"/todo/{key}/toggle", follow_redirects=False)
     html = client.get("/month").text
     assert "<strong>Nothing due this month.</strong>" in html
-    assert "Nothing scheduled yet. New changes appear here after the next crawl." in html
-    assert "<h2>Done (4)</h2>" in html
-    assert "Already in force" not in html
-    assert html.count('class="todo done"') == 4
-    assert _subline(html) == "September 2026 · 0 open · 4 done · 0 unclear"
+    # no open to-do left: the hint falls back to the nearest stored effective date
+    assert NEXT_EFFECTIVE.isoformat() in html.split("</div>")[0]
+    assert "Nothing scheduled yet" not in html
+    assert f"<h2>Done ({N_OPEN})</h2>" in html
+    assert "Already in force" not in html and "Coming up" not in html
+    assert html.count('class="todo done"') == N_OPEN
+    assert _subline(html) == f"September 2026 · 0 open · {N_OPEN} done · {N_UNCLEAR} unclear"
 
 
 # ---------- 9, 11: htmx wiring and landing ----------
@@ -430,7 +471,7 @@ def test_htmx_script_and_attrs(client: TestClient) -> None:
     assert '<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>' in html
     assert 'hx-post="/todo/' in html
     assert '<section id="month-list" hx-target="#month-list" hx-swap="outerHTML">' in html
-    assert html.count('<form method="post" action="/todo/') == 4  # plain form keeps working
+    assert html.count('<form method="post" action="/todo/') == N_OPEN  # plain form still works
     assert "htmx.org" not in client.get("/feed").text
 
 

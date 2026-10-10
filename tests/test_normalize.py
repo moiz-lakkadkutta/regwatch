@@ -39,7 +39,7 @@ from regwatch.understand.normalize import (
     to_regchange,
 )
 from regwatch.understand.sections import is_long_act, split_act
-from tests.conftest import LLM_FIXTURES_ROOT
+from tests.conftest import LLM_FIXTURES_ROOT, SEED_CHANGES
 
 EXTRACT = Path(__file__).resolve().parent / "fixtures" / "tavily" / "extract"
 URL_2673 = "https://eur-lex.europa.eu/eli/dir/2023/2673/oj"
@@ -476,11 +476,11 @@ def test_crawl_stage_normalize_updates_run_row_and_prints_line(
 def test_seed_then_normalize_adds_zero_for_seed_docs(
     tmp_settings: Settings, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    assert seed(tmp_settings) == 2
+    assert seed(tmp_settings) == SEED_CHANGES
     assert seed(tmp_settings) == 0
     with Session(make_engine(tmp_settings)) as s:
         changes = s.exec(select(RegChangeRow)).all()
-        assert len(changes) == 2
+        assert len(changes) == SEED_CHANGES
         for c in changes:
             doc = s.get(DocumentRow, c.document_url)
             assert doc is not None and c.content_hash == doc.content_hash != ""
@@ -497,7 +497,7 @@ def test_seed_then_normalize_adds_zero_for_seed_docs(
         in capsys.readouterr().err
     )
     with Session(make_engine(tmp_settings)) as s:
-        assert len(s.exec(select(RegChangeRow)).all()) == 2
+        assert len(s.exec(select(RegChangeRow)).all()) == SEED_CHANGES
 
 
 # --- concurrency -------------------------------------------------------------------------------

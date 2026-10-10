@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import importlib
 import json
+import shutil
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any
@@ -22,8 +23,22 @@ from regwatch.db import (
     regulation_tag_for,
     session,
 )
+from tests.conftest import (
+    ART_11A,
+    SEED_CHANGES,
+    SEED_FILES,
+    seed_change_id,
+    seed_file,
+    seed_payload,
+)
 
 SEED_DIR = Path(__file__).resolve().parent.parent / "examples" / "seed-run"
+SEED_DOCS = [
+    json.loads(line)
+    for line in (SEED_DIR / "documents.jsonl").read_text(encoding="utf-8").splitlines()
+]
+SEED_SOURCES = {d["source_domain"] for d in SEED_DOCS}
+SEED_CREDITS = sum(seed_payload(p)["tavily_credits"] for p in SEED_FILES)
 
 IHK_URL = "https://www.ihk.de/eudr-kmu"
 BMJ_URL = "https://www.bmj.de/widerrufsbutton-faq"
@@ -106,11 +121,11 @@ def _reload_app(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str) -> A
 
 @pytest.fixture()
 def seed_client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
-    """The recorded seed run only (two applies changes on eur-lex)."""
+    """The recorded seed run only (sections of 2023/2673 and 2023/1115, guidance pages)."""
     appmod = _reload_app(tmp_path, monkeypatch, "seed.db")
     from regwatch.jobs.crawl import seed
 
-    assert seed() == 2
+    assert seed() == SEED_CHANGES
     return TestClient(appmod.app)
 
 
@@ -276,19 +291,22 @@ def test_feed_rows_and_unchecked_from_db(pages_client: TestClient) -> None:
         prof = appmod.current_profile(s)
         assert prof is not None and prof.id is not None
         rows = feed_rows(s, prof.id)
-        assert [r.source_domain for r in rows] == [
-            "help.shopify.com",
-            "ihk.de",
-            "gesetze-im-internet.de",
-            "eur-lex.europa.eu",
-            "eur-lex.europa.eu",
-        ]
+        assert len(rows) == SEED_CHANGES + 3  # every extra row but the unchecked one
+        stamps = [r.created_at for r in rows]
+        assert stamps == sorted(stamps, reverse=True)  # newest change first
+        # the recorded seed (crawled in October) comes before the July extras
+        assert {r.source_domain for r in rows[:SEED_CHANGES]} == SEED_SOURCES
         assert {r.tag for r in rows} == {"withdrawal", "eudr"}
-        one = feed_row(s, prof.id, 1)
-        assert one is not None and one.tavily_credits == 6 and one.normalize_model == "seed"
+        payload = seed_payload(seed_file(ART_11A))
+        one = feed_row(s, prof.id, seed_change_id(ART_11A))
+        assert one is not None and one.normalize_model == "seed"
+        assert one.change.instrument == ART_11A and one.appl.decision == "applies"
+        assert one.classify_model == payload["model"] and one.cost_usd == payload["cost_usd"]
+        assert one.tavily_credits == payload["tavily_credits"]
         assert feed_row(s, prof.id, _change_id(BMJ_URL)) is None
         assert [c.document_url for c in unchecked_changes(s, prof.id)] == [BMJ_URL]
-        assert corpus_counts(s) == (6, 5)
+        extra_sources = {spec["domain"] for spec in EXTRA_ROWS}
+        assert corpus_counts(s) == (len(SEED_DOCS) + 4, len(SEED_SOURCES | extra_sources))
 
 
 # ---------- feed (plan §5 tests 1–7) ----------
@@ -309,11 +327,14 @@ def test_feed_orders_applies_before_unclear_before_does_not(pages_client: TestCl
     html = pages_client.get("/feed").text
     withdrawal = _section(html, "withdrawal")
     pills = [p.split("<")[0] for p in withdrawal.split('<span class="pill ')[1:]]
-    assert [p.split('"')[0] for p in pills] == ["applies", "applies", "does_not"]
-    # newest first inside a decision: § 356a (1 Jul) before the seed directive (1 Jun)
+    pills = [p.split('"')[0] for p in pills]
+    assert pills == sorted(pills, key=["applies", "unclear", "does_not"].index)
+    assert pills[-1] == "does_not" and pills.count("does_not") == 1  # 2023/2673's collapse
+    # newest first inside a decision: the recorded seed (6 Oct) before § 356a (1 Jul)
     titles = [h.split("</a>")[0].split(">")[-1] for h in withdrawal.split("<h3>")[1:]]
-    assert titles[0].startswith("§ 356a BGB") and titles[1].startswith("Directive (EU) 2023/2673")
-    assert titles[2].startswith("Shopify Help")
+    assert ART_11A in titles[:-2]
+    assert titles[-2].startswith("§ 356a BGB — Widerrufsfunktion")
+    assert titles[-1].startswith("Shopify Help")
     eudr = _section(html, "eudr")
     assert eudr.index("pill applies") < eudr.index("pill unclear")
     assert "Doesn't apply to you" not in eudr
@@ -330,7 +351,11 @@ def test_feed_pills_all_three_states(pages_client: TestClient) -> None:
 
 def test_feed_item_meta(pages_client: TestClient) -> None:
     html = pages_client.get("/feed").text
-    assert "2 to-dos · in force since 19 Jun 2026" in html
+    # the withdrawal button (Art. 11a): applies, four to-dos, in force since 19 June 2026
+    art_11a = html.split(f'<a href="/change/{seed_change_id(ART_11A)}">{ART_11A}</a>')
+    assert len(art_11a) == 2
+    assert '<span class="pill applies">' in art_11a[0].rsplit("<article", 1)[1]
+    assert "4 to-dos · in force since 19 Jun 2026" in art_11a[1].split("</article>")[0]
     assert "No to-dos yet — see the obligations" in html
     assert "Answer one question to find out" in html
     assert 'class="chip">eur-lex.europa.eu' in html
@@ -341,9 +366,9 @@ def test_feed_item_meta(pages_client: TestClient) -> None:
 def test_feed_footer_seed_state(seed_client: TestClient) -> None:
     html = seed_client.get("/feed").text
     assert "Showing the recorded seed run" in html
-    assert "14 Tavily credits used when it was recorded" in html
+    assert f"{SEED_CREDITS} Tavily credits used when it was recorded" in html
     assert "no live crawl yet" in html
-    assert "2 documents from 1 source " in html
+    assert f"{len(SEED_DOCS)} documents from {len(SEED_SOURCES)} sources " in html
     assert "Last crawl" not in html
     assert "credits used" in html  # test_app.test_feed_shows_both_seed_changes relies on it
 
@@ -366,7 +391,7 @@ def test_feed_footer_after_crawl(seed_client: TestClient) -> None:
     assert "Last crawl 21 Oct 2026 14:02 UTC" in html
     assert "44 Tavily credits used this crawl" in html
     assert "$0.0312 Nemotron" in html
-    assert "2 documents from 1 source " in html
+    assert f"{len(SEED_DOCS)} documents from {len(SEED_SOURCES)} sources " in html
     assert "seed run" not in html
 
 
@@ -406,7 +431,7 @@ def test_feed_unchecked_section_after_profile_change(pages_client: TestClient) -
     assert "regwatch crawl --stage classify" in html
     with session(__import__("regwatch.app", fromlist=["engine"]).engine) as s:
         instruments = [c.instrument for c in s.exec(select(RegChangeRow)).all()]
-    assert len(instruments) == 6
+    assert len(instruments) == SEED_CHANGES + 4
     for name in instruments:
         assert escape(name) in html
     assert 'class="pill' not in html
@@ -424,7 +449,9 @@ def test_detail_every_todo_links_citation_url(seed_client: TestClient) -> None:
     """Grounding guard: every rendered to-do quote cites the change's own document URL."""
     import regwatch.app as appmod
 
-    for change_id in (1, 2):
+    with_todos = [p for p in SEED_FILES if seed_payload(p)["applicability"]["todos"]]
+    assert seed_file(ART_11A) in with_todos
+    for change_id in [SEED_FILES.index(p) + 1 for p in with_todos]:
         with session(appmod.engine) as s:
             ch = s.get(RegChangeRow, change_id)
             assert ch is not None
@@ -455,7 +482,7 @@ def test_templates_never_mark_stored_text_safe() -> None:
 
 
 def test_detail_applies_todo_due_and_overdue(seed_client: TestClient) -> None:
-    html = seed_client.get("/change/1").text
+    html = seed_client.get(f"/change/{seed_change_id(ART_11A)}").text
     assert "Applies to you" in html
     assert "Why this applies to you" in html
     assert "What to do" in html
@@ -501,23 +528,27 @@ def test_detail_source_metadata_and_mailto(seed_client: TestClient) -> None:
     import regwatch.app as appmod
     from regwatch.app import wrong_call_mailto
 
+    change_id = seed_change_id(ART_11A)
+    payload = seed_payload(seed_file(ART_11A))
     with session(appmod.engine) as s:
-        ch = s.get(RegChangeRow, 1)
+        ch = s.get(RegChangeRow, change_id)
         assert ch is not None
         doc = s.get(DocumentRow, ch.document_url)
         assert doc is not None
         content_hash = doc.content_hash
-    html = seed_client.get("/change/1").text
+        published = doc.published_date
+    html = seed_client.get(f"/change/{change_id}").text
     assert "<dt>Extracted by</dt><dd>recorded seed run</dd>" in html
-    assert "nvidia/Nemotron-3-Ultra-550b-a55b · $0.0600" in html
+    assert f"{payload['model']} · ${payload['cost_usd']:.4f}" in html
     assert f"<code>{content_hash[:12]}</code>" in html
-    assert "<dt>Published</dt><dd>2023-11-22</dd>" in html
+    assert published is None  # Tavily returned no date for the ELI page: no row, none invented
+    assert "<dt>Published</dt>" not in html
     assert "<dt>Fetched</dt><dd>" in html and " UTC</dd>" in html
-    assert "EU; transposed in Germany as § 356a BGB" in html
-    mailto = wrong_call_mailto(1, "applies")
-    assert (
-        mailto
-        == "mailto:?subject=RegWatch%20wrong%20call%3A%20change%20%231%20is%20marked%20applies"
+    assert f"<dt>Jurisdiction</dt><dd>{escape(payload['change']['jurisdiction'])}</dd>" in html
+    mailto = wrong_call_mailto(change_id, "applies")
+    assert mailto == (
+        "mailto:?subject=RegWatch%20wrong%20call%3A%20change%20%23"
+        f"{change_id}%20is%20marked%20applies"
     )
     assert f'<a class="wrong" href="{mailto}">Report a wrong call</a>' in html
 
@@ -539,7 +570,7 @@ def test_detail_mailto_uses_report_email_setting(
 
 def test_detail_unchecked_change_renders(pages_client: TestClient) -> None:
     bmj_id = _change_id(BMJ_URL)
-    assert bmj_id == 4
+    assert bmj_id == SEED_CHANGES + 2
     r = pages_client.get(f"/change/{bmj_id}")
     assert r.status_code == 200
     assert "Not checked against your profile yet" in r.text
@@ -591,12 +622,33 @@ def test_feed_subline_shows_category_plain_names(seed_client: TestClient) -> Non
     assert "furniture_wood" not in html
 
 
-def test_feed_single_item_group_omits_instrument_subline(seed_client: TestClient) -> None:
-    # seed only: one item per group → the legal name appears once (in the item h3), not twice
-    html = seed_client.get("/feed").text
+def test_feed_single_item_group_omits_instrument_subline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # one recorded seed change per regulation → each group has one item and no law subline
+    one_each = tmp_path / "one-each"
+    one_each.mkdir()
+    for name in ("profile.json", "documents.jsonl"):
+        shutil.copy(SEED_DIR / name, one_each / name)
+    eudr = next(p for p in SEED_FILES if p.stem.endswith("-eudr"))
+    for path in (seed_file(ART_11A), eudr):
+        shutil.copy(path, one_each / path.name)
+    monkeypatch.setenv("REGWATCH_SEED_DIR", str(one_each))
+    appmod = _reload_app(tmp_path, monkeypatch, "one-each.db")
+    from regwatch.jobs.crawl import seed
+
+    assert seed() == 2
+    html = TestClient(appmod.app).get("/feed").text
     assert '<p class="law">' not in html
     for r in SEED_REGULATIONS:
-        assert html.count(escape(r["instrument"])) == 1
+        assert escape(r["instrument"]) not in html
+    assert html.count("<h3>") == 2
+
+
+def test_feed_seed_groups_keep_instrument_subline(seed_client: TestClient) -> None:
+    html = seed_client.get("/feed").text
+    for r in SEED_REGULATIONS:
+        assert html.count(f'<p class="law">{escape(r["instrument"])}</p>') == 1
 
 
 def test_feed_multi_item_group_keeps_instrument_subline(pages_client: TestClient) -> None:
@@ -608,7 +660,15 @@ def test_feed_multi_item_group_keeps_instrument_subline(pages_client: TestClient
 # ---------- sectioned acts collapse their non-applying sections ----------
 
 ACT_URL = "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32023L2673"
-ACT_NAME = "Directive (EU) 2023/2673"
+ACT_NAME = "Directive (EU) 2019/2161"  # not an act of the recorded seed
+
+
+def _collapse_lines(html: str) -> list[str]:
+    return [c.split("</p>")[0] for c in html.split('<p class="muted collapsed">')[1:]]
+
+
+def _act_collapse_lines(html: str) -> list[str]:
+    return [line for line in _collapse_lines(html) if ACT_NAME in line]
 
 
 def _add_sections(
@@ -674,7 +734,7 @@ def test_feed_collapses_does_not_sections_under_act(seed_client: TestClient) -> 
     assert f"{ACT_NAME} — Article 1" in html
     assert f"{ACT_NAME} — Article 2" not in html
     assert f"{ACT_NAME} — Article 3" not in html
-    assert html.count("other provisions of") == 1
+    assert len(_act_collapse_lines(html)) == 1
 
 
 def test_feed_collapse_line_singular(seed_client: TestClient) -> None:
@@ -699,7 +759,7 @@ def test_feed_old_version_does_not_is_not_counted_against_new_version(
     _add_sections(seed_client, ACT_URL, ["applies"], content_hash="hash-new", first=2, day=10)
     html = seed_client.get("/feed").text
     assert f"{ACT_NAME} — Article 2" in html
-    assert "other provision" not in html
+    assert _act_collapse_lines(html) == []
 
 
 def test_feed_collapse_counts_only_the_newest_versions_sections(seed_client: TestClient) -> None:
@@ -716,9 +776,34 @@ def test_feed_collapse_counts_only_the_newest_versions_sections(seed_client: Tes
     assert f"2 other provisions of {ACT_NAME} don&#39;t apply to you" in html
 
 
+def _n_seed_does_not(act: str) -> int:
+    return sum(
+        seed_payload(p)["change"]["instrument"].startswith(f"{act} — ")
+        and seed_payload(p)["applicability"]["decision"] == "does_not"
+        for p in SEED_FILES
+    )
+
+
+def test_feed_seed_collapses_non_applying_sections(seed_client: TestClient) -> None:
+    html = seed_client.get("/feed").text
+    n_2673 = _n_seed_does_not("Directive (EU) 2023/2673")
+    n_1115 = _n_seed_does_not("Regulation (EU) 2023/1115")
+    assert n_2673 >= 2 and n_1115 >= 2
+    assert _collapse_lines(html) == [
+        f"{n_2673} other provisions of Directive (EU) 2023/2673 don&#39;t apply to you",
+        f"{n_1115} other provisions of Regulation (EU) 2023/1115 don&#39;t apply to you",
+    ]
+    assert _collapse_lines(html)[0] in _section(html, "withdrawal")
+    assert "Directive (EU) 2023/2673 — Article 1, point (1)" not in html  # a does_not section
+    assert escape(ART_11A) in _section(html, "withdrawal")
+
+
 def test_feed_single_change_documents_have_no_collapse_line(pages_client: TestClient) -> None:
     html = pages_client.get("/feed").text
-    assert "other provision" not in html
+    lines = _collapse_lines(html)
+    assert len(lines) == 2  # only the recorded seed's two sectioned acts
+    for spec in EXTRA_ROWS:
+        assert not any(spec["instrument"] in line for line in lines)
 
 
 def test_month_and_detail_render_sectioned_instrument(seed_client: TestClient) -> None:
