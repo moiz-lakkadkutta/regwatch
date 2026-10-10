@@ -109,3 +109,11 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   ($0.20 / $0.60) overstated normalise cost ~3×. Sixth live crawl re-priced from its usage log: Lightning 115 calls,
   682,890 / 58,210 tokens → $0.0549 (was shown as $0.1715); Ultra 61 calls, 102,279 / 84,830 → $0.3568; full crawl
   $0.4117 + 40 Tavily credits — ~87% of model spend is Ultra classify (one call per act section).
+- (2026-10-10, Nebius CLI / AI Cloud) nebius CLI 0.12.287 on macOS arm64. `nebius profile create` is interactive only
+  unless every value is passed as a flag; under a non-TTY it fails with `Error: ^D`. With flags
+  (`--endpoint api.nebius.cloud --federation-endpoint auth.nebius.com --parent-id …`) the browser login worked, but
+  the Token Factory project ID (`aiproject-e00…`) is not an AI Cloud project: `iam v2 project get` → "id must be a
+  project id with 'project-' prefix"; with the prefix swapped → NotFound; `iam v2 tenant list` → `{}`;
+  `registry list` → PermissionDenied "unknown subject". Token Factory access does not imply an AI Cloud tenant, and
+  nothing in the Token Factory UI or the hackathon resources says so — the Serverless Endpoint/Job deploy is blocked
+  until an AI Cloud tenant exists for the account.
