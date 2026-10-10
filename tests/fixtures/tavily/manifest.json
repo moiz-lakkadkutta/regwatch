@@ -6,7 +6,7 @@
     "regulation_tags": ["withdrawal"],
     "kind": "core",
     "expected_decision": "applies",
-    "why": "Distance contracts with EU consumers: the profile sells to 10 EU countries. Contains the 3 obligation quotes of examples/seed-run/change-001-withdrawal.json verbatim."
+    "why": "Distance contracts with EU consumers: the profile sells to 10 EU countries. Fixture copy of the ELI page; the demo seed is recorded from a live crawl (regwatch record-seed) and uses the /oj/eng page instead."
   },
   {
     "id": "gii-356a-bgb",
@@ -24,7 +24,7 @@
     "regulation_tags": ["eudr"],
     "kind": "core",
     "expected_decision": "applies",
-    "why": "Wood (furniture_wood) and cattle/leather are relevant commodities. Contains the 3 obligation quotes of examples/seed-run/change-002-eudr.json verbatim."
+    "why": "Wood (furniture_wood) and cattle/leather are relevant commodities. Fixture copy of the ELI page; the demo seed is recorded from a live crawl (regwatch record-seed) and uses the consolidated text instead."
   },
   {
     "id": "commission-eudr-coffee-cocoa",
