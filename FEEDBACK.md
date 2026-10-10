@@ -117,3 +117,11 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   `registry list` → PermissionDenied "unknown subject". Token Factory access does not imply an AI Cloud tenant, and
   nothing in the Token Factory UI or the hackathon resources says so — the Serverless Endpoint/Job deploy is blocked
   until an AI Cloud tenant exists for the account.
+- (2026-10-10, Serverless Endpoint deploy, eu-west2) After billing was set up on the new tenant, `nebius registry create`
+  went from PermissionDenied to ACTIVE in ~2 s (`cr.eu-west2.nebius.cloud`); `registry configure-helper` + push of the
+  342 MB linux/amd64 image worked first time. `nebius ai endpoint create … --platform cpu-d3 --preset 2vcpu-8gb --public
+  --auth none --disk-size 32Gi --args serve` (validated with `--dry-run`): **257 s from create to RUNNING** (provision →
+  image download → container start); the CLI blocks until RUNNING and prints a public tunnel URL plus a public IP.
+  First requests: /healthz, /feed, /month all 200 in ~0.25 s; logs show `seeded 29 change(s)` then uvicorn.
+  The smallest cpu-d3 preset in eu-west2 is 2vcpu-8gb (plan assumed 4vcpu-16gb). `--container-port 8000/http` from our
+  notes is not the CLI's syntax (`8000`). The Serverless AI CLI has `--dry-run` — worth surfacing in the docs.

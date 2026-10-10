@@ -3,9 +3,9 @@
 # `regwatch crawl --stage all --backend live --llm-backend live` on its own ephemeral SQLite.
 # Without both keys the entrypoint exits 2 (status FAILED) — it never falls back to recorded data.
 name: regwatch-crawl
-image: cr.eu-north1.nebius.cloud/<REGISTRY_ID>/regwatch:<GIT_SHA>
+image: cr.eu-west2.nebius.cloud/e04t3ertpv4dynst9y/regwatch:<GIT_SHA>
 platform: cpu-d3
-preset: 4vcpu-16gb          # same as the Endpoint
+preset: 2vcpu-8gb           # same as the Endpoint
 disk_size: 32Gi             # default 250Gi costs ~$17.75/month
 timeout: 1h
 restart_policy: never
@@ -27,4 +27,4 @@ env_secret:                 # SecretStash secret `regwatch-keys` (runbook step 4
   NEBIUS_API_KEY: regwatch-keys
   TAVILY_API_KEY: regwatch-keys
 schedule: "see .github/workflows/daily-crawl.yml — Nebius Jobs have no cron field"
-# cli: nebius ai job create --name regwatch-crawl-$(date +%F) --image $IMAGE --platform cpu-d3 --preset 4vcpu-16gb --args crawl --timeout 1h --env REGWATCH_TIME_RANGE=month --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys
+# cli: nebius ai job create --name regwatch-crawl-$(date +%F) --image $IMAGE --platform cpu-d3 --preset 2vcpu-8gb --args crawl --timeout 1h --env REGWATCH_TIME_RANGE=month --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys

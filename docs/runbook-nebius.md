@@ -14,12 +14,15 @@ Cost line: the Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/
 
 1. **Prereqs.** Docker Desktop running (`docker info` succeeds); install the nebius CLI
    (`curl -sSL https://storage.eu-north1.nebius.cloud/cli/install.sh | bash`); `nebius profile create`
-   (browser login); note `PROJECT_ID`.
+   (browser login); note `PROJECT_ID`. Non-TTY: `nebius profile create regwatch --endpoint api.nebius.cloud
+   --federation-endpoint auth.nebius.com --parent-id <project-…>` (an AI Cloud project, not the Token Factory `aiproject-…`).
+   Deployed 2026-10-10: tenant `maroon-loon-tenant-k2d`, project `project-e04w3bxjbc0029g2wvxk5h` (eu-west2); billing must be
+   set up before `registry create` (PermissionDenied otherwise).
 2. **Registry.** `nebius registry create --name regwatch`; `nebius registry configure-helper` → note
    `REGISTRY_ID`.
 3. **Build + push.**
    ```bash
-   IMAGE=cr.eu-north1.nebius.cloud/$REGISTRY_ID/regwatch:$(git rev-parse --short HEAD)
+   IMAGE=cr.$REGION.nebius.cloud/$REGISTRY_ID/regwatch:$(git rev-parse --short HEAD)   # deployed: cr.eu-west2.nebius.cloud/e04t3ertpv4dynst9y
    docker build --platform linux/amd64 -f ops/Dockerfile -t $IMAGE . && docker push $IMAGE
    ```
    Fallback if registry auth fails: push to public GHCR and use that image reference.

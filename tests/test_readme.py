@@ -47,6 +47,6 @@ def test_readme_quotes_the_fixture_crawl_figures(tmp_settings: Settings) -> None
         assert "live" in ln.lower() or "offline" in ln.lower(), ln
 
     assert "AI-powered" not in text and "we think" not in text.lower()
-    assert "<endpoint-url>" in text and "set on deploy" in text
+    assert "tunnel.applications." in text and "Serverless Endpoint" in text
     assert "> Status:" not in text
     assert text.startswith("# RegWatch\n")
