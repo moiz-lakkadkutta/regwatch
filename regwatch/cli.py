@@ -1,4 +1,4 @@
-"""regwatch CLI: seed | crawl | serve."""
+"""regwatch CLI: seed | record-seed | crawl | serve."""
 
 from __future__ import annotations
 
@@ -20,6 +20,32 @@ def seed() -> None:
 
     n = _seed()
     print(f"seeded {n} change(s)", file=sys.stderr)
+
+
+@app.command("record-seed")
+def record_seed(
+    url: Annotated[
+        list[str], typer.Option("--url", help="Document URL to record (repeat for several).")
+    ],
+    out: Annotated[
+        Path | None, typer.Option(help="Seed directory (default: REGWATCH_SEED_DIR).")
+    ] = None,
+) -> None:
+    """Record chosen documents of a crawl in the DB (REGWATCH_DB_URL) as the demo seed."""
+    import logging
+
+    from regwatch.config import Settings
+    from regwatch.jobs.record import RecordError
+    from regwatch.jobs.record import record_seed as _record
+
+    logging.basicConfig(level=logging.WARNING, stream=sys.stderr)
+    settings = Settings()
+    try:
+        summary = _record(settings, url, out if out is not None else settings.seed_dir)
+    except RecordError as e:
+        print(f"record-seed: refused — {e}", file=sys.stderr)
+        raise typer.Exit(code=1) from e
+    print(summary.line(), file=sys.stderr)
 
 
 @app.command()
