@@ -50,12 +50,17 @@ class _Piece:
 
 
 def is_long_act(document: Document, settings: Settings) -> bool:
-    """A EUR-Lex act (ELI or legal-content URL) longer than `act_split_min_chars`."""
+    """A EUR-Lex act (ELI or legal-content URL) longer than `act_split_min_chars`.
+
+    `/legal-content/summary/` pages are EUR-Lex guidance summaries of an act, never the act.
+    """
     parsed = urlparse(document.url)
     host = (parsed.hostname or "").lower()
     if host != _EURLEX_HOST and not host.endswith("." + _EURLEX_HOST):
         return False
     if "/eli/" not in parsed.path and "/legal-content/" not in parsed.path:
+        return False
+    if "/legal-content/summary/" in parsed.path.lower():
         return False
     return len(document.markdown) > settings.act_split_min_chars
 
