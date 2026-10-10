@@ -61,7 +61,7 @@ def _reload_frozen(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, name: str) -
 
 @pytest.fixture()
 def client(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> TestClient:
-    """The recorded seed run: in-force withdrawal and EUDR to-dos, EUDR to-dos coming up."""
+    """The recorded seed run: withdrawal to-dos in force, EUDR to-dos coming up."""
     appmod = _reload_frozen(tmp_path, monkeypatch, "month.db")
     from regwatch.jobs.crawl import seed
 
@@ -188,7 +188,8 @@ def test_seed_in_force_and_coming_up(client: TestClient) -> None:
     # the withdrawal button (Art. 11a) is in force since 19 June 2026 — four to-dos
     assert in_force.count(OVERDUE_19) == N_WITHDRAWAL_19
     assert in_force.count(f'href="/change/{seed_change_id(ART_11A)}">' + WITHDRAWAL) == 4
-    assert EUDR in in_force and EUDR in coming_up
+    # EUDR obligations for this profile start on 30 December 2026: none is already in force
+    assert EUDR not in in_force and EUDR in coming_up
     assert 'due <time datetime="2026-12-30">30 December 2026</time>' in coming_up
     assert "pill overdue" not in coming_up
     assert html.count('class="pill overdue"') == N_IN_FORCE

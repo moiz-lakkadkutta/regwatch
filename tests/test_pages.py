@@ -366,7 +366,9 @@ def test_feed_item_meta(pages_client: TestClient) -> None:
 def test_feed_footer_seed_state(seed_client: TestClient) -> None:
     html = seed_client.get("/feed").text
     assert "Showing the recorded seed run" in html
-    assert f"{SEED_CREDITS} Tavily credits used when it was recorded" in html
+    # the real Tavily credits of the live crawl the seed was recorded from (run6)
+    assert SEED_CREDITS == 40
+    assert "40 Tavily credits used when it was recorded" in html
     assert "no live crawl yet" in html
     assert f"{len(SEED_DOCS)} documents from {len(SEED_SOURCES)} sources " in html
     assert "Last crawl" not in html
