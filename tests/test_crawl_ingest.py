@@ -120,12 +120,39 @@ def test_main_stage_ingest_cli(
     assert re.search(r"^ingest: 16 documents \(0 new, 0 changed, 16 unchanged\)", err, re.M)
     assert "wrote" not in err.splitlines()[-1]
 
-    # R1: a fixture run never writes examples/seed-run/documents.jsonl unless --out is explicit
+    # R1: no crawl writes examples/seed-run/documents.jsonl unless --out is explicit
     before = DEFAULT_OUT.read_bytes()
     rc = main(["--stage", "ingest", "--backend", "fixtures"])
     assert rc == 0
     assert "wrote" not in capsys.readouterr().err.splitlines()[-1]
     assert DEFAULT_OUT.read_bytes() == before
+
+
+def test_live_crawl_never_writes_the_seed_by_default(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    fixtures_root: Path,
+) -> None:
+    """R1: `regwatch record-seed` owns examples/seed-run; a live crawl writes no documents.jsonl
+    unless --out is given (the live backend is replaced by the fixtures here: no network)."""
+    import regwatch.jobs.crawl as crawl_mod
+    from regwatch.ingest.tavily_backend import FixtureTavilyBackend
+
+    monkeypatch.setenv("REGWATCH_DB_URL", f"sqlite:///{tmp_path / 'live.db'}")
+    kinds: list[str] = []
+
+    def fake_make_backend(settings: Settings, kind: str, *_: object) -> FixtureTavilyBackend:
+        kinds.append(kind)
+        return FixtureTavilyBackend(fixtures_root)
+
+    monkeypatch.setattr(crawl_mod, "make_backend", fake_make_backend)
+    before = DEFAULT_OUT.read_bytes()
+    assert main(["--stage", "ingest", "--backend", "live"]) == 0
+    assert kinds == ["live"]
+    assert "wrote" not in capsys.readouterr().err.splitlines()[-1]
+    assert DEFAULT_OUT.read_bytes() == before
+    assert not hasattr(crawl_mod, "default_out")
 
 
 def test_stage_all_runs_end_to_end(

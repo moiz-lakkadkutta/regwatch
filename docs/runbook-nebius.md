@@ -48,9 +48,11 @@ Cost line: the Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/
 9. **Job #2 (idempotency acceptance).** Expected `… (0 new, 0 changed, N unchanged) …` and
    `0 new changes · 0 classified`. If Job #1 found new documents: re-record the seed locally —
    crawl with keys into a scratch DB (`REGWATCH_DB_URL=sqlite:////tmp/live.db uv run regwatch crawl
-   --stage all --no-out`), check `/feed`, then `REGWATCH_DB_URL=sqlite:////tmp/live.db uv run
-   regwatch record-seed --url <document URL> [--url …]` (writes `examples/seed-run`; keeps
-   `profile.json`; skips changes with an undated to-do; refuses ungrounded changes). Commit,
+   --stage all`; a crawl never writes `examples/seed-run`), check `/feed`, then
+   `REGWATCH_DB_URL=sqlite:////tmp/live.db uv run regwatch record-seed --url <document URL> [--url …]
+   [--exclude "<exact instrument>" …]` (writes `examples/seed-run`; keeps `profile.json`; skips
+   changes with an undated to-do; refuses ungrounded changes and excludes that match nothing;
+   carries the crawl's Tavily credits into the seed footer). Commit,
    rebuild/push, redeploy, repeat. Paste both summary lines into `FEEDBACK.md`.
 10. **Schedule.** GitHub repository secrets `NEBIUS_SA_ID`, `NEBIUS_SA_PUBLIC_KEY_ID`,
     `NEBIUS_SA_PRIVATE_KEY`, `NEBIUS_PROJECT_ID`; repository variable `REGWATCH_IMAGE`; run

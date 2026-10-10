@@ -64,9 +64,11 @@ def crawl(
     time_range: Annotated[str, typer.Option()] = "year",
     out: Annotated[
         Path | None,
-        typer.Option(help="documents.jsonl path (default: examples/seed-run for --backend live)"),
+        typer.Option(help="write the ingested documents.jsonl here (default: nothing is written)"),
     ] = None,
-    no_out: Annotated[bool, typer.Option("--no-out", help="do not write documents.jsonl")] = False,
+    no_out: Annotated[
+        bool, typer.Option("--no-out", help="do not write documents.jsonl (the default)")
+    ] = False,
 ) -> None:
     """Search → extract → diff → normalise → classify; the Serverless Job entrypoint."""
     from regwatch.jobs.crawl import STAGES, main
