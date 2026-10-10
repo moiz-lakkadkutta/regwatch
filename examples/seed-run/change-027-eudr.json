@@ -1,34 +1,48 @@
 {
-  "created_at": "2026-10-06T11:41:28.121130+00:00",
+  "created_at": "2026-10-06T11:41:28.122414+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.002716,
-  "tavily_credits": 0,
+  "cost_usd": 0.006003,
+  "tavily_credits": 1,
   "change": {
     "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
-    "instrument": "Regulation (EU) 2023/1115 — Article 34",
+    "instrument": "Regulation (EU) 2023/1115 — ANNEX I",
     "jurisdiction": "EU",
-    "summary": "The Commission must complete a simplification review by 30 April 2026 and a general review by 30 June 2030, then every five years. These reviews evaluate the Regulation's impact on deforestation, trade, and small operators, and may lead to legislative proposals.",
+    "summary": "The annex lists the commodities and products subject to the regulation. It also states that the regulation does not apply to goods made entirely from waste that has completed its lifecycle. Merchants must check if their goods fall under the listed codes and the waste exclusion rule.",
     "effective_dates": [
-      "2026-04-30",
-      "2030-06-30"
+      "2026-12-30",
+      "2027-06-30"
     ],
     "obligations": [
       {
-        "text": "Carry out a simplification review by 30 April 2026.",
-        "quote": "By 30 April 2026, the Commission shall carry out a simplification review of this Regulation and on this basis present a report to the European Parliament and to the Council accompanied, where appropriate, by a legislative proposal."
+        "text": "Check if goods are listed as relevant commodities or products in the annex.",
+        "quote": "The following table lists goods as classified in the Combined Nomenclature set out in Annex I to Regulation (EEC) No 2658/87 that are referred to in Article 1 of this Regulation."
       },
       {
-        "text": "Carry out a general review by 30 June 2030 and every five years thereafter.",
-        "quote": "By 30 June 2030 and at least every five years thereafter, the Commission shall carry out a general review of this Regulation and shall present a report to the European Parliament and the Council accompanied, if appropriate, by a legislative proposal."
+        "text": "Do not place on the market goods made entirely from waste that has completed its lifecycle.",
+        "quote": "Except for by-products of a manufacturing process, where that process involved material that was not waste as defined in Article 3, point (1), of Directive 2008/98/EC, this Regulation does not apply to goods if they are produced entirely from material that has completed its lifecycle and would otherwise have been discarded as waste as defined in Article 3, point (1), of that Directive."
       }
     ]
   },
   "applicability": {
-    "decision": "does_not",
+    "decision": "applies",
     "reasons": [
-      "The obligations are addressed to the European Commission, requiring it to carry out simplification and general reviews of the Regulation.",
-      "Your shop is a seller of furniture, wooden goods and leather goods, not the Commission, so no obligation binds you."
+      "Applies because you sell wooden furniture and leather goods, both of which are covered by the regulation's list of commodities (wood and cattle products).",
+      "You are established in Germany and ship to multiple EU countries, so you place these goods on the EU market.",
+      "The regulation requires you to verify whether your specific products match the HS codes in Annex I and ensure they are not made entirely from waste that has completed its lifecycle."
     ],
-    "todos": []
+    "todos": [
+      {
+        "text": "Compare your product catalogue against the HS codes in Annex I to confirm which items are in scope",
+        "due": "2026-12-30",
+        "quote": "The following table lists goods as classified in the Combined Nomenclature set out in Annex I to Regulation (EEC) No 2658/87 that are referred to in Article 1 of this Regulation.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Ask your suppliers to confirm that your wooden and leather goods are not produced entirely from material that has completed its lifecycle and would otherwise be discarded as waste",
+        "due": "2026-12-30",
+        "quote": "Except for by-products of a manufacturing process, where that process involved material that was not waste as defined in Article 3, point (1), of Directive 2008/98/EC, this Regulation does not apply to goods if they are produced entirely from material that has completed its lifecycle and would otherwise have been discarded as waste as defined in Article 3, point (1), of that Directive.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      }
+    ]
   }
 }

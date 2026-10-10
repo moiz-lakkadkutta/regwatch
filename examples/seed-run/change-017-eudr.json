@@ -1,58 +1,54 @@
 {
-  "created_at": "2026-10-06T11:41:28.112141+00:00",
+  "created_at": "2026-10-06T11:41:28.113656+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.007889,
-  "tavily_credits": 0,
+  "cost_usd": 0.003632,
+  "tavily_credits": 1,
   "change": {
     "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
-    "instrument": "Regulation (EU) 2023/1115 — Article 10",
+    "instrument": "Regulation (EU) 2023/1115 — Article 16",
     "jurisdiction": "EU",
-    "summary": "Operators must perform a risk assessment on relevant products before placing them on the market or exporting them, and may only do so if the risk is no or negligible. They must document and review this assessment annually and demonstrate how they applied the criteria listed in the article.",
+    "summary": "Competent authorities must check operators and traders to verify compliance with the Regulation, using risk-based plans that cover at least 3% of non-SME operators and 3% of relevant product quantity annually. The law applies to all operators, downstream operators, and traders established in the Union placing relevant products on the market.",
     "effective_dates": [
       "2026-12-30",
       "2027-06-30"
     ],
     "obligations": [
       {
-        "text": "Do not place relevant products on the market or export them unless the risk assessment shows no or only a negligible risk of non-compliance.",
-        "quote": "Operators shall not place the relevant products on the market or export them, except where the risk assessment reveals no or only a negligible risk that the relevant products are non-compliant."
+        "text": "Carry out checks on operators and traders to verify compliance with the Regulation.",
+        "quote": "The competent authorities shall carry out checks within their territory to establish whether operators, downstream operators and traders established in the Union comply with this Regulation."
       },
       {
-        "text": "Document and review the risk assessment at least once a year.",
-        "quote": "The operators shall document and review the risk assessments at least on an annual basis and make them available to the competent authorities upon request."
+        "text": "Use a risk-based approach to identify and carry out checks.",
+        "quote": "The competent authorities shall use a risk-based approach to identify the checks to be carried out."
       },
       {
-        "text": "Demonstrate how gathered information was checked against the risk assessment criteria.",
-        "quote": "Operators shall be able to demonstrate how the information gathered was checked against the risk assessment criteria set out in paragraph 2 and how they determined the degree of risk."
+        "text": "Establish annual check plans based on national risk criteria and systematic inclusion of high-risk countries.",
+        "quote": "the competent authorities shall establish annual plans containing at least the following: (a) national risk criteria, established in accordance with paragraph 3, for the purpose of determining the checks that are necessary, which build upon any indicative risk criteria at Union level established by the Commission in accordance with paragraph 4, and systematically include risk criteria in relation to countries or parts thereof classified as high risk;"
+      },
+      {
+        "text": "Select operators, downstream operators and traders to be checked based on risk criteria and due diligence statements.",
+        "quote": "the selection of operators, downstream operators and traders to be checked; that selection is to be based on the national risk criteria referred to in point (a), using, inter alia, information contained in the information system referred to in Article 33 and electronic data-processing techniques; for each operator, downstream operator or trader to be checked, competent authorities may identify specific due diligence statements to be checked."
+      },
+      {
+        "text": "Communicate check plans and updates to other competent authorities and the Commission.",
+        "quote": "Competent authorities shall communicate their plans of checks, as well as updates thereto, to other competent authorities and the Commission."
+      },
+      {
+        "text": "Carry out checks when new information on potential non-compliance becomes available.",
+        "quote": "competent authorities shall carry out checks referred to in paragraph 1 of this Article when they obtain or are made aware of relevant information, including based on substantiated concerns submitted by third parties under Article 31, concerning a potential case of non-compliance with this Regulation."
+      },
+      {
+        "text": "Keep records of all checks for at least 10 years.",
+        "quote": "Records of all checks shall be kept for at least 10 years."
       }
     ]
   },
   "applicability": {
-    "decision": "applies",
+    "decision": "does_not",
     "reasons": [
-      "applies because you are established in Germany and sell wooden furniture and leather goods, which are relevant products under the EU Deforestation Regulation.",
-      "The regulation requires operators placing such products on the EU market to perform risk assessments.",
-      "Your shop ships to multiple EU countries, so you are placing these products on the market."
+      "All seven obligations are addressed to competent authorities — government bodies that check operators and traders like your shop.",
+      "Your shop sells wooden furniture and leather goods, so it may be subject to checks under the Deforestation Regulation, but the listed duties belong to the authorities, not to you as a seller."
     ],
-    "todos": [
-      {
-        "text": "Perform a risk assessment for each wooden and leather product before listing it for sale",
-        "due": "2026-12-30",
-        "quote": "Operators shall not place the relevant products on the market or export them, except where the risk assessment reveals no or only a negligible risk that the relevant products are non-compliant.",
-        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
-      },
-      {
-        "text": "Create a yearly review schedule for your risk assessments and store the documents where authorities can access them",
-        "due": "2026-12-30",
-        "quote": "The operators shall document and review the risk assessments at least on an annual basis and make them available to the competent authorities upon request.",
-        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
-      },
-      {
-        "text": "Record how you verify each product's compliance against the regulation's risk criteria",
-        "due": "2026-12-30",
-        "quote": "Operators shall be able to demonstrate how the information gathered was checked against the risk assessment criteria set out in paragraph 2 and how they determined the degree of risk.",
-        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
-      }
-    ]
+    "todos": []
   }
 }

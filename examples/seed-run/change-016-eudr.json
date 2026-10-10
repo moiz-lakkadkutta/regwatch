@@ -1,36 +1,56 @@
 {
-  "created_at": "2026-10-06T11:41:28.111163+00:00",
+  "created_at": "2026-10-06T11:41:28.112141+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.005911,
-  "tavily_credits": 0,
+  "cost_usd": 0.007889,
+  "tavily_credits": 1,
   "change": {
     "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
-    "instrument": "Regulation (EU) 2023/1115 — Article 9",
+    "instrument": "Regulation (EU) 2023/1115 — Article 10",
     "jurisdiction": "EU",
-    "summary": "Operators must collect and keep product information for five years after placing goods on the market or exporting them. They must also make this information available to authorities upon request.",
+    "summary": "Operators must perform a risk assessment on relevant products before placing them on the market or exporting them, and may only do so if the risk is no or negligible. They must document and review this assessment annually and demonstrate how they applied the criteria listed in the article.",
     "effective_dates": [
       "2026-12-30",
       "2027-06-30"
     ],
     "obligations": [
       {
-        "text": "Make collected information available to authorities upon request.",
-        "quote": "The operator shall make available to the competent authorities upon request the information, documents and data collected under this Article."
+        "text": "Do not place relevant products on the market or export them unless the risk assessment shows no or only a negligible risk of non-compliance.",
+        "quote": "Operators shall not place the relevant products on the market or export them, except where the risk assessment reveals no or only a negligible risk that the relevant products are non-compliant."
+      },
+      {
+        "text": "Document and review the risk assessment at least once a year.",
+        "quote": "The operators shall document and review the risk assessments at least on an annual basis and make them available to the competent authorities upon request."
+      },
+      {
+        "text": "Demonstrate how gathered information was checked against the risk assessment criteria.",
+        "quote": "Operators shall be able to demonstrate how the information gathered was checked against the risk assessment criteria set out in paragraph 2 and how they determined the degree of risk."
       }
     ]
   },
   "applicability": {
     "decision": "applies",
     "reasons": [
-      "Your shop is established in Germany and ships to multiple EU countries, placing furniture and wooden goods as well as leather goods on the EU market.",
-      "These product categories fall under the wood and cattle commodities covered by the EU Deforestation Regulation (EU) 2023/1115.",
-      "As an operator placing relevant products on the market, you are required to make collected information available to competent authorities upon request."
+      "applies because you are established in Germany and sell wooden furniture and leather goods, which are relevant products under the EU Deforestation Regulation.",
+      "The regulation requires operators placing such products on the EU market to perform risk assessments.",
+      "Your shop ships to multiple EU countries, so you are placing these products on the market."
     ],
     "todos": [
       {
-        "text": "Prepare to provide collected product information, documents, and data to competent authorities upon request",
+        "text": "Perform a risk assessment for each wooden and leather product before listing it for sale",
         "due": "2026-12-30",
-        "quote": "The operator shall make available to the competent authorities upon request the information, documents and data collected under this Article.",
+        "quote": "Operators shall not place the relevant products on the market or export them, except where the risk assessment reveals no or only a negligible risk that the relevant products are non-compliant.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Create a yearly review schedule for your risk assessments and store the documents where authorities can access them",
+        "due": "2026-12-30",
+        "quote": "The operators shall document and review the risk assessments at least on an annual basis and make them available to the competent authorities upon request.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Record how you verify each product's compliance against the regulation's risk criteria",
+        "due": "2026-12-30",
+        "quote": "Operators shall be able to demonstrate how the information gathered was checked against the risk assessment criteria set out in paragraph 2 and how they determined the degree of risk.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
       }
     ]

@@ -1,74 +1,57 @@
 {
-  "created_at": "2026-10-06T11:41:28.115027+00:00",
+  "created_at": "2026-10-06T11:41:28.118022+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.003671,
-  "tavily_credits": 0,
+  "cost_usd": 0.003296,
+  "tavily_credits": 1,
   "change": {
     "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
-    "instrument": "Regulation (EU) 2023/1115 — Article 25",
+    "instrument": "Regulation (EU) 2023/1115 — Article 29",
     "jurisdiction": "EU",
-    "summary": "EU Member States must set penalties for infringements by operators and traders, ensuring they are effective, proportionate, and dissuasive. They must notify the Commission of these rules and any changes.",
+    "summary": "All countries start with a standard risk level on 29 June 2023. The Commission will then classify them as low or high risk based on deforestation and other criteria, publishing the final list by 30 June 2025.",
     "effective_dates": [
-      "2026-12-30",
-      "2027-06-30"
+      "2023-06-29",
+      "2025-06-30"
     ],
     "obligations": [
       {
-        "text": "Lay down rules on penalties applicable to infringements by operators, downstream operators and traders.",
-        "quote": "Member States shall lay down rules on penalties applicable to infringements of this Regulation by operators, downstream operators and traders and shall take all measures necessary to ensure that they are implemented."
+        "text": "Assign all countries a standard risk level on 29 June 2023.",
+        "quote": "On 29 June 2023, all countries shall be assigned a standard level of risk."
       },
       {
-        "text": "Ensure penalties are effective, proportionate and dissuasive.",
-        "quote": "The penalties provided for in paragraph 1 shall be effective, proportionate and dissuasive."
+        "text": "Classify countries as low or high risk based on assessment criteria.",
+        "quote": "The Commission shall classify countries or parts thereof, that present a low or high risk in accordance with paragraph 1 of this Article."
       },
       {
-        "text": "Impose fines proportionate to environmental damage and value of relevant commodities, calculating level to effectively deprive responsible persons of economic benefits.",
-        "quote": "fines proportionate to the environmental damage and the value of the relevant commodities or relevant products concerned, calculating the level of such fines in such way as to ensure that they effectively deprive those responsible of the economic benefits derived from their infringements"
+        "text": "Publish the list of low and high risk countries by 30 June 2025.",
+        "quote": "The list of the countries or parts thereof, that present a low or high risk shall be published by means of implementing acts to be adopted in accordance with the examination procedure referred to in Article 36(2), no later than 30 June 2025."
       },
       {
-        "text": "Gradually increase fine levels for repeated infringements.",
-        "quote": "gradually increasing the level of such fines for repeated infringements"
+        "text": "Review and update the risk list as often as necessary in light of new evidence.",
+        "quote": "That list shall be reviewed, and updated if appropriate, as often as necessary in light of new evidence."
       },
       {
-        "text": "Set maximum fine amount of at least 4% of operator's total annual Union-wide turnover for legal persons.",
-        "quote": "in the case of a legal person, the maximum amount of such a fine shall be at least 4% of the operator’s, downstream operator’s or trader’s total annual Union-wide turnover in the financial year preceding the fining decision"
+        "text": "Conduct an objective and transparent assessment based on deforestation and other criteria.",
+        "quote": "The classification of low-risk and high-risk countries or parts thereof, pursuant to paragraph 1 shall be based on an objective and transparent assessment by the Commission, taking into account the latest scientific evidence and internationally recognised sources."
       },
       {
-        "text": "Increase fines to exceed potential economic benefit gained from infringement.",
-        "quote": "shall be increased, where necessary, to exceed the potential economic benefit gained"
+        "text": "Include reasons, invitation to respond, and consequences in the notification to high-risk countries.",
+        "quote": "The Commission shall include the following information in the notification: (a) the reason or reasons for the intention to change the risk classification of the country or parts thereof; (b) the invitation to respond to the Commission in writing with regard to the intention to changing the risk classification of the country or parts thereof; (c) the consequences of its classification as a high or low risk country."
       },
       {
-        "text": "Confiscate relevant products from operator, downstream operator and/or trader.",
-        "quote": "confiscation of the relevant products concerned from the operator, downstream operator and/or trader"
+        "text": "Allow countries sufficient time to reply to the Commission's notification.",
+        "quote": "The Commission shall allow the country concerned sufficient time to reply to the notification."
       },
       {
-        "text": "Confiscate revenues gained from transactions with relevant products.",
-        "quote": "confiscation of revenues gained by the operator, downstream operator and/or trader from a transaction with the relevant products concerned"
-      },
-      {
-        "text": "Temporarily exclude from public procurement processes and public funding for maximum 12 months.",
-        "quote": "temporary exclusion for a maximum period of 12 months from public procurement processes and from access to public funding, including tendering procedures, grants and concessions"
-      },
-      {
-        "text": "Temporarily prohibit placing or making available on the market or exporting relevant commodities and products in case of serious or repeated infringements.",
-        "quote": "temporary prohibition from placing or making available on the market or exporting relevant commodities and relevant products, in the event of a serious infringement or of repeated infringements"
-      },
-      {
-        "text": "Prohibit exercising simplified due diligence set out in Article 13 in case of serious or repeated infringements.",
-        "quote": "prohibition from exercising the simplified due diligence set out in Article 13 in the event of a serious infringement or of repeated infringements"
-      },
-      {
-        "text": "Notify Commission of final judgments against legal persons within 30 days of judgment becoming final.",
-        "quote": "Member States shall notify the Commission of final judgments against legal persons for infringements of this Regulation and the penalties imposed on them, within 30 days from the date on which the judgments become final"
+        "text": "Notify the country concerned and competent authorities without delay of inclusion or removal from the risk list.",
+        "quote": "The Commission shall, without delay, notify the country concerned and the competent authorities of inclusion or removal of a country, or parts thereof, from the list referred to in paragraph 2."
       }
     ]
   },
   "applicability": {
     "decision": "does_not",
     "reasons": [
-      "The obligations in Article 25 are addressed to EU Member States — they must lay down penalty rules, set fine levels, confiscate products, and notify the Commission.",
-      "Your shop is an operator/trader selling furniture, wooden goods and leather goods, which are relevant products under the Deforestation Regulation, but this Article creates no direct obligations for you as a seller.",
-      "You still need to comply with the Regulation's due-diligence and reporting requirements (Articles 8–13), but Article 25 itself only binds national authorities."
+      "The regulation change lists obligations only for the European Commission to classify countries by deforestation risk and publish risk lists.",
+      "Your shop is a seller of furniture and leather goods, not the Commission, so these specific obligations do not bind you."
     ],
     "todos": []
   }

@@ -1,57 +1,41 @@
 {
-  "created_at": "2026-10-06T11:41:28.118022+00:00",
+  "created_at": "2026-10-06T11:41:28.119652+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.003296,
-  "tavily_credits": 0,
+  "cost_usd": 0.003129,
+  "tavily_credits": 1,
   "change": {
     "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
-    "instrument": "Regulation (EU) 2023/1115 — Article 29",
+    "instrument": "Regulation (EU) 2023/1115 — Article 31 – Article 32",
     "jurisdiction": "EU",
-    "summary": "All countries start with a standard risk level on 29 June 2023. The Commission will then classify them as low or high risk based on deforestation and other criteria, publishing the final list by 30 June 2025.",
+    "summary": "Competent authorities must assess and follow up on substantiated concerns about non-compliance within 30 days, protect the identity of reporters, and allow affected persons to challenge authority decisions. These articles set out rights and duties for operators and traders under the Regulation.",
     "effective_dates": [
-      "2023-06-29",
-      "2025-06-30"
+      "2026-12-30",
+      "2027-06-30"
     ],
     "obligations": [
       {
-        "text": "Assign all countries a standard risk level on 29 June 2023.",
-        "quote": "On 29 June 2023, all countries shall be assigned a standard level of risk."
+        "text": "Inform submitters of follow-up within 30 days of receiving a substantiated concern.",
+        "quote": "Within 30 days of receiving a substantiated concern, if not otherwise stated in national law, the competent authority shall inform the persons referred to in paragraph 1, who submitted the substantiated concerns, of the follow-up given to the submission and shall provide the reasons for it."
       },
       {
-        "text": "Classify countries as low or high risk based on assessment criteria.",
-        "quote": "The Commission shall classify countries or parts thereof, that present a low or high risk in accordance with paragraph 1 of this Article."
+        "text": "Competent authorities shall assess substantiated concerns diligently and impartially.",
+        "quote": "Competent authorities shall, without undue delay, diligently and impartially assess the substantiated concerns, including whether the claims are well-founded, and take the necessary steps, including carrying out checks and conducting hearings of operators, downstream operators and traders, with a view to detecting potential non-compliance with this Regulation and, where appropriate, taking interim measures under Article 23 to prevent the placing or making available on the market and export of relevant products under investigation."
       },
       {
-        "text": "Publish the list of low and high risk countries by 30 June 2025.",
-        "quote": "The list of the countries or parts thereof, that present a low or high risk shall be published by means of implementing acts to be adopted in accordance with the examination procedure referred to in Article 36(2), no later than 30 June 2025."
+        "text": "Provide for measures to protect the identity of persons who submit substantiated concerns.",
+        "quote": "Member States shall provide for measures to protect the identity of the natural or legal persons who submit substantiated concerns or who conduct investigations with the aim of verifying compliance by operators, downstream operators or traders with this Regulation."
       },
       {
-        "text": "Review and update the risk list as often as necessary in light of new evidence.",
-        "quote": "That list shall be reviewed, and updated if appropriate, as often as necessary in light of new evidence."
-      },
-      {
-        "text": "Conduct an objective and transparent assessment based on deforestation and other criteria.",
-        "quote": "The classification of low-risk and high-risk countries or parts thereof, pursuant to paragraph 1 shall be based on an objective and transparent assessment by the Commission, taking into account the latest scientific evidence and internationally recognised sources."
-      },
-      {
-        "text": "Include reasons, invitation to respond, and consequences in the notification to high-risk countries.",
-        "quote": "The Commission shall include the following information in the notification: (a) the reason or reasons for the intention to change the risk classification of the country or parts thereof; (b) the invitation to respond to the Commission in writing with regard to the intention to changing the risk classification of the country or parts thereof; (c) the consequences of its classification as a high or low risk country."
-      },
-      {
-        "text": "Allow countries sufficient time to reply to the Commission's notification.",
-        "quote": "The Commission shall allow the country concerned sufficient time to reply to the notification."
-      },
-      {
-        "text": "Notify the country concerned and competent authorities without delay of inclusion or removal from the risk list.",
-        "quote": "The Commission shall, without delay, notify the country concerned and the competent authorities of inclusion or removal of a country, or parts thereof, from the list referred to in paragraph 2."
+        "text": "Have access to administrative or judicial procedures to review the legality of authority decisions.",
+        "quote": "Any natural or legal person having a sufficient interest, as determined in accordance with the existing national systems of legal remedies, including where such persons meet the criteria, if any, laid down in the national law, including persons who have submitted a substantiated concern in accordance with Article 31, shall have access to administrative or judicial procedures to review the legality of the decisions, acts or failure to act of the competent authorities under this Regulation."
       }
     ]
   },
   "applicability": {
     "decision": "does_not",
     "reasons": [
-      "The regulation change lists obligations only for the European Commission to classify countries by deforestation risk and publish risk lists.",
-      "Your shop is a seller of furniture and leather goods, not the Commission, so these specific obligations do not bind you."
+      "The four obligations you were given are all addressed to competent authorities or Member States — they require authorities to inform submitters, assess concerns, protect reporters' identities, and give persons access to review procedures.",
+      "Your shop is an operator/trader that sells furniture and leather goods to several EU countries, but these articles impose no duties on sellers; they only govern how authorities handle substantiated concerns about non-compliance."
     ],
     "todos": []
   }

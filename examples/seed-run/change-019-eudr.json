@@ -1,53 +1,74 @@
 {
-  "created_at": "2026-10-06T11:41:28.113656+00:00",
+  "created_at": "2026-10-06T11:41:28.115027+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.003632,
-  "tavily_credits": 0,
+  "cost_usd": 0.003671,
+  "tavily_credits": 1,
   "change": {
     "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
-    "instrument": "Regulation (EU) 2023/1115 — Article 16",
+    "instrument": "Regulation (EU) 2023/1115 — Article 25",
     "jurisdiction": "EU",
-    "summary": "Competent authorities must check operators and traders to verify compliance with the Regulation, using risk-based plans that cover at least 3% of non-SME operators and 3% of relevant product quantity annually. The law applies to all operators, downstream operators, and traders established in the Union placing relevant products on the market.",
+    "summary": "EU Member States must set penalties for infringements by operators and traders, ensuring they are effective, proportionate, and dissuasive. They must notify the Commission of these rules and any changes.",
     "effective_dates": [
       "2026-12-30",
       "2027-06-30"
     ],
     "obligations": [
       {
-        "text": "Carry out checks on operators and traders to verify compliance with the Regulation.",
-        "quote": "The competent authorities shall carry out checks within their territory to establish whether operators, downstream operators and traders established in the Union comply with this Regulation."
+        "text": "Lay down rules on penalties applicable to infringements by operators, downstream operators and traders.",
+        "quote": "Member States shall lay down rules on penalties applicable to infringements of this Regulation by operators, downstream operators and traders and shall take all measures necessary to ensure that they are implemented."
       },
       {
-        "text": "Use a risk-based approach to identify and carry out checks.",
-        "quote": "The competent authorities shall use a risk-based approach to identify the checks to be carried out."
+        "text": "Ensure penalties are effective, proportionate and dissuasive.",
+        "quote": "The penalties provided for in paragraph 1 shall be effective, proportionate and dissuasive."
       },
       {
-        "text": "Establish annual check plans based on national risk criteria and systematic inclusion of high-risk countries.",
-        "quote": "the competent authorities shall establish annual plans containing at least the following: (a) national risk criteria, established in accordance with paragraph 3, for the purpose of determining the checks that are necessary, which build upon any indicative risk criteria at Union level established by the Commission in accordance with paragraph 4, and systematically include risk criteria in relation to countries or parts thereof classified as high risk;"
+        "text": "Impose fines proportionate to environmental damage and value of relevant commodities, calculating level to effectively deprive responsible persons of economic benefits.",
+        "quote": "fines proportionate to the environmental damage and the value of the relevant commodities or relevant products concerned, calculating the level of such fines in such way as to ensure that they effectively deprive those responsible of the economic benefits derived from their infringements"
       },
       {
-        "text": "Select operators, downstream operators and traders to be checked based on risk criteria and due diligence statements.",
-        "quote": "the selection of operators, downstream operators and traders to be checked; that selection is to be based on the national risk criteria referred to in point (a), using, inter alia, information contained in the information system referred to in Article 33 and electronic data-processing techniques; for each operator, downstream operator or trader to be checked, competent authorities may identify specific due diligence statements to be checked."
+        "text": "Gradually increase fine levels for repeated infringements.",
+        "quote": "gradually increasing the level of such fines for repeated infringements"
       },
       {
-        "text": "Communicate check plans and updates to other competent authorities and the Commission.",
-        "quote": "Competent authorities shall communicate their plans of checks, as well as updates thereto, to other competent authorities and the Commission."
+        "text": "Set maximum fine amount of at least 4% of operator's total annual Union-wide turnover for legal persons.",
+        "quote": "in the case of a legal person, the maximum amount of such a fine shall be at least 4% of the operator’s, downstream operator’s or trader’s total annual Union-wide turnover in the financial year preceding the fining decision"
       },
       {
-        "text": "Carry out checks when new information on potential non-compliance becomes available.",
-        "quote": "competent authorities shall carry out checks referred to in paragraph 1 of this Article when they obtain or are made aware of relevant information, including based on substantiated concerns submitted by third parties under Article 31, concerning a potential case of non-compliance with this Regulation."
+        "text": "Increase fines to exceed potential economic benefit gained from infringement.",
+        "quote": "shall be increased, where necessary, to exceed the potential economic benefit gained"
       },
       {
-        "text": "Keep records of all checks for at least 10 years.",
-        "quote": "Records of all checks shall be kept for at least 10 years."
+        "text": "Confiscate relevant products from operator, downstream operator and/or trader.",
+        "quote": "confiscation of the relevant products concerned from the operator, downstream operator and/or trader"
+      },
+      {
+        "text": "Confiscate revenues gained from transactions with relevant products.",
+        "quote": "confiscation of revenues gained by the operator, downstream operator and/or trader from a transaction with the relevant products concerned"
+      },
+      {
+        "text": "Temporarily exclude from public procurement processes and public funding for maximum 12 months.",
+        "quote": "temporary exclusion for a maximum period of 12 months from public procurement processes and from access to public funding, including tendering procedures, grants and concessions"
+      },
+      {
+        "text": "Temporarily prohibit placing or making available on the market or exporting relevant commodities and products in case of serious or repeated infringements.",
+        "quote": "temporary prohibition from placing or making available on the market or exporting relevant commodities and relevant products, in the event of a serious infringement or of repeated infringements"
+      },
+      {
+        "text": "Prohibit exercising simplified due diligence set out in Article 13 in case of serious or repeated infringements.",
+        "quote": "prohibition from exercising the simplified due diligence set out in Article 13 in the event of a serious infringement or of repeated infringements"
+      },
+      {
+        "text": "Notify Commission of final judgments against legal persons within 30 days of judgment becoming final.",
+        "quote": "Member States shall notify the Commission of final judgments against legal persons for infringements of this Regulation and the penalties imposed on them, within 30 days from the date on which the judgments become final"
       }
     ]
   },
   "applicability": {
     "decision": "does_not",
     "reasons": [
-      "All seven obligations are addressed to competent authorities — government bodies that check operators and traders like your shop.",
-      "Your shop sells wooden furniture and leather goods, so it may be subject to checks under the Deforestation Regulation, but the listed duties belong to the authorities, not to you as a seller."
+      "The obligations in Article 25 are addressed to EU Member States — they must lay down penalty rules, set fine levels, confiscate products, and notify the Commission.",
+      "Your shop is an operator/trader selling furniture, wooden goods and leather goods, which are relevant products under the Deforestation Regulation, but this Article creates no direct obligations for you as a seller.",
+      "You still need to comply with the Regulation's due-diligence and reporting requirements (Articles 8–13), but Article 25 itself only binds national authorities."
     ],
     "todos": []
   }

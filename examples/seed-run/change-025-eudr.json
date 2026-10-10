@@ -1,41 +1,33 @@
 {
-  "created_at": "2026-10-06T11:41:28.119652+00:00",
+  "created_at": "2026-10-06T11:41:28.121130+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.003129,
-  "tavily_credits": 0,
+  "cost_usd": 0.002716,
+  "tavily_credits": 1,
   "change": {
     "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
-    "instrument": "Regulation (EU) 2023/1115 — Article 31 – Article 32",
+    "instrument": "Regulation (EU) 2023/1115 — Article 34",
     "jurisdiction": "EU",
-    "summary": "Competent authorities must assess and follow up on substantiated concerns about non-compliance within 30 days, protect the identity of reporters, and allow affected persons to challenge authority decisions. These articles set out rights and duties for operators and traders under the Regulation.",
+    "summary": "The Commission must complete a simplification review by 30 April 2026 and a general review by 30 June 2030, then every five years. These reviews evaluate the Regulation's impact on deforestation, trade, and small operators, and may lead to legislative proposals.",
     "effective_dates": [
-      "2026-12-30",
-      "2027-06-30"
+      "2026-04-30",
+      "2030-06-30"
     ],
     "obligations": [
       {
-        "text": "Inform submitters of follow-up within 30 days of receiving a substantiated concern.",
-        "quote": "Within 30 days of receiving a substantiated concern, if not otherwise stated in national law, the competent authority shall inform the persons referred to in paragraph 1, who submitted the substantiated concerns, of the follow-up given to the submission and shall provide the reasons for it."
+        "text": "Carry out a simplification review by 30 April 2026.",
+        "quote": "By 30 April 2026, the Commission shall carry out a simplification review of this Regulation and on this basis present a report to the European Parliament and to the Council accompanied, where appropriate, by a legislative proposal."
       },
       {
-        "text": "Competent authorities shall assess substantiated concerns diligently and impartially.",
-        "quote": "Competent authorities shall, without undue delay, diligently and impartially assess the substantiated concerns, including whether the claims are well-founded, and take the necessary steps, including carrying out checks and conducting hearings of operators, downstream operators and traders, with a view to detecting potential non-compliance with this Regulation and, where appropriate, taking interim measures under Article 23 to prevent the placing or making available on the market and export of relevant products under investigation."
-      },
-      {
-        "text": "Provide for measures to protect the identity of persons who submit substantiated concerns.",
-        "quote": "Member States shall provide for measures to protect the identity of the natural or legal persons who submit substantiated concerns or who conduct investigations with the aim of verifying compliance by operators, downstream operators or traders with this Regulation."
-      },
-      {
-        "text": "Have access to administrative or judicial procedures to review the legality of authority decisions.",
-        "quote": "Any natural or legal person having a sufficient interest, as determined in accordance with the existing national systems of legal remedies, including where such persons meet the criteria, if any, laid down in the national law, including persons who have submitted a substantiated concern in accordance with Article 31, shall have access to administrative or judicial procedures to review the legality of the decisions, acts or failure to act of the competent authorities under this Regulation."
+        "text": "Carry out a general review by 30 June 2030 and every five years thereafter.",
+        "quote": "By 30 June 2030 and at least every five years thereafter, the Commission shall carry out a general review of this Regulation and shall present a report to the European Parliament and the Council accompanied, if appropriate, by a legislative proposal."
       }
     ]
   },
   "applicability": {
     "decision": "does_not",
     "reasons": [
-      "The four obligations you were given are all addressed to competent authorities or Member States — they require authorities to inform submitters, assess concerns, protect reporters' identities, and give persons access to review procedures.",
-      "Your shop is an operator/trader that sells furniture and leather goods to several EU countries, but these articles impose no duties on sellers; they only govern how authorities handle substantiated concerns about non-compliance."
+      "The obligations are addressed to the European Commission, requiring it to carry out simplification and general reviews of the Regulation.",
+      "Your shop is a seller of furniture, wooden goods and leather goods, not the Commission, so no obligation binds you."
     ],
     "todos": []
   }

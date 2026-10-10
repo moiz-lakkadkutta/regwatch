@@ -1,0 +1,42 @@
+{
+  "created_at": "2026-10-06T11:39:53.440738+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.002955,
+  "tavily_credits": 2,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj",
+    "instrument": "Directive (EU) 2023/2673 — Article 1, point (1)",
+    "jurisdiction": "EU",
+    "summary": "Distance sellers of financial services must apply only specific consumer protection articles to initial agreements or the first in a new series after one year. The amended Directive 2011/83/EU applies selectively to financial services contracts.",
+    "effective_dates": [
+      "2026-06-19"
+    ],
+    "obligations": [
+      {
+        "text": "Apply only selected consumer protection articles to distance financial services contracts.",
+        "quote": "only Articles 1 and 2, Article 3(2), (5) and(6), Article 4, Article 6a, Article 8(6), Article 11a, Articles 16a to 16e, Article 19, Articles 21 to 23, Article 24(1) and(6), Articles 25 to 27 and Article 29 shall apply."
+      },
+      {
+        "text": "Apply only to the initial agreement when successive operations of the same nature occur.",
+        "quote": "where contracts referred to in the first subparagraph comprise an initial service agreement followed by successive operations, or a series of separate operations, of the same nature, performed over time, the provisions referred to in the first subparagraph shall apply only to the initial agreement."
+      },
+      {
+        "text": "Apply only to the first operation when no initial service agreement exists but same-nature operations occur between parties.",
+        "quote": "In the event that there is no initial service agreement but the successive operations, or separate operations, of the same nature performed over time are performed between the same contractual parties, Articles 16a and 16d shall apply only to the first operation."
+      },
+      {
+        "text": "Deem next operation as first in a new series if more than one year passes.",
+        "quote": "Where, however, no operation of the same nature is performed for more than one year, the next operation will be deemed to be the first in a new series of operations and, accordingly, Articles 16a and 16d shall apply."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "does_not",
+    "reasons": [
+      "The regulation covers distance sellers of financial services and applies only to financial services contracts.",
+      "Your shop sells furniture, wooden goods, and leather goods — physical products, not financial services.",
+      "Since you do not offer financial services, the obligations do not bind you."
+    ],
+    "todos": []
+  }
+}

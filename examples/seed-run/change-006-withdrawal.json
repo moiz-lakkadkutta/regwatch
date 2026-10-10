@@ -1,33 +1,29 @@
 {
-  "created_at": "2026-10-06T11:39:53.444953+00:00",
+  "created_at": "2026-10-06T11:39:53.445789+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.003808,
-  "tavily_credits": 0,
+  "cost_usd": 0.003243,
+  "tavily_credits": 2,
   "change": {
     "document_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj",
-    "instrument": "Directive (EU) 2023/2673 — Article 1, point (4) (part 2)",
+    "instrument": "Directive (EU) 2023/2673 — Article 1, point (5)",
     "jurisdiction": "EU",
-    "summary": "Traders must ensure their online interfaces for distance financial services are not designed to deceive or manipulate consumers. The burden of proof for adequate explanation requirements shifts to the trader.",
+    "summary": "Member States must ensure penalties for distance financial service infringements include administrative fines or legal proceedings, or both. This amends Directive 2011/83/EU to strengthen enforcement for consumer financial services.",
     "effective_dates": [
       "2026-06-19"
     ],
     "obligations": [
       {
-        "text": "Ensure consumers can request human intervention in the same language as pre-contractual information",
-        "quote": "Member States shall ensure that, in the event that the trader uses online tools, the consumer shall have a right to request and to obtain human intervention at the pre-contractual stage, and in justified cases after the distance contract has been concluded, in the same language as that used for the pre-contractual information provided in accordance with Article 16a(1)."
-      },
-      {
-        "text": "Burden of proof for adequate explanation requirements lies with the trader",
-        "quote": "As regards compliance with the adequate explanation requirements laid down in this Article, the burden of proof shall be on the trader."
+        "text": "Include administrative fines or legal proceedings for distance financial service infringements.",
+        "quote": "With regard to infringements of the measures adopted pursuant to the provisions referred to in Article 3(1b) applicable to distance contracts for consumer financial services, Member States shall ensure that, when penalties are to be imposed in accordance with Article 21 of Regulation (EU)2017/2394, they include the possibility either to impose fines through administrative procedures or to initiate legal proceedings for the imposition of fines, or both."
       }
     ]
   },
   "applicability": {
     "decision": "does_not",
     "reasons": [
-      "The directive covers distance financial services sold online.",
-      "Your shop sells furniture and wooden goods and leather goods — physical products, not financial services.",
-      "The obligations address traders providing financial services at a distance, which your profile does not indicate you do."
+      "The regulation covers penalties for distance contracts for consumer financial services and is addressed to Member States.",
+      "Your shop sells furniture and leather goods, not financial services.",
+      "The obligation binds national governments to structure their penalty regimes, not individual retailers."
     ],
     "todos": []
   }
