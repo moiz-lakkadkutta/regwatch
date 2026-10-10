@@ -55,8 +55,10 @@ Cost line: the Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/
    carries the crawl's Tavily credits into the seed footer). Commit,
    rebuild/push, redeploy, repeat. Paste both summary lines into `FEEDBACK.md`.
 10. **Schedule.** GitHub repository secrets `NEBIUS_SA_ID`, `NEBIUS_SA_PUBLIC_KEY_ID`,
-    `NEBIUS_SA_PRIVATE_KEY`, `NEBIUS_PROJECT_ID`; repository variable `REGWATCH_IMAGE`; run
-    `daily-crawl` once via workflow_dispatch → a Job appears in the console. Cap: daily;
+    `NEBIUS_SA_PRIVATE_KEY`, `NEBIUS_PROJECT_ID`; repository variable `REGWATCH_IMAGE`; the workflow
+    is disabled until then (2026-10-10, so the 05:00 UTC schedule does not fail daily) —
+    `gh workflow enable daily-crawl`; run `daily-crawl` once via workflow_dispatch → a Job appears in
+    the console. Cap: daily;
     `REGWATCH_TIME_RANGE=month`.
 11. **Rollback.** Stop the Endpoint; disable the workflow; delete the Job; redeploy the previous image
     tag. Delete the Endpoint only after the video is recorded.
