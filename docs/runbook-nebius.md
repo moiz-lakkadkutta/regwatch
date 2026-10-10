@@ -25,7 +25,7 @@ Cost line: the Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/
    Fallback if registry auth fails: push to public GHCR and use that image reference.
 4. **Secret.** SecretStash secret `regwatch-keys` with keys `NEBIUS_API_KEY` and `TAVILY_API_KEY`
    (Moiz pastes the values; never the orchestrator).
-5. **ASK (cost).** Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/day; RAM rate
+5. **ASK (cost) — approved by Moiz 2026-10-10.** Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/day; RAM rate
    unverified) + 32Gi disk ≈ $2.3/month; Oct 23–28 ≈ $8–15 → above the $5 gate. Moiz approves or picks
    the smallest listed preset. Then create the Endpoint with the `ops/serverless-endpoint.yaml` values
    (or its CLI line); note the time from Create to RUNNING (cold-start line for FEEDBACK); copy the

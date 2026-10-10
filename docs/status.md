@@ -9,11 +9,10 @@ Art. 11a → applies) with the feed collapsing non-applying provisions · `regwa
 the sixth live crawl · Token Factory catalog prices set (Lightning $0.06 / $0.24, Ultra $1.00 / $3.00 per Mtok; a full
 live crawl ≈ $0.41 + 40 Tavily credits). **Tests:** 289 passed, 4 live deselected.
 
-**Pending:** Endpoint + Job deploy (`docs/runbook-nebius.md`; `daily-crawl` workflow disabled until its secrets exist) ·
+**Endpoint cost approved by Moiz 2026-10-10 (~$8–15 through submission).** **Pending:** Endpoint + Job deploy (`docs/runbook-nebius.md`; `daily-crawl` workflow disabled until its secrets exist) ·
 video (Oct 25–26) · clean-machine dry run (Oct 27) · Devpost submission (closes Oct 30, 10:00 PDT).
 
-**Asks for Moiz:** keys into SecretStash `regwatch-keys` · approve Endpoint cost above the $5 gate (~$8–15) or pick the
-smallest preset · one console session for runbook steps 1–10 · `REGWATCH_REPORT_EMAIL`.
+**Asks for Moiz:** keys into SecretStash `regwatch-keys` · one console session for runbook steps 1–10 · `REGWATCH_REPORT_EMAIL`.
 
 **Top 5 open issues** (`docs/issues.md`): failed-normalize doc re-selected every crawl · `_todo_key` collision on shared quotes (one seed change has it) · unverified nebius CLI / `--args` syntax. The seed is recorded from a live crawl (`regwatch record-seed`: 4 documents, 29 changes, live Ultra applicabilities).
 
