@@ -47,7 +47,7 @@ jobs:
             --parent-id ${{ secrets.NEBIUS_PROJECT_ID }}
       - name: Create today's crawl Job (ops/serverless-job.yaml values)
         run: |
-          nebius ai job create --name regwatch-crawl-$(date +%F) --image $IMAGE --platform cpu-d3 --preset 4vcpu-16gb --disk-size 32Gi --args crawl --timeout 1h --env REGWATCH_TIME_RANGE=month --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys
+          nebius ai job create --name regwatch-crawl-$(date +%F) --image $IMAGE --platform cpu-d3 --preset 2vcpu-8gb --disk-size 32Gi --args crawl --timeout 1h --env REGWATCH_DB_URL=sqlite:////tmp/regwatch.db --env REGWATCH_TIME_RANGE=month --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys
       - name: Remove the key file
         if: always()
         run: rm -f key.pem

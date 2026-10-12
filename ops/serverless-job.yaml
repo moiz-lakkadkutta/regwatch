@@ -15,7 +15,7 @@ env:                        # every non-secret variable from .env.example
   TOKENFACTORY_BASE_URL: https://api.tokenfactory.nebius.com/v1
   REGWATCH_CLASSIFIER_MODEL: nvidia/Nemotron-3-Ultra-550b-a55b
   REGWATCH_EXTRACTOR_MODEL: nvidia/Nemotron-3_5-Lightning
-  REGWATCH_DB_URL: sqlite:////data/regwatch.db
+  REGWATCH_DB_URL: sqlite:////tmp/regwatch.db       # what Job 1 ran with (2026-10-10); fresh per Job
   REGWATCH_EXTRACTOR_PRICE_IN_PER_MTOK: "0.06"     # Token Factory catalog, checked 2026-10-10
   REGWATCH_EXTRACTOR_PRICE_OUT_PER_MTOK: "0.24"
   REGWATCH_CLASSIFIER_PRICE_IN_PER_MTOK: "1.00"
@@ -27,4 +27,4 @@ env_secret:                 # SecretStash secret `regwatch-keys` (runbook step 4
   NEBIUS_API_KEY: regwatch-keys
   TAVILY_API_KEY: regwatch-keys
 schedule: "see .github/workflows/daily-crawl.yml — Nebius Jobs have no cron field"
-# cli: nebius ai job create --name regwatch-crawl-$(date +%F) --image $IMAGE --platform cpu-d3 --preset 2vcpu-8gb --args crawl --timeout 1h --env REGWATCH_TIME_RANGE=month --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys
+# cli: nebius ai job create --name regwatch-crawl-$(date +%F) --image $IMAGE --platform cpu-d3 --preset 2vcpu-8gb --disk-size 32Gi --args crawl --timeout 1h --env REGWATCH_DB_URL=sqlite:////tmp/regwatch.db --env REGWATCH_TIME_RANGE=month --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys

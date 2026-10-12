@@ -15,7 +15,7 @@ cpu-d3 2vcpu-8gb, eu-west2, image `95c3b73`). **Job #1 (2026-10-10):** COMPLETED
 **Pending:** daily schedule (service account + 4 repo secrets; `daily-crawl` workflow disabled) ·
 video (Oct 25–26) · clean-machine dry run (Oct 27) · Devpost submission (closes Oct 30, 10:00 PDT).
 
-**Asks for Moiz:** keys into SecretStash `regwatch-keys` · one console session for runbook steps 1–10 · `REGWATCH_REPORT_EMAIL`.
+**Asks for Moiz:** decide on the daily schedule (Tavily free plan 1000 credits/month vs ~52 per run; results do not reach the Endpoint) · `REGWATCH_REPORT_EMAIL` · check the live URL on a phone.
 
 **Top 5 open issues** (`docs/issues.md`): failed-normalize doc re-selected every crawl · `_todo_key` collision on shared quotes (one seed change has it) · unverified nebius CLI / `--args` syntax. The seed is recorded from a live crawl (`regwatch record-seed`: 4 documents, 29 changes, live Ultra applicabilities).
 
