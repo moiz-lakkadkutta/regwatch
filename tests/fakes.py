@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from regwatch.ingest.tavily_backend import TavilyBackend, normalize_url
+from regwatch.understand.llm_backend import FixtureMissing, LLMResult, LLMUsage
 
 
 class RecordingBackend:
@@ -90,3 +92,94 @@ IHK_PAGE = f"# EUDR für KMU\n\n{IHK_SENTENCE}\n\n{TRADER_QUOTE}\n"
 def ihk_tavily() -> ScriptedTavily:
     """One IHK hit on ihk.de and its page."""
     return ScriptedTavily(results={"ihk.de": [IHK_HIT]}, pages={IHK_URL: IHK_PAGE})
+
+
+class ScriptedLLM:
+    """LLMBackend replaying scripted replies in order, whatever the Source URL. It records every
+    call's messages and response_format; once the replies run out it raises FixtureMissing, so the
+    run fails visibly."""
+
+    def __init__(
+        self, replies: list[str], *, prompt_tokens: int = 2_000, completion_tokens: int = 150
+    ) -> None:
+        self.replies = list(replies)
+        self.usage = LLMUsage(prompt_tokens=prompt_tokens, completion_tokens=completion_tokens)
+        self.calls: list[list[dict[str, str]]] = []
+        self.formats: list[dict[str, Any] | None] = []
+
+    def complete(
+        self, *, model: str, messages: list[dict[str, str]], response_format: dict[str, Any] | None
+    ) -> LLMResult:
+        self.calls.append([dict(m) for m in messages])
+        self.formats.append(response_format)
+        if not self.replies:
+            raise FixtureMissing("no scripted agent reply left")
+        return LLMResult(text=self.replies.pop(0), usage=self.usage, model=model)
+
+
+def agent_action(tool: str, thought: str = "next step", **fields: Any) -> str:
+    """One AgentAction reply as JSON: every field present, the unused ones null."""
+    body: dict[str, Any] = dict.fromkeys(
+        ("query", "domain", "url", "question", "options")
+        + ("decision", "reasons", "todos", "evidence")
+    )
+    body.update(fields)
+    return json.dumps({"thought": thought, "tool": tool, **body}, ensure_ascii=False)
+
+
+QUESTION = "Do you import wood or leather goods from outside the EU yourself?"
+OPTIONS = ["Yes, I import some myself", "No, I buy only from EU suppliers"]
+
+
+def until_question() -> list[str]:
+    """search ihk.de → read the IHK page → ask the merchant (the run then waits)."""
+    return [
+        agent_action(
+            "search_sources",
+            "Check whether a shop buying in the EU counts as an operator.",
+            query="EUDR Händler EU-Lieferanten Marktteilnehmer",
+            domain="ihk.de",
+        ),
+        agent_action("read_source", "The IHK page covers traders.", url=IHK_URL),
+        agent_action(
+            "ask_merchant", "Whether you import decides it.", question=QUESTION, options=OPTIONS
+        ),
+    ]
+
+
+def decide_does_not(*, fact_id: int = 1, page_id: int = 1) -> str:
+    """does_not, citing the merchant's answer, the IHK quote and obligation 4 (due diligence)."""
+    return agent_action(
+        "decide",
+        "A shop buying only in the EU is a trader, not an operator.",
+        decision="does_not",
+        reasons=[
+            {
+                "text": "You buy only from EU suppliers, so these operator duties don't bind you.",
+                "fact_ids": [fact_id],
+                "evidence_ids": [1],
+                "obligation_numbers": [4],
+            }
+        ],
+        todos=[],
+        evidence=[{"evidence_id": 1, "page_id": page_id, "quote": TRADER_QUOTE}],
+    )
+
+
+def decide_unclear() -> str:
+    """Keeps unclear, backed by obligation 1 of the EUDR change."""
+    return agent_action(
+        "decide",
+        "The sources do not settle who places the goods on the market.",
+        decision="unclear",
+        reasons=[
+            {
+                "text": "It depends on whether you place the goods on the EU market yourself.",
+                "fact_ids": [],
+                "evidence_ids": [],
+                "obligation_numbers": [1],
+            }
+        ],
+        todos=[],
+        evidence=[],
+    )

@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -6,7 +7,7 @@ from typing import Any
 import pytest
 
 from regwatch.config import Settings
-from regwatch.db import AgentRunRow, AgentStepRow, session
+from regwatch.db import AgentRunRow, AgentStepRow, make_engine, session
 from regwatch.ingest.tavily_backend import FixtureTavilyBackend
 from regwatch.schemas import RegChange
 from regwatch.understand.llm_backend import FixtureLLMBackend
@@ -130,3 +131,37 @@ def make_agent_step(
             )
         )
         s.commit()
+
+
+@dataclass(frozen=True)
+class AgentDB:
+    """A freshly seeded DB with the EUDR `unclear` change and the seed profile (id 1)."""
+
+    engine: Any
+    settings: Settings
+    change_id: int
+    profile_id: int
+
+
+@pytest.fixture()
+def agent_db(tmp_settings: Settings) -> AgentDB:
+    from regwatch.jobs.crawl import seed
+
+    assert seed(tmp_settings) == SEED_CHANGES
+    return AgentDB(
+        engine=make_engine(tmp_settings),
+        settings=tmp_settings,
+        change_id=seed_change_id(EUDR_UNCLEAR),
+        profile_id=1,
+    )
+
+
+def new_run(db: AgentDB, visitor: str = "visitor-a") -> int:
+    """A queued AgentRunRow for the EUDR unclear change."""
+    with session(db.engine) as s:
+        row = AgentRunRow(visitor_id=visitor, profile_id=db.profile_id, regchange_id=db.change_id)
+        s.add(row)
+        s.commit()
+        s.refresh(row)
+        assert row.id is not None
+        return row.id

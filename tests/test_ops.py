@@ -69,7 +69,7 @@ def test_dockerignore_excludes_secrets_and_dbs() -> None:
 
 def test_prompts_ship_as_package_data() -> None:
     names = {p.name for p in resources.files("regwatch.prompts").iterdir()}
-    assert {"normalize.md", "classify.md"} <= names
+    assert {"normalize.md", "classify.md", "agent.md"} <= names
 
 
 # --- entrypoint.sh ----------------------------------------------------------------------------
