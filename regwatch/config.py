@@ -54,6 +54,17 @@ class Settings(BaseSettings):
     report_email: str = Field(default="", alias="REGWATCH_REPORT_EMAIL")
     # Directory with profile.json, change-*.json and documents.jsonl that `regwatch seed` loads.
     seed_dir: Path = Field(default=DEFAULT_SEED_DIR, alias="REGWATCH_SEED_DIR")
+    # "Let the agent check" (docs/plans/agent-unclear-spec.md): off unless set; caps are hard.
+    agent_enabled: bool = Field(default=False, alias="REGWATCH_AGENT_ENABLED")
+    agent_daily_usd: float = Field(default=1.0, alias="REGWATCH_AGENT_DAILY_USD")
+    agent_daily_credits: int = Field(default=60, alias="REGWATCH_AGENT_DAILY_CREDITS")
+    agent_run_steps: int = Field(default=6, alias="REGWATCH_AGENT_RUN_STEPS")
+    agent_run_credits: int = Field(default=10, alias="REGWATCH_AGENT_RUN_CREDITS")
+    agent_visitor_runs_per_hour: int = Field(
+        default=5, alias="REGWATCH_AGENT_VISITOR_RUNS_PER_HOUR"
+    )
+    # The public demo shares one profile; locked, POST /profile is refused so nobody blanks it.
+    profile_locked: bool = Field(default=False, alias="REGWATCH_PROFILE_LOCKED")
 
 
 # Only these domains are ever searched or extracted. Official sources first, platform guidance last.

@@ -4,10 +4,14 @@
 {% if item %}<span class="pill {{item.decision}}">{% if item.decision == "applies" %}Applies to you{% elif item.decision == "does_not" %}Doesn't apply to you{% else %}Unclear — one question{% endif %}</span>{% endif %} <span class="muted">· {{created_at|d}} · <span class="chip">{{source_domain}}</span></span>
 <h1>{{change.instrument}}</h1>
 <p>{{change.summary}}</p>
+{% if a and a.result %}{% include "partials/agent_result.html" %}<p class="muted label">Original check</p>{% endif %}
 {% if not item %}<div class="card"><h2>Not checked against your profile yet</h2><p>Your profile changed. The next crawl re-checks this change; to do it now run <code>regwatch crawl --stage classify</code>.</p></div>
 {% elif item.decision == "unclear" %}<h2>We couldn't tell from your profile</h2>
 <ul>{% for r in item.reasons %}<li>{{r}}</li>{% endfor %}</ul>
-<p><a href="/profile">Answer one question in your store profile</a> and the next crawl decides.</p>
+{% if a %}{% include "partials/agent_panel.html" %}
+{% if not locked %}<p class="muted"><a href="/profile">Or answer it in your store profile</a> and the next crawl decides.</p>{% endif %}
+{% elif locked %}<p class="muted">This demo's profile is fixed, so the answer depends on the fact above.</p>
+{% else %}<p><a href="/profile">Answer one question in your store profile</a> and the next crawl decides.</p>{% endif %}
 {% else %}<h2>Why this {% if item.decision == "applies" %}applies to you{% else %}doesn't apply to you{% endif %}</h2>
 <ul>{% for r in item.reasons %}<li>{{r}}</li>{% endfor %}</ul>{% endif %}
 {% if item and item.decision == "applies" %}<h2>What to do</h2>{% if item.todos %}<div class="card">{% for t in item.todos %}

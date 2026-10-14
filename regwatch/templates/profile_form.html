@@ -2,7 +2,8 @@
 {% block body %}
 <h1>Tell us about your store</h1>
 <p class="muted">Two minutes, once. We use this to decide which rules apply to you — nothing is stored beyond these four answers.</p>
-<form method="post" action="/profile" class="card">
+{% if locked %}<p class="note">This demo shares one store profile with every visitor, so it can't be changed here. On an unclear change, “Let the agent check” asks you what it needs instead.</p>{% endif %}
+<form method="post" action="/profile" class="card"><fieldset class="plain"{% if locked %} disabled{% endif %}>
   <label for="establishment_country">Where is your business established?</label>
   <select id="establishment_country" name="establishment_country" required>
     {% for c in countries %}<option value="{{c}}" {% if profile and profile.establishment_country==c %}selected{% endif %}>{{c}}</option>{% endfor %}
@@ -26,6 +27,7 @@
   <select id="platform" name="platform">{% for key,name in platforms %}<option value="{{key}}" {% if profile and profile.platform==key %}selected{% endif %}>{{name}}</option>{% endfor %}</select>
   <p class="help">Platform guidance pages (e.g. Shopify Help) are searched too, so to-dos can point at the setting to change.</p>
 
-  <button class="primary" type="submit">Save and show my changes</button>
-</form>
+  </fieldset>{% if not locked %}
+    <button class="primary" type="submit">Save and show my changes</button>{% endif %}
+  </form>
 {% endblock %}

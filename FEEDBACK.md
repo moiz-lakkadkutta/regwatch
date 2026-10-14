@@ -135,3 +135,10 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   default, so the `seeded …` line was cut. Negative check (no `--env-secret`): FAILED after 204 s with
   `crawl: refusing to run — missing NEBIUS_API_KEY TAVILY_API_KEY`, CLI error "Job failed before startup completed"
   (code 9) — the message is misleading, the container did start and exit 2.
+- (2026-10-14, agent, OFFLINE) "Let the agent check" on Nemotron 3 Ultra + Tavily basic, scripted replay
+  (`tests/test_agent_loop.py`, not a live run): 4 steps (search · read · ask · decide), 2 Tavily credits, $0.0098 at
+  the scripted 2,000 / 150 tokens per step. Worst-case reservation per Ultra call = 4,096 completion tokens x
+  $3.00/Mtok = $0.0123 plus input at $1.00/Mtok, so the $1/day cap admits at most ~81 calls (~13 six-step runs)
+  before input tokens. Tavily credits are settled as max(reported, 1) because a live single-URL advanced extract
+  reported `usage.credits` 0 on 2026-10-01. Live steps, credits, USD and latency per step: pending the live run; runbook
+  step 12c appends them here.

@@ -1,11 +1,15 @@
 import json
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from regwatch.config import Settings
+from regwatch.db import AgentRunRow, AgentStepRow, make_engine, session
 from regwatch.ingest.tavily_backend import FixtureTavilyBackend
+from regwatch.schemas import RegChange
 from regwatch.understand.llm_backend import FixtureLLMBackend
 from tests.fakes import RecordingBackend
 
@@ -68,3 +72,92 @@ def seed_file(instrument: str) -> Path:
 def seed_change_id(instrument: str) -> int:
     """RegChangeRow.id of `instrument` after `seed()` into a fresh DB (files load in name order)."""
     return SEED_FILES.index(seed_file(instrument)) + 1
+
+
+# the seed's EUDR change the classifier left `unclear` (operator vs trader, company size)
+EUDR_UNCLEAR = "Regulation (EU) 2023/1115 — Article 6 – Article 8"
+EUDR_URL = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+
+
+def eudr_change() -> RegChange:
+    """The seed's unclear EUDR RegChange, shared by the agent grounding and loop tests."""
+    return RegChange.model_validate(seed_payload(seed_file(EUDR_UNCLEAR))["change"])
+
+
+def make_agent_run(
+    engine: Any,
+    *,
+    visitor: str = "v",
+    change: int = 14,
+    status: str = "running",
+    n_steps: int = 0,
+    credits: int = 0,
+    created_at: datetime | None = None,
+    profile_id: int = 1,
+) -> int:
+    """Insert an AgentRunRow and return its id (shared by the agent budget/runner/route tests)."""
+    now = created_at or datetime(2026, 10, 20, 12, 0)
+    with session(engine) as s:
+        row = AgentRunRow(
+            visitor_id=visitor,
+            profile_id=profile_id,
+            regchange_id=change,
+            status=status,
+            n_steps=n_steps,
+            tavily_credits=credits,
+            created_at=now,
+            updated_at=now,
+        )
+        s.add(row)
+        s.commit()
+        s.refresh(row)
+        assert row.id is not None
+        return row.id
+
+
+def make_agent_step(
+    engine: Any, run_id: int, *, usd: float = 0.0, credits: int = 0, at: datetime | None = None
+) -> None:
+    """Insert one settled AgentStepRow carrying `usd` and `credits` of spend."""
+    with session(engine) as s:
+        s.add(
+            AgentStepRow(
+                run_id=run_id,
+                idx=1,
+                tool="search_sources",
+                cost_usd=usd,
+                credits=credits,
+                created_at=at or datetime(2026, 10, 20, 12, 0),
+            )
+        )
+        s.commit()
+
+
+@dataclass(frozen=True)
+class AgentDB:
+    """A freshly seeded DB with the EUDR `unclear` change and the seed profile (id 1)."""
+
+    engine: Any
+    settings: Settings
+    change_id: int
+    profile_id: int
+
+
+@pytest.fixture()
+def agent_db(tmp_settings: Settings) -> AgentDB:
+    from regwatch.jobs.crawl import seed
+
+    assert seed(tmp_settings) == SEED_CHANGES
+    return AgentDB(
+        engine=make_engine(tmp_settings),
+        settings=tmp_settings,
+        change_id=seed_change_id(EUDR_UNCLEAR),
+        profile_id=1,
+    )
+
+
+def new_run(db: AgentDB, visitor: str = "visitor-a") -> int:
+    """A queued AgentRunRow for the EUDR unclear change."""
+    return make_agent_run(
+        db.engine, visitor=visitor, change=db.change_id, status="queued", profile_id=db.profile_id
+    )

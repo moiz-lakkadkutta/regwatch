@@ -141,8 +141,9 @@ def retry_message(change: RegChange, rejected: list[TodoDraft]) -> str:
     )
 
 
-def parse_payload(text: str) -> ClassifiedPayload:
-    """Same stripping as normalize (<think>, ``` fences, prose); raises PayloadError."""
+def parse_reply[M: BaseModel](text: str, model: type[M]) -> M:
+    """One `model` JSON object from a reply: strips <think>, ``` fences and prose around it (as
+    normalize); raises PayloadError("invalid_json" | "schema")."""
     body = _THINK_RE.sub("", text)
     fenced = _FENCE_RE.search(body)
     if fenced:
@@ -151,7 +152,7 @@ def parse_payload(text: str) -> ClassifiedPayload:
     if start == -1 or end == -1 or end < start:
         raise PayloadError("invalid_json", "no JSON object in reply")
     try:
-        return ClassifiedPayload.model_validate_json(body[start : end + 1])
+        return model.model_validate_json(body[start : end + 1])
     except ValidationError as e:
         errors = e.errors()
         detail = "; ".join(
@@ -159,6 +160,11 @@ def parse_payload(text: str) -> ClassifiedPayload:
         )
         kind = "invalid_json" if any(err["type"] == "json_invalid" for err in errors) else "schema"
         raise PayloadError(kind, detail) from e
+
+
+def parse_payload(text: str) -> ClassifiedPayload:
+    """Same stripping as normalize (<think>, ``` fences, prose); raises PayloadError."""
+    return parse_reply(text, ClassifiedPayload)
 
 
 def _ref(change: RegChange) -> str:

@@ -69,6 +69,10 @@ The demo seed is recorded from such a crawl with `uv run regwatch record-seed --
 (grounded changes only; undated to-dos skipped; the crawl's Tavily credits carried into the footer).
 Schema changes are not migrated — delete a stale local `regwatch.db` first.
 
+## Let the agent check (unclear changes)
+
+On a change marked unclear, a button starts an agent: Nemotron 3 Ultra picks one tool per step — search one allow-listed domain (Tavily basic depth), read a page it was shown, ask you a multiple-choice question, or decide — and each step is shown with its Tavily credits and model cost. Its to-dos pass the same `enforce()` grounding as the crawl, an evidence quote must be verbatim in a page it read, and a reason that cites no quote or answer of yours is dropped (an `applies` / `does_not` left without one becomes `unclear`). The result is shown only to the visitor who ran it; the shared seed rows are never written. Caps in code: 6 model steps and 10 Tavily credits per run, $1 of model tokens and 60 Tavily credits per UTC day (counted in the app's database, which resets when the Endpoint restarts) for all visitors together, 5 runs per visitor per hour. `REGWATCH_AGENT_ENABLED=false` (the default) hides it, and agent spend is not counted in the feed footer's credits per crawl.
+
 ## Deploy on Nebius
 
 The public URL serves the recorded run in `examples/seed-run` (recorded with `regwatch record-seed` from the sixth live crawl: 4 documents, 29 changes, 40 Tavily credits); the Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database — Job #1 on 2026-10-10 re-ingested the 4 seed documents as unchanged and left them alone (52 new documents, 47 new changes, 52 Tavily credits, $0.2464 in model tokens; a second pass over one database adding nothing is verified offline by `tests/test_crawl_all.py::test_crawl_all_twice_is_idempotent`) — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
@@ -106,6 +110,8 @@ dropped and the withdrawal function stays; everything else is unchanged.
   1,000-credit Tavily free plan, and its results reach the URL only by re-recording the seed. Crawls run on demand.
 - The demo serves the recorded seed run. "Report a wrong call" opens a mail draft to `REGWATCH_REPORT_EMAIL`,
   which is not yet set on the demo (the draft opens with an empty recipient).
+- "Let the agent check" ships off by default (`REGWATCH_AGENT_ENABLED`); turning it on for the public Endpoint,
+  with keys and the read-only demo profile, is the owner's step 12 of `docs/runbook-nebius.md`.
 - Not done: dates in English only (no locale), no re-classification right after a profile change (the next crawl
   does it). Open issues: `docs/issues.md`.
 
