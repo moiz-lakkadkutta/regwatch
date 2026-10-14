@@ -12,6 +12,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 from dataclasses import dataclass, replace
+from typing import Any
 
 from regwatch.config import SEED_REGULATIONS
 from regwatch.ingest.tavily_backend import (
@@ -35,6 +36,41 @@ class Hit:
     published_date: str | None
     source_domain: str
     regulation_tags: tuple[str, ...]
+    snippet: str = ""  # result content; filled by the agent's search, empty for the crawl
+
+
+def filter_hits(
+    results: Iterable[dict[str, Any]],
+    *,
+    tags: tuple[str, ...],
+    context: str,
+    snippet_chars: int = 0,
+) -> list[Hit]:
+    """Turn raw Tavily results into Hits: drop off-list hosts (`allowed_domain`) and non-en/de
+    copies (`foreign_language`), logging each drop with `context`. Shared by the crawl and the
+    agent's search. `snippet_chars` > 0 also keeps that many characters of `content`."""
+    hits: list[Hit] = []
+    for r in results:
+        url = str(r.get("url", ""))
+        source_domain = allowed_domain(url)
+        if source_domain is None:
+            log.warning("dropped off-list hit %s url=%s", context, url)
+            continue
+        lang = foreign_language(url)
+        if lang is not None:
+            log.warning("dropped foreign-language hit %s lang=%s url=%s", context, lang, url)
+            continue
+        hits.append(
+            Hit(
+                url=normalize_url(url),
+                title=str(r.get("title") or ""),
+                published_date=r.get("published_date") or None,
+                source_domain=source_domain,
+                regulation_tags=tags,
+                snippet=str(r.get("content") or "")[:snippet_chars],
+            )
+        )
+    return hits
 
 
 def search_regulation(
@@ -72,31 +108,7 @@ def search_regulation(
             resp.get("usage"),
             credits,
         )
-        for r in results:
-            url = str(r.get("url", ""))
-            source_domain = allowed_domain(url)
-            if source_domain is None:
-                log.warning("dropped off-list hit tag=%s domain=%s url=%s", tag, domain, url)
-                continue
-            lang = foreign_language(url)
-            if lang is not None:
-                log.warning(
-                    "dropped foreign-language hit tag=%s domain=%s lang=%s url=%s",
-                    tag,
-                    domain,
-                    lang,
-                    url,
-                )
-                continue
-            hits.append(
-                Hit(
-                    url=normalize_url(url),
-                    title=str(r.get("title") or ""),
-                    published_date=r.get("published_date") or None,
-                    source_domain=source_domain,
-                    regulation_tags=(tag,),
-                )
-            )
+        hits.extend(filter_hits(results, tags=(tag,), context=f"tag={tag} domain={domain}"))
     return hits
 
 
