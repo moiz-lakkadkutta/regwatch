@@ -75,12 +75,18 @@ Cost line: the Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/
     is run by the orchestrator without Moiz's go.
     - The hourly per-visitor limit is cookie-based (`rw_visitor`) and bypassable by clearing cookies. The
       daily $1 / 60-credit caps are what actually bound spend.
+    - The daily counter lives in the ephemeral DB (`sqlite:////tmp/regwatch.db`, re-seeded per boot): a
+      restart or redeploy starts the day again, so the real bound is the cap × boots that day. Use
+      provider-side key caps where offered (12b) and redeploy sparingly on video day.
     - Turn the agent off: set `REGWATCH_AGENT_ENABLED=false` on the Endpoint (env change / redeploy).
     a. Check the Tavily plan's remaining monthly credits before enabling (60/day × 16 days could reach ~960,
        plus any crawl at ~40–52). If less is left, set `REGWATCH_AGENT_DAILY_CREDITS` to (credits left ÷ days
        to Oct 30).
-    b. Prefer a separate Token Factory key and Tavily key for the Endpoint (provider-side spend caps if
-       offered), so the Job's keys are not on the public VM; note in `FEEDBACK.md` whether per-key caps exist.
+    b. The Endpoint uses the Job's shared `regwatch-keys` MysteryBox secret (12d and the yaml) until a
+       separate key pair exists. Optional: create a separate Token Factory key and Tavily key with
+       provider-side spend caps where offered, put them in a second MysteryBox secret and change the
+       secret name in the yaml's `env_secret` (and 12d) to it, so the Job's keys are not on the public VM.
+       Note in `FEEDBACK.md` whether per-key caps exist.
     c. Locally, with keys in `.env`: `uv run pytest -m live -s tests/test_agent_live.py` (the test caps the
        run at 4 steps and $0.10 per day via settings; it spends real money). Paste its `live agent: …` line and
        the step lines into a dated `FEEDBACK.md` entry (steps, credits, USD, latency per step).
@@ -91,7 +97,8 @@ Cost line: the Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/
        `docs/devpost.md`, `docs/status.md`, the yaml and `tests/test_readme.py` before the video (Oct 25–26).
     e. After the redeploy, verify a non-htmx same-origin POST is not refused: the agent POST guard compares
        the `Origin` header with the `Host` header, which behind the Nebius ingress may differ from what the
-       app sees locally. Send a POST without `HX-Request` and with `Origin: $URL`; it must not answer 403.
+       app sees locally. Send the agent start route `POST $URL/change/14/agent` without `HX-Request` and
+       with `Origin: $URL`; it must not answer 403 (a 303 redirect, or 429 when a limit is reached, is fine).
     f. Verify on a phone: `$URL/change/14` (Regulation (EU) 2023/1115 — Article 6 – Article 8, the seed's
        unclear change) → "Let the agent check" → steps appear with credits, one question, answer → the
        "Agent: …" card above "Original check"; the card's "Agent today" line moves; the `/feed` footer's

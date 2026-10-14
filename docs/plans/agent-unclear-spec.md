@@ -48,11 +48,11 @@ source quote or a fact the visitor gave, with its cost shown.
 - `search_sources(query, domain)`: `domain ∈ SOURCE_DOMAINS` else refused; query 3–200 chars. Tavily
   `search(search_depth="basic", include_domains=[domain], include_domains_mode="filter", max_results=5,
   include_usage=True)`. Results filtered with `allowed_domain` + `foreign_language` (as `search_regulation`) and
-  stored in the step; the model sees `[{hit_id, title, url, snippet ≤ 300}]`. Credits = `usage.credits`, fallback 1.
+  stored in the step; the model sees `[{hit_id, title, url, snippet ≤ 300}]`. Credits = `max(1, usage.credits)` (at least 1).
 - `read_source(url)`: URL must be one of this run's hit URLs or the change's `document_url` (normalised), and pass
   `allowed_domain` + `foreign_language`, else refused. Tavily `extract(urls=[url], extract_depth="basic",
-  format="markdown", include_usage=True)`; credits = `max(1, usage.credits)` (a live single-URL extract once
-  reported 0). Full markdown → `AgentPageRow`; the model sees `page_id` + the first 6,000 chars plus up to 3
+  format="markdown", include_usage=True)`; credits = `max(1, usage.credits)` (a live single-URL advanced extract
+  reported `usage.credits` 0 on 2026-10-01). Full markdown → `AgentPageRow`; the model sees `page_id` + the first 6,000 chars plus up to 3
   windows of 1,500 chars around the run's query terms, total ≤ 10,000 chars.
 - `ask_merchant(question, options)`: question 10–200 chars; 2–4 options, each 1–80 chars. Run → `waiting`.
   The visitor answers by option **index**; free text is never accepted. At most 2 questions per run.

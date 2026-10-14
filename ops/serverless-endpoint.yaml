@@ -4,6 +4,10 @@
 # Keys: owner decision 2026-10-14 reverses the earlier no-keys rule so "Let the agent check" runs
 # live; capped in code at $1 model + 60 Tavily credits per UTC day (REGWATCH_AGENT_DAILY_USD /
 # _CREDITS defaults), 6 steps / 10 credits per run. Kill switch: REGWATCH_AGENT_ENABLED=false.
+# The daily counter lives in the ephemeral /tmp DB below: a restart or redeploy starts the day again,
+# so the real bound is the cap x boots that day. Use provider-side key caps where offered (runbook
+# 12b) and redeploy sparingly on video day. Keys: the shared `regwatch-keys` secret (as the Job)
+# until a separate Endpoint key pair exists; then put it in a second secret and change the name below.
 # The shared demo profile is read-only (REGWATCH_PROFILE_LOCKED). Applied only at runbook step 12.
 name: regwatch-web
 image: cr.eu-west2.nebius.cloud/e04t3ertpv4dynst9y/regwatch:<GIT_SHA>   # deployed 2026-10-10: 95c3b73

@@ -139,6 +139,6 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   (`tests/test_agent_loop.py`, not a live run): 4 steps (search · read · ask · decide), 2 Tavily credits, $0.0098 at
   the scripted 2,000 / 150 tokens per step. Worst-case reservation per Ultra call = 4,096 completion tokens x
   $3.00/Mtok = $0.0123 plus input at $1.00/Mtok, so the $1/day cap admits at most ~81 calls (~13 six-step runs)
-  before input tokens. Tavily credits are settled as max(reported, 1) because a live single-URL extract reported
-  `usage.credits` 0 on 2026-10-10. Live steps, credits, USD and latency per step: pending the live run; runbook
+  before input tokens. Tavily credits are settled as max(reported, 1) because a live single-URL advanced extract
+  reported `usage.credits` 0 on 2026-10-01. Live steps, credits, USD and latency per step: pending the live run; runbook
   step 12c appends them here.
