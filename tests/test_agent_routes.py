@@ -164,7 +164,7 @@ def test_answer_accepts_an_option_index_only(make: Callable[..., Harness]) -> No
     run_id = h.runs()[0].id
     for bad in (OPTIONS[1], "5", "-1", "1.0", ""):
         r = h.client.post(f"/agent/{run_id}/answer", data={"option": bad}, headers=HX)
-        assert r.status_code in (400, 422), bad
+        assert r.status_code == 200 and "Pick one of the options." in r.text, bad
     assert h.client.post(f"/agent/{run_id}/answer", data={"option": "1"}).status_code == 403
     with session(h.app.engine) as s:
         (fact,) = s.exec(select(AgentFactRow)).all()
@@ -241,10 +241,10 @@ def test_answer_after_expiry_is_refused(make: Callable[..., Harness]) -> None:
         row.updated_at = utcnow() - timedelta(minutes=31)
         s.add(row)
         s.commit()
-    assert (
-        h.client.post(f"/agent/{run_id}/answer", data={"option": "1"}, headers=HX).status_code
-        == 409
-    )
+    r = h.client.post(f"/agent/{run_id}/answer", data={"option": "1"}, headers=HX)
+    assert r.status_code == 200  # htmx swaps 2xx only: the closed panel replaces the dead form
+    assert "This question has closed." in r.text and "Try again" in r.text
+    assert 'id="agent-run"' in r.text
     assert h.runs()[0].status == "expired"
     page = h.client.get(f"/change/{EUDR_ID}").text
     assert "Stopped: no answer within 30 minutes" in page and "Try again" in page
@@ -307,3 +307,43 @@ def test_profile_lock(make: Callable[..., Harness]) -> None:
     assert r.status_code == 403
     with session(h.app.engine) as s:
         assert len(s.exec(select(ProfileRow)).all()) == 1
+    html = h.client.get(f"/change/{EUDR_ID}").text
+    assert "Let the agent check" in html
+    assert 'href="/profile"' not in html.split("<main", 1)[-1].split("<footer>", 1)[0]
+    assert "next crawl decides" not in html
+
+
+def test_profile_lock_with_the_agent_off_shows_a_plain_line(
+    make: Callable[..., Harness],
+) -> None:
+    html = make(enabled=False, locked=True).client.get(f"/change/{EUDR_ID}").text
+    assert "This demo's profile is fixed" in html
+    assert "next crawl decides" not in html and "Answer one question" not in html
+
+
+def test_htmx_answer_refusals_rerender_the_panel(make: Callable[..., Harness]) -> None:
+    h = make(replies=[*until_question(), decide_does_not()])
+    h.client.post(START, headers=HX)
+    run_id = h.runs()[0].id
+    url = f"/agent/{run_id}/answer"
+    bad = h.client.post(url, data={"option": "x"}, headers=HX)
+    assert bad.status_code == 200 and "Pick one of the options." in bad.text
+    assert QUESTION in bad.text  # the question is still open
+    out = h.client.post(url, data={"option": "9"}, headers=HX)
+    assert out.status_code == 200 and "Pick one of the options." in out.text
+    assert h.client.post(url, data={"option": "1"}, headers=HX).status_code == 200
+    again = h.client.post(url, data={"option": "1"}, headers=HX)
+    assert again.status_code == 200 and "This question has closed." in again.text
+
+
+def test_non_htmx_answer_refusals_keep_their_status_codes(make: Callable[..., Harness]) -> None:
+    h = make(replies=[*until_question(), decide_does_not()])
+    h.client.post(START, headers=HX)
+    run_id = h.runs()[0].id
+    url = f"/agent/{run_id}/answer"
+    same = {"Origin": "http://testserver"}
+    assert h.client.post(url, data={"option": "x"}, headers=same).status_code == 400
+    assert h.client.post(url, data={"option": "9"}, headers=same).status_code == 400
+    ok = h.client.post(url, data={"option": "1"}, headers=same, follow_redirects=False)
+    assert ok.status_code == 303
+    assert h.client.post(url, data={"option": "1"}, headers=same).status_code == 409

@@ -101,6 +101,7 @@ class AgentPanel:
     cost_usd: float = 0.0
     polling: bool = False
     message: str = ""  # a start refusal, or NO_BUDGET when a new run cannot start
+    notice: str = ""  # a refused answer ("This question has closed."), shown on any status
 
 
 def step_view(step: AgentStepRow, fact: AgentFactRow | None) -> StepView:

@@ -6,7 +6,9 @@
 2. Reasons: each must cite at least one valid fact (an answered AgentFactRow of this run), one kept
    piece of evidence, or one obligation number of the change, or it is dropped. A kept reason keeps
    only its valid citations.
-3. `applies` / `does_not` with no reason left → `unclear` with DOWNGRADE_REASON.
+   An evidence quote shorter than MIN_QUOTE_WORDS (6) words is dropped.
+3. `applies` / `does_not` with no reason left, or with no kept reason citing a fact or a piece of
+   evidence (obligation numbers alone do not count), → `unclear` with DOWNGRADE_REASON first.
 4. To-dos: `ClassifiedPayload` → `enforce()` unchanged. The citation is ours, invented dues are
    nulled, and quotes must be the change's obligation quotes. Rejected to-dos go back to the caller
    for the one retry.
@@ -22,6 +24,7 @@ from regwatch.agent.schemas import AgentDecision, CitedReason, Evidence, Fact
 from regwatch.agent.tools import PageText
 from regwatch.schemas import Applicability, Decision, RegChange, Todo
 from regwatch.understand.classify import ClassifiedPayload, enforce
+from regwatch.understand.normalize import MIN_QUOTE_WORDS
 
 log = logging.getLogger(__name__)
 
@@ -60,6 +63,8 @@ def ground_decision(
             dropped.append(f"evidence #{e.evidence_id}: page #{e.page_id} was not read in this run")
         elif not quote or quote not in _norm(page.markdown):
             dropped.append(f"evidence #{e.evidence_id}: quote is not verbatim in page #{e.page_id}")
+        elif len(quote.split()) < MIN_QUOTE_WORDS:
+            dropped.append(f"evidence #{e.evidence_id}: quote shorter than {MIN_QUOTE_WORDS} words")
         else:
             evidence[e.evidence_id] = Evidence(
                 evidence_id=e.evidence_id, page_id=e.page_id, url=page.url, quote=e.quote.strip()
@@ -81,19 +86,24 @@ def ground_decision(
         dropped.append(f"reasons: kept the first {MAX_REASONS} of {len(reasons)}")
         reasons = reasons[:MAX_REASONS]
     verdict: Decision = decision.decision
+    downgrade = CitedReason(
+        text=DOWNGRADE_REASON,
+        fact_ids=[],
+        evidence_ids=[],
+        obligation_numbers=[],
+        code_written=True,
+    )
     if not reasons:
         if verdict != "unclear":
             dropped.append(f"decision: {verdict} downgraded to unclear (no cited reason)")
         verdict = "unclear"
-        reasons = [
-            CitedReason(
-                text=DOWNGRADE_REASON,
-                fact_ids=[],
-                evidence_ids=[],
-                obligation_numbers=[],
-                code_written=True,
-            )
-        ]
+        reasons = [downgrade]
+    elif verdict != "unclear" and not any(r.fact_ids or r.evidence_ids for r in reasons):
+        # the change's own obligations do not settle what the original check left unclear: a
+        # flip needs one of the merchant's answers or a verified page quote
+        dropped.append(f"decision: {verdict} downgraded to unclear (no cited fact or page quote)")
+        verdict = "unclear"
+        reasons = [downgrade, *reasons][:MAX_REASONS]
     payload = ClassifiedPayload(
         decision=verdict, reasons=[r.text for r in reasons], todos=decision.todos
     )

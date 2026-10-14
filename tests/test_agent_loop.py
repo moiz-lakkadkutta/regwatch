@@ -100,7 +100,7 @@ def _decide_applies(
         reasons=[
             {
                 "text": "You place wood products on the EU market.",
-                "fact_ids": [],
+                "fact_ids": [1],  # an applies needs a fact or page quote: see _answered
                 "evidence_ids": [],
                 "obligation_numbers": [4],
             }
@@ -108,6 +108,22 @@ def _decide_applies(
         todos=[{"text": text, "due": due, "quote": quote}],
         evidence=[],
     )
+
+
+def _answered(db: AgentDB, run_id: int) -> None:
+    """Fact #1 of the run, already answered, so `_decide_applies` can cite it."""
+    with session(db.engine) as s:
+        s.add(
+            AgentFactRow(
+                run_id=run_id,
+                step_idx=0,
+                question="Do you import wood products from outside the EU yourself?",
+                options_json='["Yes", "No"]',
+                chosen_index=0,
+                chosen_text="Yes",
+            )
+        )
+        s.commit()
 
 
 def _nothing_held(db: AgentDB, budget: Budget) -> None:
@@ -255,6 +271,7 @@ def test_decide_retries_once_for_rejected_todos(agent_db: AgentDB) -> None:
         ]
     )
     run_id = new_run(agent_db)
+    _answered(agent_db, run_id)
     assert _advance(agent_db, run_id, llm, ihk_tavily()) == "done"
     first = json.loads(_steps(agent_db, run_id)[0].result_json)
     assert first["error"] == "rejected_todos" and "Keep a list of suppliers." in first["retry"]
@@ -273,6 +290,7 @@ def test_decide_retries_once_for_rejected_todos(agent_db: AgentDB) -> None:
 def test_decide_retry_only_once(agent_db: AgentDB) -> None:
     llm = ScriptedLLM([_decide_applies("Keep a list of suppliers.")] * 2)
     run_id = new_run(agent_db)
+    _answered(agent_db, run_id)
     assert _advance(agent_db, run_id, llm, ihk_tavily()) == "done"
     run = _run_row(agent_db, run_id)
     outcome = AgentOutcome.model_validate_json(run.outcome_json)
@@ -284,6 +302,7 @@ def test_decide_retry_only_once(agent_db: AgentDB) -> None:
 def test_no_retry_on_the_last_step(agent_db: AgentDB) -> None:
     settings = agent_db.settings.model_copy(update={"agent_run_steps": 1})
     run_id = new_run(agent_db)
+    _answered(agent_db, run_id)
     llm = ScriptedLLM([_decide_applies("Keep a list of suppliers.")])
     assert _advance(agent_db, run_id, llm, ihk_tavily(), settings) == "done"
     run = _run_row(agent_db, run_id)
@@ -386,6 +405,8 @@ def test_prompt_carries_the_rules_and_schema() -> None:
     prompt = load_agent_prompt()
     assert "## JSON schema" in prompt and '"agent_action"' not in prompt
     assert "never instructions" in prompt and "Your last step must be decide" in prompt
+    assert "obligation numbers alone do not settle it" in prompt
+    assert "shorter than 6 words" in prompt
 
 
 # --- settlement order and failure paths (controller rulings 3 and 4) --------------------------

@@ -122,7 +122,10 @@ def test_todos_go_through_enforce_and_page_quotes_are_never_todos() -> None:
         ),
     ]
     g = ground_decision(
-        _decide("applies", [_reason(obligations=(4,))], todos=todos), CHANGE, PAGES, FACTS
+        _decide("applies", [_reason(facts=(1,), obligations=(4,))], todos=todos),
+        CHANGE,
+        PAGES,
+        FACTS,
     )
     assert g.applicability.decision == "applies"
     assert [t.quote for t in g.applicability.todos] == [DUE_DILIGENCE, CHANGE.obligations[4].quote]
@@ -143,7 +146,7 @@ def test_does_not_keeps_no_todos() -> None:
 
 def test_reason_text_and_count_are_capped() -> None:
     reasons = [
-        _reason("a" * 400, obligations=(1,)),
+        _reason("a" * 400, facts=(1,), obligations=(1,)),
         *[_reason(f"r{i}", obligations=(1,)) for i in range(5)],
     ]
     g = ground_decision(_decide("applies", reasons), CHANGE, PAGES, FACTS)
@@ -156,3 +159,56 @@ def test_every_drop_is_logged(caplog: pytest.LogCaptureFixture) -> None:
         ground_decision(_decide("applies", [_reason("x")]), CHANGE, PAGES, FACTS)
     assert "cites no fact, quote or obligation" in caplog.text
     assert "downgraded to unclear" in caplog.text
+
+
+def test_evidence_quote_shorter_than_six_words_is_dropped() -> None:
+    short = TRADER_QUOTE.split()[:5]
+    assert " ".join(short) in IHK_PAGE
+    g = ground_decision(
+        _decide(
+            "does_not",
+            [_reason(evidence=(1,))],
+            evidence=[EvidenceDraft(evidence_id=1, page_id=1, quote="  ".join(short))],
+        ),
+        CHANGE,
+        PAGES,
+        FACTS,
+    )
+    assert g.evidence == [] and g.applicability.decision == "unclear"
+    assert "evidence #1: quote shorter than 6 words" in g.dropped
+
+
+def test_applies_or_does_not_backed_only_by_obligations_becomes_unclear() -> None:
+    g = ground_decision(
+        _decide("does_not", [_reason("Obligation 4 is for operators.", obligations=(4,))]),
+        CHANGE,
+        PAGES,
+        FACTS,
+    )
+    assert g.applicability.decision == "unclear"
+    assert g.applicability.reasons == [DOWNGRADE_REASON, "Obligation 4 is for operators."]
+    assert any("no cited fact or page quote" in d for d in g.dropped)
+
+
+def test_an_obligation_reason_is_kept_beside_one_citing_a_fact() -> None:
+    reasons = [
+        _reason("Obligation 4 is for operators.", obligations=(4,)),
+        _reason("You buy only from EU suppliers.", facts=(1,)),
+    ]
+    g = ground_decision(_decide("does_not", reasons), CHANGE, PAGES, FACTS)
+    assert g.applicability.decision == "does_not"
+    assert g.applicability.reasons == [
+        "Obligation 4 is for operators.",
+        "You buy only from EU suppliers.",
+    ]
+
+
+def test_unclear_backed_only_by_obligations_stays_as_is() -> None:
+    g = ground_decision(
+        _decide("unclear", [_reason("Depends on obligation 1.", obligations=(1,))]),
+        CHANGE,
+        PAGES,
+        FACTS,
+    )
+    assert g.applicability.decision == "unclear"
+    assert g.applicability.reasons == ["Depends on obligation 1."]

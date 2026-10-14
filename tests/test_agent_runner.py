@@ -299,3 +299,25 @@ def test_answer_expires_a_stale_wait_before_recording(
     )
     assert runner.answer(agent_db.engine, agent_db.settings, run_id, 0) == "not_waiting"
     assert (_run(agent_db, run_id).status, submitted) == ("expired", [])
+
+
+@pytest.mark.parametrize("claimed", [False, True])
+def test_run_now_fails_the_run_when_advance_raises(
+    agent_db: AgentDB, monkeypatch: pytest.MonkeyPatch, claimed: bool
+) -> None:
+    monkeypatch.setattr(
+        runner,
+        "make_backends",
+        lambda settings: Backends(llm=ScriptedLLM([]), tavily=ScriptedTavily()),
+    )
+    run_id = new_run(agent_db)
+
+    def boom(rid: int, **kw: Any) -> str:
+        if claimed:
+            _set(agent_db, rid, status="running")
+        raise RuntimeError("database is locked")
+
+    monkeypatch.setattr(runner, "advance", boom)
+    runner.run_now(run_id, engine=agent_db.engine, settings=agent_db.settings)  # never raises
+    run = _run(agent_db, run_id)
+    assert (run.status, run.stop_reason) == ("failed", "internal error")

@@ -134,9 +134,7 @@ def search_sources(
         max_results=MAX_HITS,
         include_usage=True,
     )
-    credits = _usage_credits(resp)
-    if credits is None:
-        credits = BASIC_CREDITS
+    credits = max(BASIC_CREDITS, _usage_credits(resp) or 0)
     results = resp.get("results") or []
     log.info(
         "agent search run=%d domain=%s n_results=%d usage=%s credits=%d",

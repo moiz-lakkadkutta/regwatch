@@ -19,7 +19,13 @@ from sqlalchemy.engine import Engine
 from sqlmodel import col, update
 
 from regwatch.agent.budget import start_check
-from regwatch.agent.loop import AnswerResult, advance, record_answer, transition
+from regwatch.agent.loop import (
+    INTERNAL_ERROR,
+    AnswerResult,
+    advance,
+    record_answer,
+    transition,
+)
 from regwatch.config import Settings
 from regwatch.db import AgentRunRow, session, utcnow
 from regwatch.ingest.tavily_backend import TavilyBackend, make_backend
@@ -59,7 +65,18 @@ def run_now(run_id: int, *, engine: Engine, settings: Settings) -> None:
         log.error("agent run=%d: backends unavailable (%s)", run_id, type(e).__name__)
         transition(engine, run_id, from_=("queued",), to="failed", stop_reason=UNAVAILABLE)
         return
-    advance(run_id, engine=engine, settings=settings, llm=backends.llm, tavily=backends.tavily)
+    try:
+        advance(run_id, engine=engine, settings=settings, llm=backends.llm, tavily=backends.tavily)
+    except Exception:
+        # e.g. "database is locked" in the claim: nobody reads this Future, so without this the
+        # run stays queued/running and start_run rejoins it forever
+        log.exception("agent run=%d: advance raised", run_id)
+        try:
+            transition(
+                engine, run_id, from_=("queued", "running"), to="failed", stop_reason=INTERNAL_ERROR
+            )
+        except Exception:
+            log.exception("agent run=%d: could not mark the run failed", run_id)
 
 
 def submit(run_id: int, *, engine: Engine, settings: Settings) -> Future[None]:

@@ -177,3 +177,8 @@ def test_question_ok_is_stripped() -> None:
         "Do you import goods yourself?",
         ["Yes", "No"],
     )
+
+
+def test_search_reporting_zero_credits_settles_at_one() -> None:
+    tavily = ScriptedTavily(results={"ihk.de": [IHK_HIT]}, search_credits=0)
+    assert search_sources(tavily, query="EUDR Händler", domain="ihk.de", run_id=1).credits == 1

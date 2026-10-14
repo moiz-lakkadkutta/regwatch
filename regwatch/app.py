@@ -682,6 +682,7 @@ def change_detail(request: Request, change_id: int) -> Any:
             }
     ctx["change_id"] = change_id
     ctx["profile"] = prof.to_schema()
+    ctx["locked"] = settings.profile_locked
     ctx["a"] = None
     shown = ctx["item"]
     if settings.agent_enabled and shown is not None and shown.decision == "unclear":
@@ -741,6 +742,10 @@ def agent_trace(request: Request, run_id: int) -> Any:
     return _fragment(request, _panel(run, run.regchange_id, change, source_domain))
 
 
+PICK_ONE = "Pick one of the options."
+CLOSED = "This question has closed."
+
+
 @app.post("/agent/{run_id}/answer")
 def agent_answer(request: Request, run_id: int, option: str = Form("")) -> Any:
     """The visitor's pick for the open question, by option index only (never free text)."""
@@ -752,16 +757,25 @@ def agent_answer(request: Request, run_id: int, option: str = Form("")) -> Any:
     if found is None:
         return HTMLResponse("Not found", status_code=404)
     run, change, source_domain = found
+    htmx = request.headers.get("HX-Request") == "true"
+
+    def refuse(notice: str, status_code: int) -> Response:
+        # htmx swaps 2xx only: re-render the panel with the notice so the click is not dead
+        if htmx:
+            panel = _panel(_get_run(run_id), run.regchange_id, change, source_domain)
+            return _fragment(request, replace(panel, notice=notice))
+        return HTMLResponse(notice, status_code=status_code)
+
     if not (option.isascii() and option.isdigit()):
-        return HTMLResponse("Pick one of the options.", status_code=400)
+        return refuse(PICK_ONE, 400)
     if run.status == "waiting" and runner.expire_if_stale(engine, run_id, now=utcnow()):
-        return HTMLResponse("This question has closed.", status_code=409)
+        return refuse(CLOSED, 409)
     result = runner.answer(engine, settings, run_id, int(option))
     if result == "bad_option":
-        return HTMLResponse("Pick one of the options.", status_code=400)
+        return refuse(PICK_ONE, 400)
     if result == "not_waiting":
-        return HTMLResponse("This question has closed.", status_code=409)
-    if request.headers.get("HX-Request") == "true":
+        return refuse(CLOSED, 409)
+    if htmx:
         panel = _panel(_get_run(run_id), run.regchange_id, change, source_domain)
         return _fragment(request, panel)
     return RedirectResponse(f"/change/{run.regchange_id}", status_code=303)

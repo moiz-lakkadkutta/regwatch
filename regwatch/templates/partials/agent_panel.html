@@ -5,6 +5,7 @@
 {% if a.can_start %}<form method="post" action="/change/{{a.change_id}}/agent" hx-post="/change/{{a.change_id}}/agent" hx-target="#agent-run" hx-swap="outerHTML"><button class="primary" type="submit">Let the agent check</button></form>{% endif %}
 {% else %}
 <h2>{% if a.status in ("queued", "running") %}The agent is checking…{% elif a.status == "waiting" %}The agent needs one answer from you{% elif a.status == "done" %}How the agent checked{% else %}The agent stopped{% endif %}</h2>
+{% if a.notice %}<p class="note">{{a.notice}}</p>{% endif %}
 <ol class="steps">{% for st in a.steps %}<li>
 {% if st.kind == "search" %}Searched <strong>{{st.domain}}</strong> for “{{st.query}}” — {{st.n_results}} result{% if st.n_results != 1 %}s{% endif %} · {{st.credits}} credit{% if st.credits != 1 %}s{% endif %}
 {% elif st.kind == "read" %}Read <strong>{{st.where}}</strong> · {{st.credits}} credit{% if st.credits != 1 %}s{% endif %}

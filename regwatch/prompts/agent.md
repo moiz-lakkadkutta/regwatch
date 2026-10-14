@@ -24,11 +24,13 @@ Fill only the fields that tool uses; every other field is null.
     missing; say which fact would settle it.
   - evidence: quotes you rely on from pages you read, as {evidence_id (your own number, from 1),
     page_id, quote}. Copy each quote character for character from that page's text; a quote that
-    is not in the page is deleted.
+    is not in the page, or is shorter than 6 words, is deleted.
   - reasons: 1–4 short sentences in the owner's terms, second person, no article numbers. Each
     cites what backs it: fact_ids (facts the owner gave), evidence_ids (your evidence),
     obligation_numbers (numbers in the change's obligation list). A reason that cites nothing
-    valid is deleted, and an "applies" or "does_not" left without a reason becomes "unclear".
+    valid is deleted. An "applies" or "does_not" needs at least one kept reason that cites a fact
+    or a piece of evidence; obligation numbers alone do not settle it, so without one it becomes
+    "unclear".
   - todos: only for "applies" ("unclear": at most one, "does_not": none). Each turns one numbered
     obligation into an action: `text` is a verb phrase with an object; `quote` is that
     obligation's quote copied exactly from the numbered list; `due` is one of the change's
