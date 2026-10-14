@@ -150,3 +150,13 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   credits, $0.0170 (8,203 prompt / 2,606 completion tokens), 3.6 s per step. One extra run 1 was spent by mistake
   (re-run to print step lines): total live spend for this entry ≈ $0.057 + 6 Tavily credits. Tavily account before
   the runs: 549 of 1,000 plan credits used (`GET /usage`), so the Endpoint's agent cap is set to 24 credits/day.
+- (2026-10-14, Nebius Serverless Endpoint redeploy with the agent) `nebius ai endpoint` (CLI 0.12.287) has create /
+  delete / start / stop / restart but no `update`, so changing the image, env or secrets means a new endpoint and a
+  new public URL (`regwatch-web` → `regwatch-web-2`, port8000-x8f9rz0wxq15br2 → port8000-skj2wff6z9w233q); every
+  doc and the Devpost text carrying the URL had to change. Ask: an in-place update that keeps the tunnel URL.
+  Create → RUNNING: 254 s. First attempt failed at startup ("Endpoint failed to start", code 9) — our bug: the
+  Dockerfile installed dependencies unlocked, so the image got sqlmodel 0.0.48 / SQLAlchemy 2.1.4 (lock 0.0.42 /
+  2.0.52), whose naive-datetime check crashed the agent's startup sweep; fixed by installing from `uv.lock`
+  (`6292d2d`). `nebius ai endpoint logs` showed the traceback, which made this a 5-minute fix. Verified through the
+  ingress: /healthz 200 in 0.18 s; a non-htmx same-origin agent POST → 303 (the Host-based Origin check works
+  behind the tunnel); cross-origin → 403; locked profile POST → 403; the live agent's first step asked the merchant.

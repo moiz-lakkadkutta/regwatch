@@ -9,7 +9,7 @@ unless it says otherwise; sources are `README.md` and `FEEDBACK.md`.
 to-do quotes the official sentence it comes from. Nemotron on Nebius + Tavily.
 
 **Links**
-- Live demo: https://port8000-x8f9rz0wxq15br2.tunnel.applications.eu-west2.nebius.cloud
+- Live demo: https://port8000-skj2wff6z9w233q.tunnel.applications.eu-west2.nebius.cloud
 - Code (MIT): https://github.com/moiz-lakkadkutta/regwatch
 - Video: _add after upload_
 

@@ -10,7 +10,7 @@ uv run regwatch seed     # loads the recorded run in examples/seed-run (idempote
 uv run regwatch serve    # http://localhost:8000  →  /month
 ```
 
-Demo: https://port8000-x8f9rz0wxq15br2.tunnel.applications.eu-west2.nebius.cloud (Nebius Serverless Endpoint, eu-west2, deployed 2026-10-10; serves the recorded seed run).
+Demo: https://port8000-skj2wff6z9w233q.tunnel.applications.eu-west2.nebius.cloud (Nebius Serverless Endpoint, eu-west2, redeployed 2026-10-14 with the agent on; serves the recorded seed run).
 
 ## Runs on Nebius · NVIDIA Nemotron · Tavily
 
