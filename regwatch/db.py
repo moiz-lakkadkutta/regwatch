@@ -141,6 +141,76 @@ class TodoStateRow(SQLModel, table=True):
     done: bool = True
 
 
+def utcnow() -> datetime:
+    """Naive UTC, the form SQLite hands back; agent rows are stored and compared in it."""
+    return datetime.now(UTC).replace(tzinfo=None)
+
+
+AGENT_ACTIVE: tuple[str, ...] = ("queued", "running", "waiting")
+
+
+class AgentRunRow(SQLModel, table=True):
+    """One "Let the agent check" run: one visitor, one (profile, change). The agent never writes
+    DocumentRow, RegChangeRow or ApplicabilityRow; its grounded outcome lives in `outcome_json`
+    and is shown only to `visitor_id`."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    visitor_id: str = Field(index=True)
+    profile_id: int = Field(index=True)
+    regchange_id: int = Field(index=True)
+    status: str = "queued"  # queued|running|waiting|done|stopped|failed|expired
+    stop_reason: str = ""
+    decision: str | None = None
+    outcome_json: str = ""  # agent.schemas.AgentOutcome once done
+    n_steps: int = 0
+    tavily_credits: int = 0
+    cost_usd: float = 0.0
+    created_at: datetime = Field(default_factory=utcnow)
+    updated_at: datetime = Field(default_factory=utcnow)
+
+
+class AgentStepRow(SQLModel, table=True):
+    """One model call of a run and the one tool it chose; `result_json` is what the model sees
+    next (already truncated). The day's agent spend is the sum over these rows."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    run_id: int = Field(index=True)
+    idx: int  # 1-based
+    tool: str  # a Tool, or "invalid" for an unparseable reply
+    thought: str = ""  # ≤ 300 chars
+    args_json: str = "{}"
+    result_json: str = "{}"
+    credits: int = 0
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    cost_usd: float = 0.0
+    created_at: datetime = Field(default_factory=utcnow, index=True)
+
+
+class AgentPageRow(SQLModel, table=True):
+    """A page the agent read, full markdown for evidence checks. Never a DocumentRow: that table
+    is keyed by URL and a re-read would overwrite the seed's content hash."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    run_id: int = Field(index=True)
+    url: str
+    source_domain: str
+    markdown: str
+    fetched_at: datetime = Field(default_factory=utcnow)
+
+
+class AgentFactRow(SQLModel, table=True):
+    """An ask_merchant question and the option the visitor picked (by index; never free text)."""
+
+    id: int | None = Field(default=None, primary_key=True)
+    run_id: int = Field(index=True)
+    step_idx: int
+    question: str
+    options_json: str  # JSON list[str]
+    chosen_index: int | None = None
+    chosen_text: str = ""
+
+
 def make_engine(settings: Settings):  # type: ignore[no-untyped-def]
     connect_args = {"check_same_thread": False} if settings.db_url.startswith("sqlite") else {}
     engine = create_engine(settings.db_url, connect_args=connect_args)
