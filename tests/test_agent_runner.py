@@ -278,3 +278,24 @@ def test_answer_submits_only_a_valid_index(
     assert submitted == [run_id]
     assert runner.answer(agent_db.engine, agent_db.settings, run_id, 0) == "not_waiting"
     assert submitted == [run_id]
+
+
+def test_answer_expires_a_stale_wait_before_recording(
+    agent_db: AgentDB, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    run_id = new_run(agent_db)
+    advance(
+        run_id,
+        engine=agent_db.engine,
+        settings=agent_db.settings,
+        llm=ScriptedLLM(until_question()),
+        tavily=ihk_tavily(),
+        budget=Budget(),
+    )
+    _set(agent_db, run_id, updated_at=utcnow() - timedelta(minutes=31))
+    submitted: list[int] = []
+    monkeypatch.setattr(
+        runner, "submit", lambda run_id, *, engine, settings: submitted.append(run_id)
+    )
+    assert runner.answer(agent_db.engine, agent_db.settings, run_id, 0) == "not_waiting"
+    assert (_run(agent_db, run_id).status, submitted) == ("expired", [])

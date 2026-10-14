@@ -473,7 +473,9 @@ def test_htmx_script_and_attrs(client: TestClient) -> None:
     assert 'hx-post="/todo/' in html
     assert '<section id="month-list" hx-target="#month-list" hx-swap="outerHTML">' in html
     assert html.count('<form method="post" action="/todo/') == N_OPEN  # plain form still works
-    assert "htmx.org" not in client.get("/feed").text
+    # htmx loads once from base.html on every page (the change page's agent card uses it too)
+    assert html.count("htmx.org@2.0.4") == 1
+    assert client.get("/feed").text.count("htmx.org@2.0.4") == 1
 
 
 def test_home_redirects_to_month_with_profile(client: TestClient) -> None:

@@ -8,18 +8,20 @@ from __future__ import annotations
 
 import hashlib
 import json
+import secrets
 from dataclasses import dataclass, replace
 from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Literal
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 from fastapi import FastAPI, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from regwatch.agent import runner
+from regwatch.agent.view import AgentPanel, build_panel
 from regwatch.config import (
     CATEGORIES,
     EU_COUNTRIES,
@@ -33,6 +35,7 @@ from regwatch.config import (
     regulation_instrument,
 )
 from regwatch.db import (
+    AgentRunRow,
     DocumentRow,
     FeedRow,
     ProfileRow,
@@ -47,6 +50,7 @@ from regwatch.db import (
     session,
     source_domain_for,
     unchecked_changes,
+    utcnow,
 )
 from regwatch.schemas import Decision, RegChange
 
@@ -166,6 +170,99 @@ def wrong_call_mailto(change_id: int, decision: str, to: str = "") -> str:
 
 
 templates.env.filters.update(d=fmt_date, stamp=fmt_stamp, dlong=fmt_date_long)
+
+
+VISITOR_COOKIE = "rw_visitor"
+VISITOR_MAX_AGE = 60 * 60 * 24 * 30
+PROFILE_LOCKED_NOTE = (
+    "This demo shares one store profile with every visitor, so it can't be changed here."
+)
+
+
+def _same_origin(request: Request) -> bool:
+    """htmx's HX-Request header (a cross-site page cannot send it without a CORS preflight we
+    never answer) or an Origin / Referer on this host. Guards every agent POST."""
+    if request.headers.get("HX-Request") == "true":
+        return True
+    host = request.url.netloc
+    for name in ("origin", "referer"):
+        value = request.headers.get(name)
+        if value:
+            return urlsplit(value).netloc == host
+    return False
+
+
+def _get_run(run_id: int | None) -> AgentRunRow | None:
+    if run_id is None:
+        return None
+    with session(engine) as s:
+        return s.get(AgentRunRow, run_id)
+
+
+def _latest_run(visitor: str | None, change_id: int, profile_id: int) -> AgentRunRow | None:
+    """This visitor's newest run for (profile, change); runs of an older profile are ignored."""
+    if not visitor:
+        return None
+    with session(engine) as s:
+        return s.exec(
+            select(AgentRunRow)
+            .where(
+                AgentRunRow.visitor_id == visitor,
+                AgentRunRow.regchange_id == change_id,
+                AgentRunRow.profile_id == profile_id,
+            )
+            .order_by(col(AgentRunRow.id).desc())
+        ).first()
+
+
+def _visitor_run(request: Request, run_id: int) -> tuple[AgentRunRow, RegChange, str] | None:
+    """(run, its change, source domain) when the cookie's visitor owns the run and the run was
+    made for the current profile, else None. Every /agent/{run_id} route goes through this."""
+    visitor = request.cookies.get(VISITOR_COOKIE)
+    with session(engine) as s:
+        run = s.get(AgentRunRow, run_id)
+        if run is None or not visitor or run.visitor_id != visitor:
+            return None
+        prof = current_profile(s)
+        if prof is None or prof.id != run.profile_id:
+            return None
+        ch = s.get(RegChangeRow, run.regchange_id)
+        if ch is None:
+            return None
+        doc = s.get(DocumentRow, ch.document_url)
+        return run, ch.to_schema(), source_domain_for(ch.document_url, doc)
+
+
+def _panel(
+    run: AgentRunRow | None,
+    change_id: int,
+    change: RegChange,
+    source_domain: str,
+    *,
+    message: str = "",
+) -> AgentPanel:
+    """The agent card for this change; a waiting run past its 30 minutes is expired first."""
+    now = utcnow()
+    if run is not None and run.id is not None and run.status == "waiting":
+        if runner.expire_if_stale(engine, run.id, now=now):
+            run = _get_run(run.id)
+    return build_panel(
+        engine,
+        settings,
+        change_id=change_id,
+        change=change,
+        source_domain=source_domain,
+        run=run,
+        now=now,
+        message=message,
+    )
+
+
+def _fragment(request: Request, panel: AgentPanel) -> Response:
+    resp = templates.TemplateResponse(request, "partials/agent_panel.html", {"a": panel})
+    if panel.status == "done":
+        resp.headers["HX-Refresh"] = "true"  # the result card sits above the original: reload once
+    return resp
 
 
 def _todo_key(quote: str, url: str) -> str:
@@ -452,6 +549,7 @@ def profile_form(request: Request) -> Any:
             "categories": CATEGORIES,
             "platforms": PLATFORMS,
             "profile": prof.to_schema() if prof else None,
+            "locked": settings.profile_locked,
         },
     )
 
@@ -463,6 +561,8 @@ def profile_save(
     categories: list[str] = Form(default=[]),
     platform: str = Form("shopify"),
 ) -> Any:
+    if settings.profile_locked:
+        return HTMLResponse(PROFILE_LOCKED_NOTE, status_code=403)
     if "ALL_EU" in ship_to:
         ship_to = list(EU_COUNTRIES)
     with session(engine) as s:
@@ -582,7 +682,89 @@ def change_detail(request: Request, change_id: int) -> Any:
             }
     ctx["change_id"] = change_id
     ctx["profile"] = prof.to_schema()
+    ctx["a"] = None
+    shown = ctx["item"]
+    if settings.agent_enabled and shown is not None and shown.decision == "unclear":
+        assert prof.id is not None
+        run = _latest_run(request.cookies.get(VISITOR_COOKIE), change_id, prof.id)
+        ctx["a"] = _panel(run, change_id, shown.change, shown.source_domain)
     return templates.TemplateResponse(request, "change_detail.html", ctx)
+
+
+@app.post("/change/{change_id}/agent")
+def agent_start(request: Request, change_id: int) -> Any:
+    """Start (or rejoin) this visitor's agent run on an unclear change."""
+    if not settings.agent_enabled:
+        return HTMLResponse("Not found", status_code=404)
+    if not _same_origin(request):
+        return HTMLResponse("Forbidden", status_code=403)
+    with session(engine) as s:
+        prof = current_profile(s)
+        profile_id = prof.id if prof is not None else None
+        row = feed_row(s, profile_id, change_id) if profile_id is not None else None
+    if profile_id is None or row is None or row.appl.decision != "unclear":
+        return HTMLResponse("Not found", status_code=404)
+    known = request.cookies.get(VISITOR_COOKIE)
+    visitor = known or secrets.token_hex(16)
+    run_id, refusal = runner.start_run(
+        engine,
+        settings,
+        visitor_id=visitor,
+        profile_id=profile_id,
+        regchange_id=change_id,
+        now=utcnow(),
+    )
+    resp: Response
+    if request.headers.get("HX-Request") == "true":
+        panel = _panel(_get_run(run_id), change_id, row.change, row.source_domain, message=refusal)
+        resp = _fragment(request, panel)
+    elif refusal:
+        resp = HTMLResponse(refusal, status_code=429)
+    else:
+        resp = RedirectResponse(f"/change/{change_id}", status_code=303)
+    if not known:
+        resp.set_cookie(
+            VISITOR_COOKIE, visitor, max_age=VISITOR_MAX_AGE, httponly=True, samesite="lax"
+        )
+    return resp
+
+
+@app.get("/agent/{run_id}", response_class=HTMLResponse)
+def agent_trace(request: Request, run_id: int) -> Any:
+    """The trace fragment htmx polls; only for the run's visitor and the current profile."""
+    if not settings.agent_enabled:
+        return HTMLResponse("Not found", status_code=404)
+    found = _visitor_run(request, run_id)
+    if found is None:
+        return HTMLResponse("Not found", status_code=404)
+    run, change, source_domain = found
+    return _fragment(request, _panel(run, run.regchange_id, change, source_domain))
+
+
+@app.post("/agent/{run_id}/answer")
+def agent_answer(request: Request, run_id: int, option: str = Form("")) -> Any:
+    """The visitor's pick for the open question, by option index only (never free text)."""
+    if not settings.agent_enabled:
+        return HTMLResponse("Not found", status_code=404)
+    if not _same_origin(request):
+        return HTMLResponse("Forbidden", status_code=403)
+    found = _visitor_run(request, run_id)
+    if found is None:
+        return HTMLResponse("Not found", status_code=404)
+    run, change, source_domain = found
+    if not (option.isascii() and option.isdigit()):
+        return HTMLResponse("Pick one of the options.", status_code=400)
+    if run.status == "waiting" and runner.expire_if_stale(engine, run_id, now=utcnow()):
+        return HTMLResponse("This question has closed.", status_code=409)
+    result = runner.answer(engine, settings, run_id, int(option))
+    if result == "bad_option":
+        return HTMLResponse("Pick one of the options.", status_code=400)
+    if result == "not_waiting":
+        return HTMLResponse("This question has closed.", status_code=409)
+    if request.headers.get("HX-Request") == "true":
+        panel = _panel(_get_run(run_id), run.regchange_id, change, source_domain)
+        return _fragment(request, panel)
+    return RedirectResponse(f"/change/{run.regchange_id}", status_code=303)
 
 
 @app.get("/healthz")

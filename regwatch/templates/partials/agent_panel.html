@@ -1,0 +1,25 @@
+<div id="agent-run" class="card agent"{% if a.polling %} hx-get="/agent/{{a.run_id}}" hx-trigger="every 1.5s" hx-swap="outerHTML"{% endif %}>
+{% if not a.status %}
+<p><strong>Let the agent check</strong> — it searches the official sources and may ask you one or two questions.</p>
+{% if a.message %}<p class="note">{{a.message}}</p>{% endif %}
+{% if a.can_start %}<form method="post" action="/change/{{a.change_id}}/agent" hx-post="/change/{{a.change_id}}/agent" hx-target="#agent-run" hx-swap="outerHTML"><button class="primary" type="submit">Let the agent check</button></form>{% endif %}
+{% else %}
+<h2>{% if a.status in ("queued", "running") %}The agent is checking…{% elif a.status == "waiting" %}The agent needs one answer from you{% elif a.status == "done" %}How the agent checked{% else %}The agent stopped{% endif %}</h2>
+<ol class="steps">{% for st in a.steps %}<li>
+{% if st.kind == "search" %}Searched <strong>{{st.domain}}</strong> for “{{st.query}}” — {{st.n_results}} result{% if st.n_results != 1 %}s{% endif %} · {{st.credits}} credit{% if st.credits != 1 %}s{% endif %}
+{% elif st.kind == "read" %}Read <strong>{{st.where}}</strong> · {{st.credits}} credit{% if st.credits != 1 %}s{% endif %}
+{% elif st.kind == "ask" %}Asked you: {{st.question}} → <em>{% if st.answer %}{{st.answer}}{% else %}waiting for your answer{% endif %}</em>
+{% elif st.kind == "decide" %}Decided: <strong>{{st.decision}}</strong>
+{% elif st.kind == "retry" %}{{st.note}}
+{% elif st.kind == "refused" %}Refused: {{st.note}} · 0 credits
+{% else %}Didn't work: {{st.note}}{% if st.credits %} · {{st.credits}} credit{% if st.credits != 1 %}s{% endif %}{% endif %}{% endif %}
+{% if st.thought %}<div class="muted">{{st.thought}}</div>{% endif %}</li>{% endfor %}</ol>
+{% if a.question %}<form class="answer" method="post" action="/agent/{{a.run_id}}/answer" hx-post="/agent/{{a.run_id}}/answer" hx-target="#agent-run" hx-swap="outerHTML">
+<p><strong>{{a.question.question}}</strong></p>
+{% for opt in a.question.options %}<button type="submit" name="option" value="{{loop.index0}}">{{opt}}</button>{% endfor %}</form>{% endif %}
+{% if a.status in ("stopped", "failed", "expired") %}<p class="note">Stopped: {{a.stop_reason}}. The original check still holds.</p>
+{% if a.can_start %}<form method="post" action="/change/{{a.change_id}}/agent" hx-post="/change/{{a.change_id}}/agent" hx-target="#agent-run" hx-swap="outerHTML"><button type="submit">Try again</button></form>{% elif a.message %}<p class="note">{{a.message}}</p>{% endif %}{% endif %}
+<p class="muted">{{a.n_steps}} step{% if a.n_steps != 1 %}s{% endif %} · {{a.credits}} credit{% if a.credits != 1 %}s{% endif %} · ${{"%.3f"|format(a.cost_usd)}}</p>
+{% endif %}
+<p class="muted">Agent today, all visitors: {{a.today_credits}} of {{a.credits_cap}} Tavily credits · ${{"%.2f"|format(a.today_usd)}} of ${{"%.2f"|format(a.usd_cap)}}</p>
+</div>

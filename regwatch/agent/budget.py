@@ -24,7 +24,7 @@ MAX_COMPLETION_TOKENS = 4_096  # LiveLLMBackend's max_tokens
 CHARS_PER_TOKEN = 3.5
 DAILY_BUDGET_USED = "daily budget used"
 RUN_BUDGET_USED = "run budget used"
-HOURLY_LIMIT = "You've started {n} checks in the last hour. Try again later."
+HOURLY_LIMIT = "You've started {checks} in the last hour. Try again later."
 NO_BUDGET = "The agent has used today's budget. Try again tomorrow (UTC)."
 
 
@@ -161,7 +161,8 @@ def start_check(
             ).one()
         )
     if n >= settings.agent_visitor_runs_per_hour:
-        return StartCheck(active_id=None, refusal=HOURLY_LIMIT.format(n=n))
+        checks = f"{n} check" if n == 1 else f"{n} checks"
+        return StartCheck(active_id=None, refusal=HOURLY_LIMIT.format(checks=checks))
     usd, credits = budget.day_left(engine, settings, now)
     if usd < worst_case_usd(settings, 0) or credits < 1:
         return StartCheck(active_id=None, refusal=NO_BUDGET)

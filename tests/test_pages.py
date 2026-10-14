@@ -479,7 +479,13 @@ def test_detail_every_todo_links_citation_url(seed_client: TestClient) -> None:
 
 def test_templates_never_mark_stored_text_safe() -> None:
     tpl = Path(__file__).resolve().parent.parent / "regwatch" / "templates"
-    for name in ("feed.html", "change_detail.html"):
+    for name in (
+        "feed.html",
+        "change_detail.html",
+        "profile_form.html",
+        "partials/agent_panel.html",
+        "partials/agent_result.html",
+    ):
         assert "|safe" not in (tpl / name).read_text(encoding="utf-8")
 
 

@@ -126,7 +126,9 @@ def start_run(
 
 
 def answer(engine: Engine, settings: Settings, run_id: int, option: int) -> AnswerResult:
-    """Store the visitor's option (waiting → queued) and submit; nothing else is accepted."""
+    """Store the visitor's option (waiting → queued) and submit; nothing else is accepted. A
+    question past its 30 minutes is expired first, so a late answer is refused as not_waiting."""
+    expire_if_stale(engine, run_id, now=utcnow())
     result = record_answer(engine, run_id, option)
     if result == "ok":
         submit(run_id, engine=engine, settings=settings)
