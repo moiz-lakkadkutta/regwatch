@@ -158,10 +158,6 @@ def agent_db(tmp_settings: Settings) -> AgentDB:
 
 def new_run(db: AgentDB, visitor: str = "visitor-a") -> int:
     """A queued AgentRunRow for the EUDR unclear change."""
-    with session(db.engine) as s:
-        row = AgentRunRow(visitor_id=visitor, profile_id=db.profile_id, regchange_id=db.change_id)
-        s.add(row)
-        s.commit()
-        s.refresh(row)
-        assert row.id is not None
-        return row.id
+    return make_agent_run(
+        db.engine, visitor=visitor, change=db.change_id, status="queued", profile_id=db.profile_id
+    )

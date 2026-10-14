@@ -511,11 +511,10 @@ def _paid_tavily[R: (SearchResult, ReadResult)](
             failed = replace(draft, credits=BASIC_CREDITS, result=error)
             return _keep_going(env, ctx, failed, final=False)
         paid = replace(draft, credits=got.credits)
-        try:
-            result = shown(got)
+        try:  # the paid credits settle (here or in _fail_paid) before the finally releases
+            return _keep_going(env, ctx, replace(paid, result=shown(got)), final=False)
         except Exception:
             return _fail_paid(env, ctx, paid)
-        return _keep_going(env, ctx, replace(paid, result=result), final=False)
     finally:
         env.budget.release(held)  # after the step row settled the real credits
 

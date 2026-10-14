@@ -513,3 +513,35 @@ def test_crash_after_a_paid_model_call_records_the_step_and_fails(
     assert step.cost_usd == pytest.approx(CALL_USD) and step.credits == 1
     assert run.cost_usd == pytest.approx(CALL_USD) and run.tavily_credits == 1
     _nothing_held(agent_db, budget)
+
+
+def test_failed_step_record_after_a_paid_search_still_settles_its_credits(
+    agent_db: AgentDB, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The paid search's step write fails once (DB error): the credits are still settled, before
+    the Tavily reservation is released, and the run fails cleanly."""
+    from regwatch.agent import loop
+
+    real_record = loop._record
+    calls: list[int] = []
+
+    def flaky_record(engine: Any, run_id: int, draft: Any, **kw: Any) -> None:
+        calls.append(draft.credits)
+        if len(calls) == 1:
+            raise RuntimeError("database is locked")
+        real_record(engine, run_id, draft, **kw)
+
+    monkeypatch.setattr(loop, "_record", flaky_record)
+    budget = SettlementBudget(agent_db.engine, agent_db.settings)
+    run_id = new_run(agent_db)
+    llm = ScriptedLLM([agent_action("search_sources", query="EUDR KMU", domain="ihk.de")])
+    assert _advance(agent_db, run_id, llm, ihk_tavily(), budget=budget) == "failed"
+    assert calls == [1, 1]  # the retry in _fail_paid carries the paid credit
+    (step,) = _steps(agent_db, run_id)
+    run = _run_row(agent_db, run_id)
+    assert (run.status, run.stop_reason) == ("failed", "internal error")
+    assert step.credits == 1 and run.tavily_credits == 1
+    assert step.cost_usd == pytest.approx(CALL_USD)
+    (_, _, credits_at_tavily_release), _ = budget.at_release
+    assert credits_at_tavily_release == 1  # settled before the release
+    _nothing_held(agent_db, budget)
