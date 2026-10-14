@@ -19,7 +19,7 @@ Demo: https://port8000-x8f9rz0wxq15br2.tunnel.applications.eu-west2.nebius.cloud
 | **Nebius Token Factory** — `nvidia/Nemotron-3_5-Lightning` | document → obligations, each with a verbatim quote (`regwatch/understand/normalize.py`) |
 | **Nebius Token Factory** — `nvidia/Nemotron-3-Ultra-550b-a55b` | (change, store profile) → applies / doesn't apply / unclear + grounded to-dos (`regwatch/understand/classify.py`) |
 | **Nebius Serverless Endpoint** + **Serverless Job** | web app and the daily crawl, one container image (`ops/`) |
-| **Tavily** `search` (advanced, `include_domains`, `time_range`) + `extract` (advanced, markdown) | the only ingestion path; one crawl costs **36 Tavily credits** (14 searches × 2 + 1 extract of 16 URLs at 2 per 5 URLs) — measured offline against recorded fixtures; live figures pending |
+| **Tavily** `search` (advanced, `include_domains`, `time_range`) + `extract` (advanced, markdown) | the only ingestion path; one live crawl costs **40 Tavily credits** (14 searches, 2 extracts; 2026-10-06) and 52 in the Nebius Job (2026-10-10, more new pages); 36 Tavily credits measured offline against recorded fixtures |
 
 Only nine domains are ever searched or extracted (`config.SOURCE_DOMAINS`): eur-lex.europa.eu,
 commission.europa.eu, green-forum.ec.europa.eu, gesetze-im-internet.de, bmj.de, bmuv.de, ihk.de,
@@ -100,9 +100,14 @@ dropped and the withdrawal function stays; everything else is unchanged.
 
 ## Status / what's not done
 
-- Live deploy (Endpoint + Job) pending Moiz's keys and console session — `docs/runbook-nebius.md`.
-- Live Tavily and Token Factory numbers pending in this README (see FEEDBACK.md); `examples/seed-run` is recorded from a live crawl (`regwatch record-seed`).
-- Open issues: `docs/issues.md`.
+- Live since 2026-10-10: the web app on a Nebius Serverless Endpoint (URL above) and the crawl as a Nebius Serverless
+  Job, with keys from a Nebius MysteryBox secret; a Job without the secret refuses to run (exit 2, never fixtures).
+- The daily schedule (`.github/workflows/daily-crawl.yml`) is off: a daily crawl at ~40–52 credits outruns the
+  1,000-credit Tavily free plan, and its results reach the URL only by re-recording the seed. Crawls run on demand.
+- The demo serves the recorded seed run. "Report a wrong call" opens a mail draft to `REGWATCH_REPORT_EMAIL`,
+  which is not yet set on the demo (the draft opens with an empty recipient).
+- Not done: dates in English only (no locale), no re-classification right after a profile change (the next crawl
+  does it). Open issues: `docs/issues.md`.
 
 ## Seed regulations
 
