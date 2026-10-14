@@ -1,10 +1,12 @@
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from regwatch.config import Settings
+from regwatch.db import AgentRunRow, AgentStepRow, session
 from regwatch.ingest.tavily_backend import FixtureTavilyBackend
 from regwatch.schemas import RegChange
 from regwatch.understand.llm_backend import FixtureLLMBackend
@@ -79,3 +81,52 @@ EUDR_URL = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A0202
 def eudr_change() -> RegChange:
     """The seed's unclear EUDR RegChange, shared by the agent grounding and loop tests."""
     return RegChange.model_validate(seed_payload(seed_file(EUDR_UNCLEAR))["change"])
+
+
+def make_agent_run(
+    engine: Any,
+    *,
+    visitor: str = "v",
+    change: int = 14,
+    status: str = "running",
+    n_steps: int = 0,
+    credits: int = 0,
+    created_at: datetime | None = None,
+    profile_id: int = 1,
+) -> int:
+    """Insert an AgentRunRow and return its id (shared by the agent budget/runner/route tests)."""
+    now = created_at or datetime(2026, 10, 20, 12, 0)
+    with session(engine) as s:
+        row = AgentRunRow(
+            visitor_id=visitor,
+            profile_id=profile_id,
+            regchange_id=change,
+            status=status,
+            n_steps=n_steps,
+            tavily_credits=credits,
+            created_at=now,
+            updated_at=now,
+        )
+        s.add(row)
+        s.commit()
+        s.refresh(row)
+        assert row.id is not None
+        return row.id
+
+
+def make_agent_step(
+    engine: Any, run_id: int, *, usd: float = 0.0, credits: int = 0, at: datetime | None = None
+) -> None:
+    """Insert one settled AgentStepRow carrying `usd` and `credits` of spend."""
+    with session(engine) as s:
+        s.add(
+            AgentStepRow(
+                run_id=run_id,
+                idx=1,
+                tool="search_sources",
+                cost_usd=usd,
+                credits=credits,
+                created_at=at or datetime(2026, 10, 20, 12, 0),
+            )
+        )
+        s.commit()
