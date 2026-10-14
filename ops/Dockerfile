@@ -3,14 +3,17 @@ COPY --from=ghcr.io/astral-sh/uv:0.11.7 /uv /usr/local/bin/uv
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 \
     REGWATCH_DB_URL=sqlite:////data/regwatch.db PORT=8000
 WORKDIR /app
-COPY pyproject.toml README.md ./
+COPY pyproject.toml uv.lock README.md ./
 COPY regwatch ./regwatch
 COPY examples ./examples
 # `regwatch seed` reads Settings.seed_dir; pin it to the copied examples so the seed run is found
 # whether the package is installed editable (below) or as a wheel into site-packages.
 ENV REGWATCH_SEED_DIR=/app/examples/seed-run
-# Editable install keeps /app/regwatch next to /app/examples (the DEFAULT_SEED_DIR fallback).
-RUN uv pip install --system --no-cache -e . && mkdir -p /data
+# Dependencies come from uv.lock (the versions the tests ran against), then the project itself;
+# editable keeps /app/regwatch next to /app/examples (the DEFAULT_SEED_DIR fallback).
+RUN uv export --frozen --no-dev --no-emit-project --no-hashes -o /tmp/requirements.txt \
+ && uv pip install --system --no-cache -r /tmp/requirements.txt \
+ && uv pip install --system --no-cache --no-deps -e . && mkdir -p /data
 COPY ops/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 EXPOSE 8000

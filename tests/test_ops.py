@@ -60,6 +60,17 @@ def test_dockerfile_basics() -> None:
     assert "COPY examples ./examples" in text, "the seed run is the only data baked in"
 
 
+def test_dockerfile_installs_the_locked_dependencies() -> None:
+    """2026-10-14: an unlocked `uv pip install -e .` pulled sqlmodel 0.0.48 / SQLAlchemy 2.1.4
+    into the image (lock: 0.0.42 / 2.0.52) and the Endpoint crashed at startup; use uv.lock."""
+    text = DOCKERFILE.read_text(encoding="utf-8")
+    assert "COPY pyproject.toml uv.lock README.md ./" in text
+    assert "uv export --frozen --no-dev --no-emit-project" in text
+    assert "--no-deps -e ." in text
+    install = [ln for ln in text.splitlines() if "uv pip install" in ln]
+    assert all("-r " in ln or "--no-deps" in ln for ln in install), install
+
+
 def test_dockerignore_excludes_secrets_and_dbs() -> None:
     lines = {ln.strip() for ln in DOCKERIGNORE.read_text(encoding="utf-8").splitlines()}
     for required in (".env", "*.db", ".git", ".venv", "tests/"):
