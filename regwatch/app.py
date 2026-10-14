@@ -19,6 +19,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlmodel import Session, select
 
+from regwatch.agent import runner
 from regwatch.config import (
     CATEGORIES,
     EU_COUNTRIES,
@@ -51,6 +52,9 @@ from regwatch.schemas import Decision, RegChange
 
 settings = Settings()
 engine = make_engine(settings)
+# One process (`regwatch serve`, single worker): agent runs a previous process left queued or
+# running can never finish, so they end as failed ("interrupted by restart").
+runner.sweep_interrupted(engine)
 app = FastAPI(title="RegWatch")
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
