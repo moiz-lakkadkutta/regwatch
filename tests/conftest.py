@@ -6,6 +6,7 @@ import pytest
 
 from regwatch.config import Settings
 from regwatch.ingest.tavily_backend import FixtureTavilyBackend
+from regwatch.schemas import RegChange
 from regwatch.understand.llm_backend import FixtureLLMBackend
 from tests.fakes import RecordingBackend
 
@@ -68,3 +69,13 @@ def seed_file(instrument: str) -> Path:
 def seed_change_id(instrument: str) -> int:
     """RegChangeRow.id of `instrument` after `seed()` into a fresh DB (files load in name order)."""
     return SEED_FILES.index(seed_file(instrument)) + 1
+
+
+# the seed's EUDR change the classifier left `unclear` (operator vs trader, company size)
+EUDR_UNCLEAR = "Regulation (EU) 2023/1115 — Article 6 – Article 8"
+EUDR_URL = "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+
+
+def eudr_change() -> RegChange:
+    """The seed's unclear EUDR RegChange, shared by the agent grounding and loop tests."""
+    return RegChange.model_validate(seed_payload(seed_file(EUDR_UNCLEAR))["change"])
