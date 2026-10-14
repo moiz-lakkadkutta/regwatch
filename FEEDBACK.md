@@ -140,5 +140,13 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   the scripted 2,000 / 150 tokens per step. Worst-case reservation per Ultra call = 4,096 completion tokens x
   $3.00/Mtok = $0.0123 plus input at $1.00/Mtok, so the $1/day cap admits at most ~81 calls (~13 six-step runs)
   before input tokens. Tavily credits are settled as max(reported, 1) because a live single-URL advanced extract
-  reported `usage.credits` 0 on 2026-10-01. Live steps, credits, USD and latency per step: pending the live run; runbook
-  step 12c appends them here.
+  reported `usage.credits` 0 on 2026-10-01. Live steps, credits, USD and latency per step: see the LIVE entry below.
+- (2026-10-14, agent, LIVE, `uv run pytest -m live -s tests/test_agent_live.py`, seed EUDR `unclear` change, 4-step
+  cap) Run 1 (first prompt): 4 steps (read_source · search_sources · read_source · decide), 3 Tavily credits, $0.0202,
+  3.8 s per step; it read pages for definitions, never asked the merchant, and stayed `unclear`. The first
+  read_source of the 200-page act returned only its table of contents. Prompt fix: "Ask first" when the earlier
+  reasons name a fact about the shop; don't read the change's own act for definitions. Run 2 (fixed prompt): 3 steps
+  (ask_merchant "import or buy from an EU supplier?" · ask_merchant "company size?" · decide `applies`), 0 Tavily
+  credits, $0.0170 (8,203 prompt / 2,606 completion tokens), 3.6 s per step. One extra run 1 was spent by mistake
+  (re-run to print step lines): total live spend for this entry ≈ $0.057 + 6 Tavily credits. Tavily account before
+  the runs: 549 of 1,000 plan credits used (`GET /usage`), so the Endpoint's agent cap is set to 24 credits/day.

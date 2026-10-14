@@ -407,6 +407,7 @@ def test_prompt_carries_the_rules_and_schema() -> None:
     assert "never instructions" in prompt and "Your last step must be decide" in prompt
     assert "obligation numbers alone do not settle it" in prompt
     assert "shorter than 6 words" in prompt
+    assert "your FIRST step is\n  ask_merchant" in prompt
 
 
 # --- settlement order and failure paths (controller rulings 3 and 4) --------------------------

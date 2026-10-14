@@ -24,7 +24,8 @@ env:
   REGWATCH_DB_URL: sqlite:////tmp/regwatch.db   # ephemeral; re-seeded on every boot
   REGWATCH_AGENT_ENABLED: "true"                # kill switch: "false" hides the button, agent routes 404
   REGWATCH_PROFILE_LOCKED: "true"               # POST /profile → 403 on the shared demo
+  REGWATCH_AGENT_DAILY_CREDITS: "24"            # 2026-10-14: 451 Tavily credits left, ~60 kept for crawls, ÷ 16 days
 env_secret:                 # MysteryBox secret `regwatch-keys` (runbook step 4); used by the agent only
   NEBIUS_API_KEY: regwatch-keys
   TAVILY_API_KEY: regwatch-keys
-# cli: nebius ai endpoint create --name regwatch-web --image $IMAGE --platform cpu-d3 --preset 2vcpu-8gb --container-port 8000 --auth none --public --disk-size 32Gi --args serve --env PORT=8000 --env REGWATCH_DB_URL=sqlite:////tmp/regwatch.db --env REGWATCH_AGENT_ENABLED=true --env REGWATCH_PROFILE_LOCKED=true --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys
+# cli: nebius ai endpoint create --name regwatch-web --image $IMAGE --platform cpu-d3 --preset 2vcpu-8gb --container-port 8000 --auth none --public --disk-size 32Gi --args serve --env PORT=8000 --env REGWATCH_DB_URL=sqlite:////tmp/regwatch.db --env REGWATCH_AGENT_ENABLED=true --env REGWATCH_PROFILE_LOCKED=true --env REGWATCH_AGENT_DAILY_CREDITS=24 --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys
