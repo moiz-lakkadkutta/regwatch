@@ -1,6 +1,10 @@
-# Nebius Serverless AI has no declarative YAML apply as of 2026-09; these are the values to enter in console (Serverless AI → Endpoints → Create) or the flags for the CLI line at the bottom.
+# Nebius Serverless AI has no declarative YAML apply as of 2026-09; these are the values to enter in console (Serverless AI → Endpoints → Create/Update) or the flags for the CLI line at the bottom.
 # Endpoint = the same image as the Job, `serve` mode: `regwatch seed && regwatch serve` on its own
-# ephemeral SQLite. No keys on the public VM (env_secret stays empty).
+# ephemeral SQLite, ONE uvicorn worker (the agent's executor and budget lock are per process).
+# Keys: owner decision 2026-10-14 reverses the earlier no-keys rule so "Let the agent check" runs
+# live; capped in code at $1 model + 60 Tavily credits per UTC day (REGWATCH_AGENT_DAILY_USD /
+# _CREDITS defaults), 6 steps / 10 credits per run. Kill switch: REGWATCH_AGENT_ENABLED=false.
+# The shared demo profile is read-only (REGWATCH_PROFILE_LOCKED). Applied only at runbook step 12.
 name: regwatch-web
 image: cr.eu-west2.nebius.cloud/e04t3ertpv4dynst9y/regwatch:<GIT_SHA>   # deployed 2026-10-10: 95c3b73
 platform: cpu-d3
@@ -14,5 +18,9 @@ args: "serve"
 env:
   PORT: "8000"
   REGWATCH_DB_URL: sqlite:////tmp/regwatch.db   # ephemeral; re-seeded on every boot
-env_secret: {}
-# cli: nebius ai endpoint create --name regwatch-web --image $IMAGE --platform cpu-d3 --preset 2vcpu-8gb --container-port 8000 --auth none --public --disk-size 32Gi --args serve --env PORT=8000 --env REGWATCH_DB_URL=sqlite:////tmp/regwatch.db
+  REGWATCH_AGENT_ENABLED: "true"                # kill switch: "false" hides the button, agent routes 404
+  REGWATCH_PROFILE_LOCKED: "true"               # POST /profile → 403 on the shared demo
+env_secret:                 # MysteryBox secret `regwatch-keys` (runbook step 4); used by the agent only
+  NEBIUS_API_KEY: regwatch-keys
+  TAVILY_API_KEY: regwatch-keys
+# cli: nebius ai endpoint create --name regwatch-web --image $IMAGE --platform cpu-d3 --preset 2vcpu-8gb --container-port 8000 --auth none --public --disk-size 32Gi --args serve --env PORT=8000 --env REGWATCH_DB_URL=sqlite:////tmp/regwatch.db --env REGWATCH_AGENT_ENABLED=true --env REGWATCH_PROFILE_LOCKED=true --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys

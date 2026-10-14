@@ -68,6 +68,35 @@ Cost line: the Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/
 11. **Rollback.** Stop the Endpoint; disable the workflow; delete the Job; redeploy the previous image
     tag. Delete the Endpoint only after the video is recorded.
 
+12. **Agent on the Endpoint — ASK (owner go; reverses "no keys on the public VM").** Owner decision
+    2026-10-14: "Let the agent check" runs live on the public URL, so the public Endpoint now carries the
+    keys (the `regwatch-keys` MysteryBox secret), capped in code at $1 model + 60 Tavily credits per UTC day
+    for all visitors together, ≤ 6 steps and ≤ 10 credits per run, 5 runs per visitor per hour. Nothing here
+    is run by the orchestrator without Moiz's go.
+    - The hourly per-visitor limit is cookie-based (`rw_visitor`) and bypassable by clearing cookies. The
+      daily $1 / 60-credit caps are what actually bound spend.
+    - Turn the agent off: set `REGWATCH_AGENT_ENABLED=false` on the Endpoint (env change / redeploy).
+    a. Check the Tavily plan's remaining monthly credits before enabling (60/day × 16 days could reach ~960,
+       plus any crawl at ~40–52). If less is left, set `REGWATCH_AGENT_DAILY_CREDITS` to (credits left ÷ days
+       to Oct 30).
+    b. Prefer a separate Token Factory key and Tavily key for the Endpoint (provider-side spend caps if
+       offered), so the Job's keys are not on the public VM; note in `FEEDBACK.md` whether per-key caps exist.
+    c. Locally, with keys in `.env`: `uv run pytest -m live -s tests/test_agent_live.py` (the test caps the
+       run at 4 steps and $0.10 per day via settings; it spends real money). Paste its `live agent: …` line and
+       the step lines into a dated `FEEDBACK.md` entry (steps, credits, USD, latency per step).
+    d. Build + push the image (step 3). Prefer updating the existing Endpoint in place with the new image,
+       the `env` (`REGWATCH_AGENT_ENABLED=true`, `REGWATCH_PROFILE_LOCKED=true`) and `env_secret`
+       (`NEBIUS_API_KEY` / `TAVILY_API_KEY` = `regwatch-keys`) from `ops/serverless-endpoint.yaml`. If the
+       secret can only be attached by re-creating it and the URL changes, update `README.md`,
+       `docs/devpost.md`, `docs/status.md`, the yaml and `tests/test_readme.py` before the video (Oct 25–26).
+    e. After the redeploy, verify a non-htmx same-origin POST is not refused: the agent POST guard compares
+       the `Origin` header with the `Host` header, which behind the Nebius ingress may differ from what the
+       app sees locally. Send a POST without `HX-Request` and with `Origin: $URL`; it must not answer 403.
+    f. Verify on a phone: `$URL/change/14` (Regulation (EU) 2023/1115 — Article 6 – Article 8, the seed's
+       unclear change) → "Let the agent check" → steps appear with credits, one question, answer → the
+       "Agent: …" card above "Original check"; the card's "Agent today" line moves; the `/feed` footer's
+       credits are unchanged. The Endpoint runs one uvicorn worker (`regwatch serve`); never add workers.
+
 ## Unverified until the console is open
 - Whether the root disk survives Endpoint stop/start; whether one shared filesystem mounts rw on
   Endpoint + Job simultaneously (stretch: mount at `/data` on both).

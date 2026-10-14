@@ -244,9 +244,16 @@ def test_ops_yaml_mirror_env_example() -> None:
         assert key in job["env"], f"{key} from .env.example missing in ops/serverless-job.yaml env"
     for secret in ("NEBIUS_API_KEY", "TAVILY_API_KEY"):
         assert secret in job["env_secret"]
+        # owner decision 2026-10-14: the agent runs live on the public Endpoint, capped in code
+        assert endpoint["env_secret"].get(secret) == "regwatch-keys"
         assert secret not in job["env"]
         assert secret not in endpoint["env"]
-    assert endpoint["env_secret"] == {}, "the public Endpoint carries no keys"
+    assert endpoint["env"]["REGWATCH_AGENT_ENABLED"] == "true"
+    assert endpoint["env"]["REGWATCH_PROFILE_LOCKED"] == "true"
+    endpoint_text = ENDPOINT_YAML.read_text(encoding="utf-8")
+    assert "--env-secret NEBIUS_API_KEY=regwatch-keys" in endpoint_text
+    assert not re.search(r"--env (NEBIUS|TAVILY)_API_KEY", endpoint_text)
+    assert "No keys on the public VM" not in endpoint_text
     assert job["env"]["REGWATCH_TIME_RANGE"] == "year"
     assert job["args"] == {"": '"crawl"'} or job["args"] == {"": "crawl"}
     assert endpoint["args"] == {"": '"serve"'} or endpoint["args"] == {"": "serve"}
