@@ -24,6 +24,8 @@ def test_demo_profile_matches_config() -> None:
     assert set(profile.ship_to) <= set(EU_COUNTRIES)
     assert set(profile.categories) <= {k for k, _ in CATEGORIES}
     assert profile.platform in {k for k, _ in PLATFORMS}
+    # EUDR dates and duties depend on these (Regulation (EU) 2025/2650)
+    assert profile.company_size == "small"
 
 
 @pytest.mark.parametrize("path", CHANGE_FILES, ids=[p.name for p in CHANGE_FILES])

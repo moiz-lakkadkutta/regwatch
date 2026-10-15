@@ -18,7 +18,7 @@ video (Oct 25–26) · clean-machine dry run (Oct 27) · Devpost submission (clo
 
 **Asks for Moiz:** decide on the daily schedule (Tavily free plan 1000 credits/month vs ~52 per run; results do not reach the Endpoint) · `REGWATCH_REPORT_EMAIL` · check the live URL on a phone.
 
-**Top 5 open issues** (`docs/issues.md`): failed-normalize doc re-selected every crawl · `_todo_key` collision on shared quotes (one seed change has it) · unverified nebius CLI / `--args` syntax. The seed is recorded from a live crawl (`regwatch record-seed`: 4 documents, 29 changes, live Ultra applicabilities).
+**Top 5 open issues** (`docs/issues.md`): failed-normalize doc re-selected every crawl · `_todo_key` collision on shared quotes (one seed change has it) · unverified nebius CLI / `--args` syntax. The seed is recorded from a live crawl (`regwatch record-seed`: 4 documents, 26 changes, live Ultra applicabilities re-classified 2026-10-14 for a small company: EUDR to-dos due 30 June 2027).
 
 ## Freeze checklist (Oct 24, worktree `day/1024`)
 

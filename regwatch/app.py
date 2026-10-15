@@ -7,7 +7,6 @@ to-do shows its verbatim quote and source link; 'unclear' is a first-class state
 from __future__ import annotations
 
 import hashlib
-import json
 import secrets
 from dataclasses import dataclass, replace
 from datetime import date, datetime
@@ -18,18 +17,21 @@ from urllib.parse import quote, urlsplit
 from fastapi import FastAPI, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
+from pydantic import ValidationError
 from sqlmodel import Session, col, select
 
 from regwatch.agent import runner
 from regwatch.agent.view import AgentPanel, build_panel
 from regwatch.config import (
     CATEGORIES,
+    COMPANY_SIZES,
     EU_COUNTRIES,
     PLATFORMS,
     REGULATION_LABELS,
     SECTION_SEP,
     SEED_REGULATIONS,
     SOURCE_DOMAINS,
+    SUPPLY_OPTIONS,
     Settings,
     country_name,
     regulation_instrument,
@@ -52,7 +54,7 @@ from regwatch.db import (
     unchecked_changes,
     utcnow,
 )
-from regwatch.schemas import Decision, RegChange
+from regwatch.schemas import Decision, Profile, RegChange
 
 settings = Settings()
 engine = make_engine(settings)
@@ -548,6 +550,8 @@ def profile_form(request: Request) -> Any:
             "countries": EU_COUNTRIES,
             "categories": CATEGORIES,
             "platforms": PLATFORMS,
+            "company_sizes": COMPANY_SIZES,
+            "supply_options": SUPPLY_OPTIONS,
             "profile": prof.to_schema() if prof else None,
             "locked": settings.profile_locked,
         },
@@ -560,20 +564,26 @@ def profile_save(
     ship_to: list[str] = Form(default=[]),
     categories: list[str] = Form(default=[]),
     platform: str = Form("shopify"),
+    company_size: str = Form(""),
+    supply: str = Form(""),
 ) -> Any:
     if settings.profile_locked:
         return HTMLResponse(PROFILE_LOCKED_NOTE, status_code=403)
     if "ALL_EU" in ship_to:
         ship_to = list(EU_COUNTRIES)
-    with session(engine) as s:
-        s.add(
-            ProfileRow(
-                establishment_country=establishment_country.upper(),
-                ship_to=json.dumps(sorted(set(ship_to))),
-                categories=json.dumps(sorted(set(categories))),
-                platform=platform,
-            )
+    try:
+        profile = Profile(
+            establishment_country=establishment_country.upper(),
+            ship_to=sorted(set(ship_to)),
+            categories=sorted(set(categories)),
+            platform=platform,
+            company_size=company_size or None,  # validated by Profile
+            supply=supply or None,
         )
+    except ValidationError:
+        return HTMLResponse("That answer isn't one of the options.", status_code=422)
+    with session(engine) as s:
+        s.add(ProfileRow.from_schema(profile))
         s.commit()
     return RedirectResponse("/feed", status_code=303)
 

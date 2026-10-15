@@ -105,8 +105,9 @@ SEED_REGULATIONS: list[dict[str, str]] = [
     {
         "tag": "eudr",
         "instrument": "Regulation (EU) 2023/1115 — Deforestation Regulation (EUDR)",
-        "query": "EUDR Regulation 2023/1115 application date small micro enterprises due diligence statement wood leather furniture",
-        "applies_from": "2026-06-30",
+        "query": "EUDR Regulation 2023/1115 as amended by Regulation 2025/2650 application date micro small enterprises due diligence statement wood leather furniture",
+        # Micro and small operators; medium and large from 2026-12-30 (Regulation (EU) 2025/2650).
+        "applies_from": "2027-06-30",
     },
 ]
 
@@ -187,6 +188,17 @@ PLATFORMS: list[tuple[str, str]] = [
     ("shopify", "Shopify"),
     ("woocommerce", "WooCommerce"),
     ("other", "Other"),
+]
+
+# EUDR dates and duties depend on these two facts (Regulation (EU) 2025/2650). Keys == schemas.
+COMPANY_SIZES: list[tuple[str, str]] = [
+    ("small", "Fewer than 50 staff and turnover up to €10 million"),
+    ("larger", "Bigger than that"),
+]
+
+SUPPLY_OPTIONS: list[tuple[str, str]] = [
+    ("eu_suppliers", "I buy them from suppliers in the EU"),
+    ("imports_or_makes", "I import them from outside the EU, or make them myself"),
 ]
 REGULATION_TAGS: frozenset[str] = frozenset(r["tag"] for r in SEED_REGULATIONS)
 

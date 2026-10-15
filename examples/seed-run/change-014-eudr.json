@@ -1,55 +1,58 @@
 {
-  "created_at": "2026-10-06T11:41:28.109971+00:00",
+  "created_at": "2026-10-06T11:41:28.112141+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.00858,
-  "tavily_credits": 1,
+  "cost_usd": 0.005745,
+  "tavily_credits": 2,
   "change": {
     "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
-    "instrument": "Regulation (EU) 2023/1115 — Article 6 – Article 8",
+    "instrument": "Regulation (EU) 2023/1115 — Article 10",
     "jurisdiction": "EU",
-    "summary": "Operators must submit due diligence statements or simplified declarations through authorised representatives, and all operators must exercise due diligence before placing products on the market. The rules apply to any operator placing relevant products on the EU market.",
+    "summary": "Operators must perform a risk assessment on relevant products before placing them on the market or exporting them, and may only do so if the risk is no or negligible. They must document and review this assessment annually and demonstrate how they applied the criteria listed in the article.",
     "effective_dates": [
       "2026-12-30",
       "2027-06-30"
     ],
     "obligations": [
       {
-        "text": "Mandate an authorised representative to submit due diligence or simplified declarations.",
-        "quote": "Operators may mandate an authorised representative to submit the due diligence statement pursuant to Article 4(2) or to submit a simplified declaration pursuant to Article 4a(2) on their behalf."
+        "text": "Do not place relevant products on the market or export them unless the risk assessment shows no or only a negligible risk of non-compliance.",
+        "quote": "Operators shall not place the relevant products on the market or export them, except where the risk assessment reveals no or only a negligible risk that the relevant products are non-compliant."
       },
       {
-        "text": "Provide a copy of the mandate to competent authorities upon request.",
-        "quote": "The authorised representative shall, upon request, provide a copy of the mandate in an official language of the Union to the competent authorities and a copy in an official language of the Member State in which the due diligence statement or the simplified declaration is handled or, where that is not possible, in English."
+        "text": "Document and review the risk assessment at least once a year.",
+        "quote": "The operators shall document and review the risk assessments at least on an annual basis and make them available to the competent authorities upon request."
       },
       {
-        "text": "Natural persons or microenterprises may mandate the next downstream operator as authorised representative.",
-        "quote": "An operator that is a natural person or a microenterprise may mandate the next downstream operator or trader further down the supply chain that is not a natural person or a microenterprise to act as an authorised representative."
-      },
-      {
-        "text": "Exercise due diligence before placing relevant products on the market or exporting them.",
-        "quote": "Prior to placing relevant products on the market or exporting them, operators shall exercise due diligence with regard to all relevant products."
-      },
-      {
-        "text": "Collect information, data and documents needed to fulfil Article 9 requirements.",
-        "quote": "the collection of information, data and documents needed to fulfil the requirements set out in Article 9;"
-      },
-      {
-        "text": "Conduct risk assessment measures as referred to in Article 10.",
-        "quote": "risk assessment measures as referred to in Article 10;"
-      },
-      {
-        "text": "Implement risk mitigation measures as referred to in Article 11.",
-        "quote": "risk mitigation measures as referred to in Article 11."
+        "text": "Demonstrate how gathered information was checked against the risk assessment criteria.",
+        "quote": "Operators shall be able to demonstrate how the information gathered was checked against the risk assessment criteria set out in paragraph 2 and how they determined the degree of risk."
       }
     ]
   },
   "applicability": {
-    "decision": "unclear",
+    "decision": "applies",
     "reasons": [
-      "We couldn't tell from your profile whether you are an 'operator' who places wood and leather products on the EU market for the first time (e.g., as importer or manufacturer) or a downstream trader, because the obligations only bind operators.",
-      "Your company size (microenterprise, SME, or large) determines which deadlines apply and whether you can use simplified due diligence or mandate a downstream operator as representative.",
-      "Since you sell furniture/wooden goods and leather goods — both listed as relevant products — the regulation would apply if you are the operator."
+      "You sell wooden furniture and leather goods, which fall under the wood and cattle commodities covered by the EU Deforestation Regulation.",
+      "As a Germany-based shop placing these products on the EU market, you are an operator subject to the risk assessment requirements.",
+      "Your company size (micro or small enterprise) means the obligations take effect on 30 June 2027."
     ],
-    "todos": []
+    "todos": [
+      {
+        "text": "Conduct a risk assessment on your wooden furniture and leather goods before listing them, and only list them if the assessment shows no or negligible risk of non-compliance.",
+        "due": "2027-06-30",
+        "quote": "Operators shall not place the relevant products on the market or export them, except where the risk assessment reveals no or only a negligible risk that the relevant products are non-compliant.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Create a documented risk assessment for your wood and leather products and set a calendar reminder to review and update it at least once a year.",
+        "due": "2027-06-30",
+        "quote": "The operators shall document and review the risk assessments at least on an annual basis and make them available to the competent authorities upon request.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Keep records showing how you checked your product information against the regulation's risk criteria so you can demonstrate this to authorities if asked.",
+        "due": "2027-06-30",
+        "quote": "Operators shall be able to demonstrate how the information gathered was checked against the risk assessment criteria set out in paragraph 2 and how they determined the degree of risk.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      }
+    ]
   }
 }

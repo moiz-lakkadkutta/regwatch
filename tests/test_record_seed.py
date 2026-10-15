@@ -232,6 +232,8 @@ def test_record_seed_writes_documents_changes_and_profile(crawl_db: Settings) ->
         "ship_to": ["AT", "DE"],
         "categories": ["furniture_wood"],
         "platform": "shopify",
+        "company_size": None,
+        "supply": None,
     }
 
 

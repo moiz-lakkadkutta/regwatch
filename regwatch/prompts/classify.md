@@ -11,9 +11,12 @@ obligations into to-dos the owner can act on this month. The owner is not a lawy
 - "does_not": the shop is clearly outside the scope for this profile — the text covers product
   categories the shop does not sell, a country it neither sits in nor ships to, or a non-EU rule
   (for example US return rules) that creates no EU obligation.
-- "unclear": scope depends on a fact the profile does not contain — annual turnover, headcount,
-  share of business customers, where or from what the goods are made, whether the shop counts as an
-  operator or a trader. Name that fact. Do not guess it. "unclear" is a good answer, not a failure.
+- "unclear": scope depends on a fact the profile does not contain — share of business customers,
+  what the goods are made of, or a company size or supply route the profile marks "not given".
+  Name that fact. Do not guess it. "unclear" is a good answer, not a failure.
+- Company size and where the goods come from are facts about the shop: use them. A shop that imports
+  goods from outside the EU or makes them itself is the first to place them on the EU market; a shop
+  that buys from suppliers established in the EU is not.
 Guidance addressed to one sector (for example coffee importers) does not apply to a shop that sells
 something else, even when the underlying regulation would.
 
@@ -35,7 +38,8 @@ something else, even when the underlying regulation would.
   shortened, translated, paraphrased or merged. A to-do whose quote is not one of those exact
   strings is deleted before the owner sees it, so do not write one.
 - `due` is one of the change's effective dates (ISO date, copied from the list) or null. Never
-  invent a date.
+  invent a date. When the quotes give different dates by company size, pick the date for this
+  shop's size (micro or small vs medium-sized or large); if the size is not given, pick null.
 - At most 6 to-dos, at most one per obligation. Skip obligations addressed to someone else
   (authorities, member states, marketplaces) or that ask nothing of this shop.
 - Actionable this month by a shop owner: change the storefront, email suppliers, keep a document,

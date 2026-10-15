@@ -1,46 +1,46 @@
 {
-  "created_at": "2026-10-06T11:41:28.103485+00:00",
+  "created_at": "2026-10-06T11:41:28.105479+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.006914,
+  "cost_usd": 0.006961,
   "tavily_credits": 2,
   "change": {
     "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
-    "instrument": "Regulation (EU) 2023/1115 — Article 1",
+    "instrument": "Regulation (EU) 2023/1115 — Article 3",
     "jurisdiction": "EU",
-    "summary": "Merchants must ensure relevant products placed on the Union market comply with deforestation and forest degradation rules by the dates set out in Article 38. This regulation applies to operators and traders placing or making available listed commodities on the Union market.",
+    "summary": "Operators and downstream operators may not place or make available relevant commodities or products on the EU market unless they are deforestation-free, produced in accordance with the producing country's legislation, and covered by a due diligence statement or simplified declaration. This applies to all operators and downstream operators placing relevant commodities or products on the market.",
     "effective_dates": [
       "2026-12-30",
       "2027-06-30"
     ],
     "obligations": [
       {
-        "text": "Ensure relevant products placed on the Union market comply with deforestation rules.",
-        "quote": "This Regulation lays down rules regarding the placing and making available on the Union market as well as the export from the Union of relevant products, as listed in Annex I, that contain, have been fed with or have been made using relevant commodities"
+        "text": "Do not place relevant commodities on the market unless they have been produced in accordance with the relevant legislation of the country of production.",
+        "quote": "they have been produced in accordance with the relevant legislation of the country of production;"
       },
       {
-        "text": "Do not place on the Union market relevant products produced before the date in Article 38(1).",
-        "quote": "Except as provided for in Article 37(3), this Regulation does not apply to relevant products listed in Annex I produced before the date indicated in Article 38(1)."
+        "text": "Do not place relevant commodities on the market unless they are covered by a due diligence statement or a simplified declaration.",
+        "quote": "they are covered by a due diligence statement or a simplified declaration, as required by the relevant provisions of this Regulation."
       }
     ]
   },
   "applicability": {
     "decision": "applies",
     "reasons": [
-      "You are established in Germany and ship to multiple EU countries, so you place products on the Union market.",
-      "You sell wooden furniture and leather goods, which contain or are made using wood and cattle — both listed as relevant commodities under this regulation.",
-      "The regulation binds operators and traders who make available relevant products listed in Annex I, and your product categories fall within the typical scope of those annexes."
+      "You sell wooden furniture and leather goods, which fall under the wood and cattle commodities covered by the EU Deforestation Regulation.",
+      "Your shop is established in Germany and ships to multiple EU countries, so you place these products on the EU market.",
+      "As a micro or small enterprise, the obligations apply to you from 30 June 2027."
     ],
     "todos": [
       {
-        "text": "Check which of your wooden furniture and leather goods fall under the Annex I product list and start gathering geolocation and supplier data for those items",
-        "due": "2026-12-30",
-        "quote": "This Regulation lays down rules regarding the placing and making available on the Union market as well as the export from the Union of relevant products, as listed in Annex I, that contain, have been fed with or have been made using relevant commodities",
+        "text": "Ask your suppliers for documentation proving the wood and leather were produced legally in their country of origin",
+        "due": "2027-06-30",
+        "quote": "they have been produced in accordance with the relevant legislation of the country of production;",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
       },
       {
-        "text": "Identify the Article 38(1) cutoff date and verify that stock you place on the EU market after 30 December 2026 was not produced before that date",
-        "due": "2026-12-30",
-        "quote": "Except as provided for in Article 37(3), this Regulation does not apply to relevant products listed in Annex I produced before the date indicated in Article 38(1).",
+        "text": "Prepare a simplified due diligence statement for each product line containing wood or leather, collecting geolocation and legality evidence",
+        "due": "2027-06-30",
+        "quote": "they are covered by a due diligence statement or a simplified declaration, as required by the relevant provisions of this Regulation.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
       }
     ]

@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-06T11:39:53.442143+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.005353,
+  "cost_usd": 0.004967,
   "tavily_credits": 2,
   "change": {
     "document_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj",
@@ -25,19 +25,19 @@
   "applicability": {
     "decision": "applies",
     "reasons": [
-      "You are established in Germany and ship to ten EU countries, selling furniture and leather goods online via Shopify.",
-      "The directive requires online merchants to provide withdrawal conditions, time limits, procedures, the model withdrawal form, and information about the withdrawal function for distance contracts.",
-      "Your B2C cross-border sales fall squarely within these obligations."
+      "You run an online shop established in Germany and ship to ten other EU countries, so EU distance-selling rules bind you.",
+      "You sell furniture and leather goods to consumers, which are covered by the withdrawal-right requirements for distance contracts.",
+      "The directive explicitly addresses online merchants and takes effect on 19 June 2026, giving you time to prepare."
     ],
     "todos": [
       {
-        "text": "Add withdrawal conditions, time limit, procedures, and the model withdrawal form to your storefront for distance contracts",
+        "text": "Add the withdrawal conditions, time limit, procedures and the model withdrawal form (Annex I(B)) to your storefront and order confirmation emails",
         "due": "2026-06-19",
         "quote": "where a right of withdrawal exists, the conditions, time limit and procedures for exercising that right in accordance with Article 11(1), as well as the model withdrawal form set out in Annex I(B), and, where applicable, information about the existence and placement of the withdrawal function referred to in Article 11a;",
         "citation_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj"
       },
       {
-        "text": "Display information about the existence and placement of the withdrawal function on your storefront",
+        "text": "Display clear information on your storefront about the existence and placement of the withdrawal function (e.g. a visible withdrawal button or link)",
         "due": "2026-06-19",
         "quote": "where a right of withdrawal exists, the conditions, time limit and procedures for exercising that right in accordance with Article 11(1), as well as the model withdrawal form set out in Annex I(B), and, where applicable, information about the existence and placement of the withdrawal function referred to in Article 11a;",
         "citation_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj"
