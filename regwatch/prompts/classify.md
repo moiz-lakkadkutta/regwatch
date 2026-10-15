@@ -40,8 +40,13 @@ something else, even when the underlying regulation would.
 - `due` is one of the change's effective dates (ISO date, copied from the list) or null. Never
   invent a date. When the quotes give different dates by company size, pick the date for this
   shop's size (micro or small vs medium-sized or large); if the size is not given, pick null.
-- At most 6 to-dos, at most one per obligation. Skip obligations addressed to someone else
-  (authorities, member states, marketplaces) or that ask nothing of this shop.
+- "Date notes for this act", when present, quote the act's own date rules for this shop. When they
+  say some of the shop's products keep an earlier date (an "Except …" line), give those products
+  their own to-do for that obligation with their date, and the shop's other products (if any) a
+  second to-do with theirs. Both use the same quote; each `text` names its products.
+- At most 6 obligations, at most one to-do per obligation and product group. Skip obligations
+  addressed to someone else (authorities, member states, marketplaces) or that ask nothing of
+  this shop.
 - Actionable this month by a shop owner: change the storefront, email suppliers, keep a document,
   set up a folder, ask one question.
 

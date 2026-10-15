@@ -32,23 +32,41 @@
     "reasons": [
       "You sell wooden furniture and leather goods, which fall under the wood and cattle commodities covered by the EU Deforestation Regulation.",
       "As a Germany-based shop placing these products on the EU market, you are an operator subject to the risk assessment requirements.",
-      "Your company size (micro or small enterprise) means the obligations take effect on 30 June 2027."
+      "As a small company, the obligations take effect on 30 June 2027 for your leather goods and on 30 December 2026 for your wooden furniture, which the later date leaves out."
     ],
     "todos": [
       {
-        "text": "Conduct a risk assessment on your wooden furniture and leather goods before listing them, and only list them if the assessment shows no or negligible risk of non-compliance.",
+        "text": "Conduct a risk assessment on your wooden furniture before listing it, and only list it if the assessment shows no or negligible risk of non-compliance.",
+        "due": "2026-12-30",
+        "quote": "Operators shall not place the relevant products on the market or export them, except where the risk assessment reveals no or only a negligible risk that the relevant products are non-compliant.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Conduct a risk assessment on your leather goods before listing them, and only list them if the assessment shows no or negligible risk of non-compliance.",
         "due": "2027-06-30",
         "quote": "Operators shall not place the relevant products on the market or export them, except where the risk assessment reveals no or only a negligible risk that the relevant products are non-compliant.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
       },
       {
-        "text": "Create a documented risk assessment for your wood and leather products and set a calendar reminder to review and update it at least once a year.",
+        "text": "Create a documented risk assessment for your wooden furniture and set a calendar reminder to review and update it at least once a year.",
+        "due": "2026-12-30",
+        "quote": "The operators shall document and review the risk assessments at least on an annual basis and make them available to the competent authorities upon request.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Create a documented risk assessment for your leather goods and set a calendar reminder to review and update it at least once a year.",
         "due": "2027-06-30",
         "quote": "The operators shall document and review the risk assessments at least on an annual basis and make them available to the competent authorities upon request.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
       },
       {
-        "text": "Keep records showing how you checked your product information against the regulation's risk criteria so you can demonstrate this to authorities if asked.",
+        "text": "Keep records showing how you checked your wooden furniture information against the regulation's risk criteria so you can demonstrate this to authorities if asked.",
+        "due": "2026-12-30",
+        "quote": "Operators shall be able to demonstrate how the information gathered was checked against the risk assessment criteria set out in paragraph 2 and how they determined the degree of risk.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Keep records showing how you checked your leather goods information against the regulation's risk criteria so you can demonstrate this to authorities if asked.",
         "due": "2027-06-30",
         "quote": "Operators shall be able to demonstrate how the information gathered was checked against the risk assessment criteria set out in paragraph 2 and how they determined the degree of risk.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"

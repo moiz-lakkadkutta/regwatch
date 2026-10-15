@@ -13,7 +13,7 @@ from sqlalchemy import inspect, text
 from sqlmodel import Field, Session, SQLModel, col, create_engine, func, select
 from sqlmodel.sql.expression import Select
 
-from regwatch.config import SEED_REGULATIONS, Settings
+from regwatch.config import REFERENCE_TAG, SEED_REGULATIONS, Settings
 from regwatch.schemas import Applicability, Document, Profile, RegChange
 
 
@@ -298,12 +298,14 @@ def last_crawl(s: Session) -> CrawlRunRow | None:
 
 
 def documents_needing_normalize(s: Session) -> list[DocumentRow]:
-    """DocumentRows with no RegChangeRow for their (url, content_hash), sorted by url."""
+    """DocumentRows with no RegChangeRow for their (url, content_hash), sorted by url; documents
+    tagged REFERENCE_TAG (grounding for rule moves, not changes) are never normalised."""
     done = select(RegChangeRow.id).where(
         RegChangeRow.document_url == DocumentRow.url,
         RegChangeRow.content_hash == DocumentRow.content_hash,
     )
-    return list(s.exec(select(DocumentRow).where(~done.exists()).order_by(DocumentRow.url)).all())
+    rows = s.exec(select(DocumentRow).where(~done.exists()).order_by(DocumentRow.url)).all()
+    return [r for r in rows if REFERENCE_TAG not in json.loads(r.regulation_tags)]
 
 
 def store_regchange(

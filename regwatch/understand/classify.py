@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import date
 from functools import cache
@@ -24,6 +25,7 @@ from sqlmodel import Session
 
 from regwatch.config import CATEGORIES, EU_COUNTRIES, PLATFORMS, Settings, country_name
 from regwatch.db import ProfileRow, regchanges_needing_classify, store_applicability
+from regwatch.moves import RuleMove, instrument_moves
 from regwatch.schemas import Applicability, Decision, Profile, RegChange, Todo
 from regwatch.understand.llm_backend import (
     SOURCE_URL_PREFIX,
@@ -37,7 +39,7 @@ from regwatch.understand.normalize import _FENCE_RE, _THINK_RE, PayloadError
 log = logging.getLogger(__name__)
 
 SCHEMA_NAME = "classified_payload"
-MAX_TODOS = 6
+MAX_TODOS = 6  # obligations turned into to-dos (one per product group when dates differ)
 _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _CATEGORY_LABELS = dict(CATEGORIES)
 _PLATFORM_LABELS = dict(PLATFORMS)
@@ -128,10 +130,36 @@ def render_change(change: RegChange) -> str:
     return "\n".join(lines)
 
 
-def build_messages(change: RegChange, profile: Profile) -> list[dict[str, str]]:
+def render_date_notes(moves: Iterable[RuleMove], profile: Profile) -> str:
+    """Grounded date rules of the change's act for this store ('' when none): each stored
+    RuleMove for the store's size, narrowed to what it sells, with every exception's product line
+    and the date those products keep. All quotes passed `RuleMove.validate_sources` when seeded;
+    they only steer `due`, which `enforce()` still checks against the change's effective dates."""
+    lines: list[str] = []
+    for move in moves:
+        if not move.for_profile(profile):
+            continue
+        mv = move.for_store(profile)
+        lines.append(
+            f"- For {mv.audience}: {mv.instrument}, {mv.provision}, as amended by "
+            f'{mv.amending_act}, sets {mv.new_date.isoformat()}: "{mv.quote}"'
+        )
+        for ex in mv.exceptions:
+            lines.append(
+                f"  - Except {ex.products} (this shop sells {', '.join(ex.categories)}): "
+                f'those keep {ex.due.isoformat()}. {ex.act}, {ex.provision}, lists: "{ex.quote}". '
+                f'{ex.due_provision}: "{ex.due_quote}"'
+            )
+    if not lines:
+        return ""
+    return "## Date notes for this act (verbatim from stored sources)\n" + "\n".join(lines)
+
+
+def build_messages(change: RegChange, profile: Profile, notes: str = "") -> list[dict[str, str]]:
+    parts = [render_profile(profile), notes, render_change(change)]
     return [
         {"role": "system", "content": load_prompt()},
-        {"role": "user", "content": f"{render_profile(profile)}\n\n{render_change(change)}"},
+        {"role": "user", "content": "\n\n".join(p for p in parts if p)},
     ]
 
 
@@ -203,6 +231,22 @@ def _parse_due(raw: str | None, change: RegChange, todo_text: str) -> date | Non
     return due
 
 
+def _cap(todos: list[Todo]) -> list[Todo]:
+    """To-dos of the first MAX_TODOS distinct quotes; at most two per quote (one per product
+    group when the date notes give some products an earlier date)."""
+    per_quote: dict[str, int] = {}
+    kept: list[Todo] = []
+    for t in todos:
+        q = " ".join(t.quote.split())
+        if q not in per_quote and len(per_quote) >= MAX_TODOS:
+            continue
+        if per_quote.get(q, 0) >= 2:
+            continue
+        per_quote[q] = per_quote.get(q, 0) + 1
+        kept.append(t)
+    return kept
+
+
 def enforce(payload: ClassifiedPayload, change: RegChange) -> tuple[Applicability, list[Todo], int]:
     """(grounded applicability, rejected to-dos, nulled dues). The grounding rule lives here.
 
@@ -233,9 +277,12 @@ def enforce(payload: ClassifiedPayload, change: RegChange) -> tuple[Applicabilit
                 _ref(change),
             )
         todos = first
-    if len(todos) > MAX_TODOS:
-        log.info("classify: truncated %d to-dos to %d url=%s", len(todos), MAX_TODOS, _ref(change))
-        todos = todos[:MAX_TODOS]
+    capped = _cap(todos)
+    if len(capped) < len(todos):
+        log.info(
+            "classify: truncated %d to-dos to %d url=%s", len(todos), len(capped), _ref(change)
+        )
+        todos = capped
     proposed = Applicability(decision=payload.decision, reasons=payload.reasons, todos=todos)
     rejected = proposed.ungrounded_todos(change)
     grounded = proposed.model_copy(
@@ -329,9 +376,11 @@ def classify(
     backend: LLMBackend,
     settings: Settings,
     ledger: ModelLedger,
+    moves: Iterable[RuleMove] = (),
 ) -> ClassifyResult:
-    """One (change, profile) → grounded Applicability or a failure; one retry; never raises."""
-    messages = build_messages(change, profile)
+    """One (change, profile) → grounded Applicability or a failure; one retry; never raises.
+    `moves`: stored rule moves of the change's act, rendered as date notes (`render_date_notes`)."""
+    messages = build_messages(change, profile, render_date_notes(moves, profile))
     attempt = _Attempt(
         settings=settings,
         backend=backend,
@@ -419,7 +468,14 @@ def classify_all(
     for row in rows:
         assert row.id is not None
         change = row.to_schema()
-        result = classify(change, profile, backend=backend, settings=settings, ledger=ledger)
+        result = classify(
+            change,
+            profile,
+            backend=backend,
+            settings=settings,
+            ledger=ledger,
+            moves=instrument_moves(s, change.instrument),
+        )
         summary.cost_usd += result.cost_usd
         summary.n_todos_dropped += len(result.dropped_todos)
         appl = result.applicability

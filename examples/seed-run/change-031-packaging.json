@@ -1,0 +1,57 @@
+{
+  "created_at": "2026-10-15T14:19:37.096335+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.008609,
+  "tavily_credits": 6,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/eli/reg/2025/40",
+    "instrument": "Regulation (EU) 2025/40 — Article 24",
+    "jurisdiction": "EU",
+    "summary": "Economic operators filling grouped, transport, or e-commerce packaging must ensure the empty space ratio does not exceed 50% by 1 January 2030 (or 3 years after implementing acts are adopted, whichever is later). Sales packaging fillers must be minimised by 12 February 2028, with specific rules for certain product types.",
+    "effective_dates": [
+      "2030-01-01",
+      "2028-02-12",
+      "2032-02-12"
+    ],
+    "obligations": [
+      {
+        "text": "Ensure empty space ratio in grouped, transport or e-commerce packaging does not exceed 50%.",
+        "quote": "By 1 January 2030 or 3 years from the entry into force of the implementing acts adopted pursuant to paragraph 2, whichever is the latest, economic operators who fill grouped packaging, transport packaging or e-commerce packaging shall ensure that the maximum empty space ratio, expressed as a percentage, is 50 %."
+      },
+      {
+        "text": "Adopt implementing acts to establish the empty space ratio calculation methodology by 12 February 2028.",
+        "quote": "By 12 February 2028, the Commission shall adopt implementing acts to establish the methodology for the calculation of the empty space ratio referred to in paragraph 1."
+      },
+      {
+        "text": "Reduce empty space in sales packaging to the minimum necessary for functionality by 12 February 2028.",
+        "quote": "By 12 February 2028, the economic operators who fill sales packaging shall ensure that empty space is reduced to the minimum necessary for ensuring the packaging functionality, including product protection."
+      },
+      {
+        "text": "Consider space filled by filling materials as empty space when calculating ratios.",
+        "quote": "Space filled by filling materials, such as paper cuttings, air cushions, bubble wraps, sponge fillers, foam fillers, wood wool, polystyrene or Styrofoam chips, shall be considered as empty space."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "applies",
+    "reasons": [
+      "You ship furniture and leather goods to multiple EU countries from Germany, so you fill e-commerce packaging for delivery.",
+      "You also use sales packaging for your products, which falls under the sales packaging rules.",
+      "As a micro or small enterprise, you are still an economic operator who fills packaging, so the empty space limits apply to you."
+    ],
+    "todos": [
+      {
+        "text": "Measure the empty space ratio in your shipping boxes and plan to reduce it to 50% or less",
+        "due": "2030-01-01",
+        "quote": "By 1 January 2030 or 3 years from the entry into force of the implementing acts adopted pursuant to paragraph 2, whichever is the latest, economic operators who fill grouped packaging, transport packaging or e-commerce packaging shall ensure that the maximum empty space ratio, expressed as a percentage, is 50 %.",
+        "citation_url": "https://eur-lex.europa.eu/eli/reg/2025/40"
+      },
+      {
+        "text": "Review your product packaging and reduce empty space to the minimum needed for protection",
+        "due": "2028-02-12",
+        "quote": "By 12 February 2028, the economic operators who fill sales packaging shall ensure that empty space is reduced to the minimum necessary for ensuring the packaging functionality, including product protection.",
+        "citation_url": "https://eur-lex.europa.eu/eli/reg/2025/40"
+      }
+    ]
+  }
+}

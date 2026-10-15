@@ -7,10 +7,43 @@
     "new_date": "2027-06-30",
     "amending_act": "Regulation (EU) 2025/2650",
     "amending_url": "https://eur-lex.europa.eu/legal-content/EN/AUTO/?uri=celex:32025R2650",
+    "amending_text_url": "https://eur-lex.europa.eu/eli/reg/2025/2650/oj",
     "provision": "Article 38(3)",
     "quote": "Except as regards the products covered by the Annex to Regulation (EU)No 995/2010, for operators, whether natural persons or micro- or small undertakings within the meaning of Article 3(1) or Article 3(2), first subparagraph, respectively, of Directive 2013/34/EU, irrespective of their legal form, who were established as such by 31 December 2024, the Articles referred to in paragraph 2 of this Article shall apply from 30 June 2027.",
     "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226#M2-44",
-    "caveat": "This applies if your company was already small by 31 December 2024. Timber products already covered by the EU Timber Regulation (No 995/2010) are left out of this postponement and keep the general date, 30 December 2026."
+    "caveat": "This applies if your company was already small by 31 December 2024.",
+    "old_act": "Regulation (EU) 2024/3234",
+    "old_quote": "Except as regards the products covered in the Annex to Regulation (EU)No 995/2010, for operators that by 31 December 2020 were established as micro-undertakings or small undertakings pursuant to Article 3(1) or (2) of Directive 2013/34/EU, respectively, the Articles referred to in paragraph 2 of this Article shall apply from 30 June 2026.",
+    "old_citation_url": "https://eur-lex.europa.eu/eli/reg/2024/3234/oj/eng",
+    "categories": ["furniture_wood", "leather", "coffee_cocoa", "paper_print", "rubber"],
+    "exceptions": [
+      {
+        "categories": ["furniture_wood"],
+        "products": "wooden furniture",
+        "act": "Regulation (EU) No 995/2010",
+        "act_name": "EU Timber Regulation",
+        "provision": "Annex",
+        "quote": "9403 30 , 9403 40 , 9403 50 00 , 9403 60 and 9403 90 30 Wooden furniture",
+        "citation_url": "https://eur-lex.europa.eu/eli/reg/2010/995/oj/eng",
+        "due": "2026-12-30",
+        "due_provision": "Article 38(2)",
+        "due_quote": "Subject to paragraph 3 of this Article, Articles 3 to 13, Articles 16 to 24 and Articles 26, 31 and 32 shall apply from 30 December 2026.",
+        "due_citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226#M2-44"
+      },
+      {
+        "categories": ["paper_print"],
+        "products": "paper",
+        "act": "Regulation (EU) No 995/2010",
+        "act_name": "EU Timber Regulation",
+        "provision": "Annex",
+        "quote": "Pulp and paper of Chapters 47 and 48 of the Combined Nomenclature, with the exception of bamboo-based and recovered (waste and scrap) products",
+        "citation_url": "https://eur-lex.europa.eu/eli/reg/2010/995/oj/eng",
+        "due": "2026-12-30",
+        "due_provision": "Article 38(2)",
+        "due_quote": "Subject to paragraph 3 of this Article, Articles 3 to 13, Articles 16 to 24 and Articles 26, 31 and 32 shall apply from 30 December 2026.",
+        "due_citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226#M2-44"
+      }
+    ]
   },
   {
     "instrument": "Regulation (EU) 2023/1115",
@@ -20,9 +53,15 @@
     "new_date": "2026-12-30",
     "amending_act": "Regulation (EU) 2025/2650",
     "amending_url": "https://eur-lex.europa.eu/legal-content/EN/AUTO/?uri=celex:32025R2650",
+    "amending_text_url": "https://eur-lex.europa.eu/eli/reg/2025/2650/oj",
     "provision": "Article 38(2)",
     "quote": "Subject to paragraph 3 of this Article, Articles 3 to 13, Articles 16 to 24 and Articles 26, 31 and 32 shall apply from 30 December 2026.",
     "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226#M2-44",
-    "caveat": ""
+    "caveat": "",
+    "old_act": "Regulation (EU) 2024/3234",
+    "old_quote": "Subject to paragraph 3 of this Article, Articles 3 to 13, Articles 16 to 24 and Articles 26, 31 and 32 shall apply from 30 December 2025.",
+    "old_citation_url": "https://eur-lex.europa.eu/eli/reg/2024/3234/oj/eng",
+    "categories": ["furniture_wood", "leather", "coffee_cocoa", "paper_print", "rubber"],
+    "exceptions": []
   }
 ]

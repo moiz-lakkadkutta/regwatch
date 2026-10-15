@@ -44,31 +44,61 @@
     ],
     "todos": [
       {
-        "text": "Before listing any wooden furniture or leather goods, confirm you have the supplier and customer details required by the regulation.",
+        "text": "Before listing any wooden furniture, confirm you have the supplier and customer details required by the regulation.",
+        "due": "2026-12-30",
+        "quote": "Downstream operators and traders shall place or make available on the market or export relevant products only if they are in possession of the information required under paragraph 3.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Before listing any leather goods, confirm you have the supplier and customer details required by the regulation.",
         "due": "2027-06-30",
         "quote": "Downstream operators and traders shall place or make available on the market or export relevant products only if they are in possession of the information required under paragraph 3.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
       },
       {
-        "text": "Set up a system to record the name, address, email, and website of each supplier and business customer for your wooden furniture and leather goods, including due diligence statement references from suppliers who are operators.",
+        "text": "Set up a system to record the name, address, email, and website of each supplier and business customer for your wooden furniture, including due diligence statement references from suppliers who are operators.",
+        "due": "2026-12-30",
+        "quote": "Downstream operators and traders shall collect and keep the following information relating to the relevant products they intend to place or make available on the market or export: (a) the name, registered trade name or registered trade mark, the postal address, the email address and, if available, a web address of the operators, downstream operators, or the traders who have supplied the relevant products to them, as well as, only in the event that their supplier is an operator, the reference numbers of the due diligence statements or the declaration identifiers associated to those products; (b) the name, registered trade name or registered trade mark, the postal address, the email address and, if available, a web address of the downstream operators, or the traders to whom they have supplied the relevant products.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Add your leather goods to that record: name, address, email, and website of each supplier and business customer, including due diligence statement references from suppliers who are operators.",
         "due": "2027-06-30",
         "quote": "Downstream operators and traders shall collect and keep the following information relating to the relevant products they intend to place or make available on the market or export: (a) the name, registered trade name or registered trade mark, the postal address, the email address and, if available, a web address of the operators, downstream operators, or the traders who have supplied the relevant products to them, as well as, only in the event that their supplier is an operator, the reference numbers of the due diligence statements or the declaration identifiers associated to those products; (b) the name, registered trade name or registered trade mark, the postal address, the email address and, if available, a web address of the downstream operators, or the traders to whom they have supplied the relevant products.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
       },
       {
-        "text": "Store the collected supplier and customer records for at least five years from each sale and be ready to share them with authorities if asked.",
+        "text": "Store the supplier and customer records for your wooden furniture for at least five years from each sale and be ready to share them with authorities if asked.",
+        "due": "2026-12-30",
+        "quote": "Downstream operators and traders shall keep the information referred to in paragraph 3 for at least five years from the date of the placing or making available on the market or export, and shall provide that information to the competent authorities upon request.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Store the supplier and customer records for your leather goods for at least five years from each sale and be ready to share them with authorities if asked.",
         "due": "2027-06-30",
         "quote": "Downstream operators and traders shall keep the information referred to in paragraph 3 for at least five years from the date of the placing or making available on the market or export, and shall provide that information to the competent authorities upon request.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
       },
       {
-        "text": "If you learn that any wooden furniture or leather goods you've sold may not meet the regulation, notify the competent authorities in the EU countries where you sold them and the downstream traders you supplied.",
+        "text": "If you learn that any wooden furniture you've sold may not meet the regulation, notify the competent authorities in the EU countries where you sold it and the downstream traders you supplied.",
+        "due": "2026-12-30",
+        "quote": "Downstream operators and traders that obtain or are made aware of relevant new information, including substantiated concerns, indicating that a relevant product that they have placed or made available on the market is at risk of not complying with this Regulation shall immediately inform the competent authorities of the Member States in which they placed or made available on the market the relevant product as well as downstream operators and traders to whom they supplied the relevant product. In the case of exports, downstream operators shall inform the competent authority of the Member State which is the country of production.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "If you learn that any leather goods you've sold may not meet the regulation, notify the competent authorities in the EU countries where you sold them and the downstream traders you supplied.",
         "due": "2027-06-30",
         "quote": "Downstream operators and traders that obtain or are made aware of relevant new information, including substantiated concerns, indicating that a relevant product that they have placed or made available on the market is at risk of not complying with this Regulation shall immediately inform the competent authorities of the Member States in which they placed or made available on the market the relevant product as well as downstream operators and traders to whom they supplied the relevant product. In the case of exports, downstream operators shall inform the competent authority of the Member State which is the country of production.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
       },
       {
-        "text": "Be prepared to give authorities access to your premises, documentation, and records for checks under Article 19.",
+        "text": "Be prepared to give authorities access to your premises, documentation, and records on your wooden furniture for checks under Article 19.",
+        "due": "2026-12-30",
+        "quote": "Downstream operators and traders shall offer all necessary assistance to the competent authorities to facilitate the carrying out of the checks under Article 19, including access to premises and the making available of documentation and records.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Be prepared to give authorities access to your documentation and records on your leather goods for checks under Article 19.",
         "due": "2027-06-30",
         "quote": "Downstream operators and traders shall offer all necessary assistance to the competent authorities to facilitate the carrying out of the checks under Article 19, including access to premises and the making available of documentation and records.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"

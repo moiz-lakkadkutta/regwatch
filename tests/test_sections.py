@@ -171,3 +171,35 @@ def test_blank_operative_body_falls_back_to_whole_markdown() -> None:
     sections = split_act(md, min_chars=1, max_chars=1000)
     assert sections and all(s.text.strip() for s in sections)
     assert "Preamble words that matter." in sections[0].text
+
+
+def test_nbsp_headings_split_per_article() -> None:
+    # ELI pages of newer acts (e.g. Regulation (EU) 2025/40, live crawl 2026-10-15) write
+    # "Article\xa01" and "ANNEX\xa0I"; without this every article ends up in "Introductory
+    # provisions".
+    body = "\n\n".join(f"Article\xa0{i}\n\nTitle {i}\n\n" + "z" * 3200 for i in (1, 2))
+    md = f"HAVE ADOPTED THIS REGULATION:\n\nCHAPTER\xa0I\n\n{body}\n\nANNEX\xa0I\n\nList.\n"
+    labels = [s.label for s in split_act(md)]
+    assert labels == ["Introductory provisions", "Article 1", "Article 2", "ANNEX I"]
+
+
+def test_headless_annex_of_amending_act_is_not_glued_to_last_article() -> None:
+    # The ELI page of Directive (EU) 2024/825 (live crawl 2026-10-15) drops the "ANNEX" heading;
+    # its annex starts "Annex I to Directive 2005/29/EC is amended as follows:" after the last
+    # article ("Addressees"). It must not be labelled "Article 6".
+    md = (
+        "HAVE ADOPTED THIS DIRECTIVE:\n\nArticle 1\n\n" + "a" * 3200 + "\n\nArticle 6\n\n"
+        "Addressees\n\nThis Directive is addressed to the Member States.\n\n---\n\n"
+        "Annex I to Directive 2005/29/EC is amended as follows:\n\n" + "b" * 3200 + "\n"
+    )
+    sections = split_act(md)
+    assert [s.label for s in sections] == ["Article 1", "Article 6", "ANNEX"]
+    assert sections[2].text.startswith("Annex I to Directive 2005/29/EC is amended as follows:")
+
+
+def test_annex_heading_followed_by_amendment_opener_stays_one_section() -> None:
+    md = (
+        "HAVE ADOPTED THIS DIRECTIVE:\n\nArticle 1\n\n" + "a" * 3200 + "\n\nANNEX I\n\n"
+        "Annex I to Directive 2011/83/EU is amended as follows:\n\n" + "b" * 3200 + "\n"
+    )
+    assert [s.label for s in split_act(md)] == ["Article 1", "ANNEX I"]

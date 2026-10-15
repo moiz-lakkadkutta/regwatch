@@ -27,7 +27,13 @@
     ],
     "todos": [
       {
-        "text": "Set up a process to retrieve and provide collected product information to authorities when they request it",
+        "text": "Set up a process to retrieve and provide the information collected on your wooden furniture to authorities when they request it",
+        "due": "2026-12-30",
+        "quote": "The operator shall make available to the competent authorities upon request the information, documents and data collected under this Article.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Extend that process to the information collected on your leather goods",
         "due": "2027-06-30",
         "quote": "The operator shall make available to the competent authorities upon request the information, documents and data collected under this Article.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"

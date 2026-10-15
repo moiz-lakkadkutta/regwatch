@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, func, select
 
-from regwatch.config import Settings, sources_for
+from regwatch.config import REFERENCE_TAG, Settings, sources_for
 from regwatch.db import CrawlRunRow, DocumentRow, make_engine
 from regwatch.jobs.crawl import (
     DEFAULT_OUT,
@@ -180,9 +180,12 @@ def test_stage_all_runs_end_to_end(
 
 
 def test_seed_loads_documents_jsonl_idempotently(tmp_settings: Settings) -> None:
-    n_lines = len(DEFAULT_OUT.read_text(encoding="utf-8").splitlines())
+    lines = DEFAULT_OUT.read_text(encoding="utf-8").splitlines()
+    n_lines = len(lines)
     sources = {seed_payload(p)["change"]["document_url"] for p in SEED_FILES}
-    assert n_lines == len(sources)  # R1: only the sources of seed changes ship with the demo
+    n_refs = sum(REFERENCE_TAG in json.loads(line)["regulation_tags"] for line in lines)
+    # R1: only the sources of seed changes ship with the demo, plus rule-move grounding documents
+    assert n_lines == len(sources) + n_refs
     assert seed(tmp_settings) == SEED_CHANGES
     assert _count(tmp_settings, DocumentRow) == n_lines
     with Session(make_engine(tmp_settings)) as s:

@@ -1,0 +1,47 @@
+{
+  "created_at": "2026-10-15T14:33:47.624334+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.006083,
+  "tavily_credits": 6,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/eli/reg/2023/988/oj",
+    "instrument": "Regulation (EU) 2023/988 — Article 4 – Article 8",
+    "jurisdiction": "EU",
+    "summary": "Economic operators must only place safe products on the EU market. The rules apply to any operator offering products to consumers in the Union.",
+    "effective_dates": [
+      "2024-12-13"
+    ],
+    "obligations": [
+      {
+        "text": "Place or make available only safe products on the market.",
+        "quote": "Economic operators shall place or make available on the market only safe products."
+      },
+      {
+        "text": "Deem products offered online as targeted at consumers in the Union if activities are directed to Member States.",
+        "quote": "Products offered for sale online or through other means of distance sales shall be deemed to be made available on the market if the offer is targeted at consumers in the Union. An offer for sale shall be considered to be targeted at consumers in the Union if the relevant economic operator directs, by any means, its activities to one or more Member States."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "applies",
+    "reasons": [
+      "You are established in Germany and ship to ten EU member states, so you direct your activities to consumers in the Union.",
+      "You sell furniture, wooden goods and leather goods — consumer products that fall under the general product safety rules.",
+      "The regulation binds any economic operator that places or makes products available on the EU market, which includes your Shopify storefront."
+    ],
+    "todos": [
+      {
+        "text": "Review your product range and confirm each item meets applicable EU safety standards before listing it.",
+        "due": "2024-12-13",
+        "quote": "Economic operators shall place or make available on the market only safe products.",
+        "citation_url": "https://eur-lex.europa.eu/eli/reg/2023/988/oj"
+      },
+      {
+        "text": "Confirm that your online sales to the listed EU countries are covered by your product safety compliance processes, since offering to those markets makes the products subject to the regulation.",
+        "due": "2024-12-13",
+        "quote": "Products offered for sale online or through other means of distance sales shall be deemed to be made available on the market if the offer is targeted at consumers in the Union. An offer for sale shall be considered to be targeted at consumers in the Union if the relevant economic operator directs, by any means, its activities to one or more Member States.",
+        "citation_url": "https://eur-lex.europa.eu/eli/reg/2023/988/oj"
+      }
+    ]
+  }
+}

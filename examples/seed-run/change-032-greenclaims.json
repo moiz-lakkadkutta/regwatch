@@ -1,0 +1,47 @@
+{
+  "created_at": "2026-10-15T14:11:09.384532+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.008085,
+  "tavily_credits": 6,
+  "change": {
+    "document_url": "https://www.ihk.de/ostwestfalen/newsportal/neue-eu-informationspflichten-ab-2026-fuer-handel-und-hersteller-7192052",
+    "instrument": "EmpCo-Richtlinie (EU 2024/825) — IHK guidance",
+    "jurisdiction": "EU; transposed in DE as Artikel 246 § 1 EGBGB",
+    "summary": "From 27 September 2026, EU merchants must display the official EU legal guarantee notice on every sale to end customers. The rules also require standardised GARAN-Labels for free guarantees over two years and clear information on software updates and spare parts availability.",
+    "effective_dates": [
+      "2026-09-27"
+    ],
+    "obligations": [
+      {
+        "text": "Use the official EU legal guarantee notice on every sale to end customers.",
+        "quote": "Ab dem 27. September 2026 muss bei **jedem Verkauf an Endkunden – also nicht im B2B Bereich** (sowohl im Online-Shop als auch am Point of Sale im Geschäft) gut sichtbar auf das gesetzliche Gewährleistungsrecht (Mängelhaftung von mindestens zwei Jahren) hingewiesen werden."
+      },
+      {
+        "text": "Display the harmonised GARAN-Label for free guarantees exceeding two years.",
+        "quote": "Die Angabe hat verpflichtend über das einheitliche [EU-Garantielabel (GARAN-Label)](https://europa.eu/youreurope/business/selling-in-eu/consumer-contracts-guarantees/eu-legal-guarantee-notice-and-garan-label/index_de.htm "
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "applies",
+    "reasons": [
+      "Applies because you are established in Germany and sell furniture and leather goods to end customers in multiple EU countries.",
+      "The regulation requires all EU merchants to display the official EU legal guarantee notice on every B2C sale from 27 September 2026.",
+      "It also requires the harmonised GARAN-Label for any free guarantee you offer that exceeds two years."
+    ],
+    "todos": [
+      {
+        "text": "Add the official EU legal guarantee notice to every consumer-facing sale on your Shopify storefront",
+        "due": "2026-09-27",
+        "quote": "Ab dem 27. September 2026 muss bei **jedem Verkauf an Endkunden – also nicht im B2B Bereich** (sowohl im Online-Shop als auch am Point of Sale im Geschäft) gut sichtbar auf das gesetzliche Gewährleistungsrecht (Mängelhaftung von mindestens zwei Jahren) hingewiesen werden.",
+        "citation_url": "https://www.ihk.de/ostwestfalen/newsportal/neue-eu-informationspflichten-ab-2026-fuer-handel-und-hersteller-7192052"
+      },
+      {
+        "text": "If you offer any free guarantee longer than two years, display the harmonised GARAN-Label on those offers",
+        "due": "2026-09-27",
+        "quote": "Die Angabe hat verpflichtend über das einheitliche [EU-Garantielabel (GARAN-Label)](https://europa.eu/youreurope/business/selling-in-eu/consumer-contracts-guarantees/eu-legal-guarantee-notice-and-garan-label/index_de.htm ",
+        "citation_url": "https://www.ihk.de/ostwestfalen/newsportal/neue-eu-informationspflichten-ab-2026-fuer-handel-und-hersteller-7192052"
+      }
+    ]
+  }
+}

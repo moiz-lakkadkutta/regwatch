@@ -28,17 +28,29 @@
     "reasons": [
       "You sell wooden furniture and leather goods, which fall under the wood and cattle commodities covered by the EU Deforestation Regulation.",
       "Your shop is established in Germany and ships to multiple EU countries, so you place these products on the EU market.",
-      "As a micro or small enterprise, the obligations apply to you from 30 June 2027."
+      "As a small company, your leather goods are due from 30 June 2027, but your wooden furniture stays due 30 December 2026: the later date leaves out products listed in the EU Timber Regulation's annex, which includes wooden furniture."
     ],
     "todos": [
       {
-        "text": "Ask your suppliers for documentation proving the wood and leather were produced legally in their country of origin",
+        "text": "Ask the suppliers of your wooden furniture for documentation proving the wood was produced legally in its country of origin",
+        "due": "2026-12-30",
+        "quote": "they have been produced in accordance with the relevant legislation of the country of production;",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Ask your leather suppliers for documentation proving the leather was produced legally in its country of origin",
         "due": "2027-06-30",
         "quote": "they have been produced in accordance with the relevant legislation of the country of production;",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
       },
       {
-        "text": "Prepare a simplified due diligence statement for each product line containing wood or leather, collecting geolocation and legality evidence",
+        "text": "Prepare a simplified due diligence statement for each wooden furniture line, collecting geolocation and legality evidence",
+        "due": "2026-12-30",
+        "quote": "they are covered by a due diligence statement or a simplified declaration, as required by the relevant provisions of this Regulation.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Prepare a simplified due diligence statement for each leather goods line, collecting geolocation and legality evidence",
         "due": "2027-06-30",
         "quote": "they are covered by a due diligence statement or a simplified declaration, as required by the relevant provisions of this Regulation.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"

@@ -1,0 +1,75 @@
+{
+  "created_at": "2026-10-15T14:33:47.627887+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.005644,
+  "tavily_credits": 6,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/eli/reg/2023/988/oj",
+    "instrument": "Regulation (EU) 2023/988 — Article 11",
+    "jurisdiction": "EU",
+    "summary": "Importers must ensure products comply with safety requirements before market placement and report dangerous products via the Safety Business Gateway. This article sets out the duties of importers under Regulation (EU) 2023/988.",
+    "effective_dates": [
+      "2024-12-13"
+    ],
+    "obligations": [
+      {
+        "text": "Ensure product complies with general safety requirement before market placement",
+        "quote": "Before placing a product on the market, importers shall ensure that the product complies with the general safety requirement laid down in Article 5 and that the manufacturer has complied with the requirements set out in Article 9(2), (5) and (6)."
+      },
+      {
+        "text": "Do not place non-conforming product on the market",
+        "quote": "Where an importer considers or has reason to believe, on the basis of the information in that importer’s possession, that a product is not in conformity with Article 5 and Article 9(2), (5) and (6), the importer shall not place the product on the market until the product has been brought into conformity."
+      },
+      {
+        "text": "Inform manufacturer and market authorities via Safety Business Gateway for dangerous products",
+        "quote": "Furthermore, where the product is a dangerous product, the importer shall immediately inform the manufacturer thereof and ensure that the market surveillance authorities are informed thereof through the Safety Business Gateway."
+      },
+      {
+        "text": "Indicate name and contact details on product or packaging",
+        "quote": "Importers shall indicate their name, their registered trade name or registered trade mark, their postal and electronic address and, where different, the postal or electronic address of the single contact point at which they can be contacted."
+      },
+      {
+        "text": "Ensure product is accompanied by clear instructions and safety information in an easily understood language",
+        "quote": "Importers shall ensure that the product they imported is accompanied by clear instructions and safety information in a language which can be easily understood by consumers, as determined by the Member State in which the product is made available on the market, except where the product can be used safely and as intended by the manufacturer without such instructions and safety information."
+      },
+      {
+        "text": "Maintain storage and transport conditions that do not jeopardise product conformity",
+        "quote": "Importers shall ensure that, while a product is under their responsibility, storage or transport conditions do not jeopardise its conformity with the general safety requirement laid down in Article 5 and its conformity with Article 9(5) and (6)."
+      },
+      {
+        "text": "Keep technical documentation available for 10 years after market placement",
+        "quote": "Importers shall keep the copy of technical documentation referred to in Article 9(2) at the disposal of the market surveillance authorities for a period of 10 years after they have placed the product on the market and shall ensure that the documents referred to in Article 9(2), as applicable, can be made available to those authorities, upon request."
+      },
+      {
+        "text": "Cooperate with market surveillance authorities and manufacturer to ensure product safety",
+        "quote": "Importers shall cooperate with market surveillance authorities and the manufacturer to ensure that a product is safe."
+      },
+      {
+        "text": "Provide details of risk and corrective measures for dangerous products by Member State",
+        "quote": "For the purposes of points (c) and (d) of the first subparagraph the importer shall give details, in particular, of the risk to health and safety of consumers and of any corrective measure already taken, and, if available, of the quantity, by Member State, of products still circulating on the market."
+      },
+      {
+        "text": "Make communication channels publicly available for consumer complaints and safety issues",
+        "quote": "Importers shall verify whether the communication channels referred to in Article 9(11) are publicly available to consumers, thereby allowing them to present complaints and communicate any accident or safety issue they have experienced with the product. If such channels are not available, importers shall provide for them, taking into account accessibility needs for persons with disabilities."
+      },
+      {
+        "text": "Investigate complaints and information on accidents concerning dangerous products and file in register",
+        "quote": "Importers shall investigate complaints submitted, and information received on accidents, that concern the safety of products they made available on the market, which the complainant has alleged to be dangerous, and file those complaints, as well as product recalls and any corrective measures taken to bring the product into conformity, in the register referred to in Article 9(12), or in their own internal register."
+      },
+      {
+        "text": "Keep personal data necessary for complaint investigation no longer than five years",
+        "quote": "The register of complaints shall only store those personal data that are necessary for the importer to investigate the complaint about an alleged dangerous product. Such data shall only be kept for as long as is necessary for the purposes of the investigation and in any event no longer than five years after the data have been entered."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "unclear",
+    "reasons": [
+      "We couldn't tell from your profile: whether you import furniture and leather goods from outside the EU (making you an importer under this regulation) or source them from EU-based suppliers (in which case these importer duties would not bind you).",
+      "The regulation's obligations apply only to importers who place products from third countries on the EU market.",
+      "Your shop is established in Germany and sells to multiple EU countries, but the origin of your goods is not given.",
+      "If you are the first to place these goods on the EU market, all 12 obligations would apply to you from 13 December 2024."
+    ],
+    "todos": []
+  }
+}

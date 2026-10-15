@@ -64,23 +64,41 @@
     "reasons": [
       "Applies because you sell wooden furniture (wood products covered by the regulation) and leather goods (potentially covered) from Germany to EU markets, making you an operator placing relevant products on the market.",
       "The regulation's corrective action obligations — rectifying non-compliance, withdrawing products, and fixing due diligence shortcomings — bind you as an operator when a competent authority finds non-compliance.",
-      "Your micro/small enterprise size means the later effective date (2027-06-30) applies for these provisions."
+      "As a small company, these provisions apply to your leather goods from 30 June 2027 and to your wooden furniture from 30 December 2026, which the later date leaves out."
     ],
     "todos": [
       {
-        "text": "Review your due diligence system for shortcomings and fix any gaps to prevent non-compliance risk",
+        "text": "Review your due diligence system for wooden furniture for shortcomings and fix any gaps to prevent non-compliance risk",
+        "due": "2026-12-30",
+        "quote": "the operator, downstream operator or trader shall address any shortcomings in the due diligence system with a view to preventing the risk of further non-compliance with this Regulation.",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Review your due diligence system for leather goods for shortcomings and fix any gaps to prevent non-compliance risk",
         "due": "2027-06-30",
         "quote": "the operator, downstream operator or trader shall address any shortcomings in the due diligence system with a view to preventing the risk of further non-compliance with this Regulation.",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
       },
       {
-        "text": "Prepare a procedure to rectify any formal non-compliance with Chapter 2 requirements if ordered by authorities",
+        "text": "Prepare a procedure to rectify any formal non-compliance of your wooden furniture with Chapter 2 requirements if ordered by authorities",
+        "due": "2026-12-30",
+        "quote": "rectifying any formal non-compliance, in particular with the requirements of Chapter 2;",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Extend that procedure to your leather goods",
         "due": "2027-06-30",
         "quote": "rectifying any formal non-compliance, in particular with the requirements of Chapter 2;",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
       },
       {
-        "text": "Prepare a procedure to withdraw or recall non-compliant products immediately if ordered by authorities",
+        "text": "Prepare a procedure to withdraw or recall non-compliant wooden furniture immediately if ordered by authorities",
+        "due": "2026-12-30",
+        "quote": "withdrawing or recalling the relevant product immediately;",
+        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
+      },
+      {
+        "text": "Extend that withdrawal and recall procedure to your leather goods",
         "due": "2027-06-30",
         "quote": "withdrawing or recalling the relevant product immediately;",
         "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
