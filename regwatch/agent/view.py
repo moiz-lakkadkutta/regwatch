@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field, replace
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any
 from urllib.parse import urlsplit
 
@@ -14,6 +14,7 @@ from sqlalchemy.engine import Engine
 from sqlmodel import col, select
 
 from regwatch.agent.budget import BUDGET, NO_BUDGET, Budget, worst_case_usd
+from regwatch.agent.loop import THOUGHT_CHARS
 from regwatch.agent.schemas import AgentOutcome
 from regwatch.config import Settings
 from regwatch.db import AgentFactRow, AgentRunRow, AgentStepRow, session
@@ -25,8 +26,17 @@ DECISION_LABELS: dict[str, str] = {
     "does_not": "doesn't apply",
     "unclear": "still unclear",
 }
-RETRY_NOTE = "A to-do quote didn't match the text, so the agent was asked once to fix it."
-INVALID_NOTE = "The model's reply wasn't valid JSON; it still used a step."
+# Steps that only redo work (an unreadable reply, a to-do quote sent back, a failed tool call)
+# are counted in the run line, not listed: the list reads as what the agent found out.
+REDONE_KINDS: tuple[str, ...] = ("retry", "error")
+
+
+def clip_thought(text: str) -> str:
+    """A thought stored at the THOUGHT_CHARS cap was cut mid-word; end it on a word, with '…'."""
+    if len(text) < THOUGHT_CHARS:
+        return text.strip()
+    head = text.rsplit(" ", 1)[0] if " " in text.strip() else text
+    return head.rstrip(" ,;:—–-") + "…"
 
 
 def short_url(url: str) -> str:
@@ -68,10 +78,16 @@ class ReasonView:
 
 
 @dataclass(frozen=True)
+class AgentTodo:
+    todo: Todo
+    in_force: bool  # due before today: "in force since", as on the rest of the site
+
+
+@dataclass(frozen=True)
 class ResultView:
     decision: str
     label: str
-    todos: list[Todo]
+    todos: list[AgentTodo]
     reasons: list[ReasonView]
     source_domain: str
 
@@ -93,7 +109,8 @@ class AgentPanel:
     run_id: int | None = None
     status: str = ""  # "" = no run yet
     stop_reason: str = ""
-    steps: list[StepView] = field(default_factory=list)
+    steps: list[StepView] = field(default_factory=list)  # without the REDONE_KINDS
+    n_redone: int = 0
     question: QuestionView | None = None
     result: ResultView | None = None
     n_steps: int = 0
@@ -107,22 +124,21 @@ class AgentPanel:
 def step_view(step: AgentStepRow, fact: AgentFactRow | None) -> StepView:
     args: dict[str, Any] = json.loads(step.args_json)
     result: dict[str, Any] = json.loads(step.result_json)
+    thought = clip_thought(step.thought)
     if step.tool == "invalid":
-        return StepView(step.idx, "error", step.thought, note=INVALID_NOTE)
+        return StepView(step.idx, "error", thought)
     if "refused" in result:
-        return StepView(step.idx, "refused", step.thought, note=str(result["refused"]))
+        return StepView(step.idx, "refused", thought, note=str(result["refused"]))
     if result.get("error") == "rejected_todos":
-        return StepView(step.idx, "retry", step.thought, note=RETRY_NOTE)
+        return StepView(step.idx, "retry", thought)
     if "error" in result:
-        return StepView(
-            step.idx, "error", step.thought, note=str(result["error"]), credits=step.credits
-        )
+        return StepView(step.idx, "error", thought, note=str(result["error"]), credits=step.credits)
     if step.tool == "search_sources":
         hits: list[Any] = result.get("hits", [])
         return StepView(
             step.idx,
             "search",
-            step.thought,
+            thought,
             domain=str(args.get("domain", "")),
             query=str(args.get("query", "")),
             n_results=len(hits),
@@ -131,20 +147,20 @@ def step_view(step: AgentStepRow, fact: AgentFactRow | None) -> StepView:
     if step.tool == "read_source":
         url = str(result.get("url") or args.get("url", ""))
         return StepView(
-            step.idx, "read", step.thought, where=short_url(url), url=url, credits=step.credits
+            step.idx, "read", thought, where=short_url(url), url=url, credits=step.credits
         )
     if step.tool == "ask_merchant":
         answer = fact.chosen_text if fact is not None and fact.chosen_index is not None else ""
         return StepView(
-            step.idx, "ask", step.thought, question=str(result.get("asked", "")), answer=answer
+            step.idx, "ask", thought, question=str(result.get("asked", "")), answer=answer
         )
     decision = str(result.get("decision", ""))
-    return StepView(
-        step.idx, "decide", step.thought, decision=DECISION_LABELS.get(decision, decision)
-    )
+    return StepView(step.idx, "decide", thought, decision=DECISION_LABELS.get(decision, decision))
 
 
-def result_view(outcome: AgentOutcome, change: RegChange, source_domain: str) -> ResultView:
+def result_view(
+    outcome: AgentOutcome, change: RegChange, source_domain: str, today: date
+) -> ResultView:
     facts = {f.fact_id: f for f in outcome.facts}
     evidence = {e.evidence_id: e for e in outcome.evidence}
     reasons: list[ReasonView] = []
@@ -167,7 +183,7 @@ def result_view(outcome: AgentOutcome, change: RegChange, source_domain: str) ->
     return ResultView(
         decision=appl.decision,
         label=DECISION_LABELS[appl.decision],
-        todos=appl.todos,
+        todos=[AgentTodo(t, bool(t.due and t.due < today)) for t in appl.todos],
         reasons=reasons,
         source_domain=source_domain,
     )
@@ -224,14 +240,16 @@ def build_panel(
     result = None
     if run.status == "done" and run.outcome_json:
         result = result_view(
-            AgentOutcome.model_validate_json(run.outcome_json), change, source_domain
+            AgentOutcome.model_validate_json(run.outcome_json), change, source_domain, now.date()
         )
+    views = [step_view(st, by_step.get(st.idx)) for st in steps]
     return replace(
         base,
         run_id=run.id,
         status=run.status,
         stop_reason=run.stop_reason,
-        steps=[step_view(st, by_step.get(st.idx)) for st in steps],
+        steps=[v for v in views if v.kind not in REDONE_KINDS],
+        n_redone=sum(v.kind in REDONE_KINDS for v in views),
         question=question,
         result=result,
         n_steps=run.n_steps,

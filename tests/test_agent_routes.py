@@ -6,7 +6,7 @@ from __future__ import annotations
 import importlib
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -17,7 +17,10 @@ from sqlmodel import col, select
 
 from regwatch.agent import runner
 from regwatch.agent.budget import NO_BUDGET
+from regwatch.agent.loop import THOUGHT_CHARS
 from regwatch.agent.runner import Backends
+from regwatch.agent.schemas import AgentOutcome
+from regwatch.agent.view import clip_thought, result_view
 from regwatch.db import (
     AgentFactRow,
     AgentRunRow,
@@ -26,6 +29,7 @@ from regwatch.db import (
     session,
     utcnow,
 )
+from regwatch.schemas import Applicability, RegChange, Todo
 from tests.conftest import ART_11A, EUDR_UNCLEAR, seed_change_id
 from tests.fakes import (
     IHK_URL,
@@ -386,3 +390,44 @@ def test_agent_runs_follow_the_chosen_store(make: Callable[..., Harness]) -> Non
     r = h.client.post(f"/agent/{run.id}/answer", data={"option": "1"}, headers=HX)
     assert r.status_code == 200 and f"Decided: <strong>{DOESNT}</strong>" in r.text
     assert f"Agent: {DOESNT}" in h.client.get(f"/change/{EUDR_ID}").text
+
+
+def test_trace_hides_redone_steps_and_clips_cut_thoughts(make: Callable[..., Harness]) -> None:
+    """A judge reads what the agent found out: a reply that wasn't JSON is counted ("1 redone"),
+    not listed as "Didn't work", and a thought cut at the stored cap ends on a word with '…'."""
+    cut = ("Whether the shop imports decides who the operator is " * 10)[:THOUGHT_CHARS]
+    replies = until_question()
+    replies[1] = agent_action("read_source", cut, url=IHK_URL)
+    h = make(replies=["not json at all", *replies, decide_does_not()])
+    h.client.post(START, headers=HX)
+    r = h.client.post(f"/agent/{h.runs()[0].id}/answer", data={"option": "1"}, headers=HX)
+    assert "Didn't work" not in r.text and "valid JSON" not in r.text
+    assert "5 steps (1 redone) · 2 credits" in r.text
+    assert cut not in r.text and f"{cut.rsplit(' ', 1)[0].rstrip()}…" in r.text
+
+
+def test_clip_thought() -> None:
+    assert clip_thought(" short ") == "short"
+    assert clip_thought(("word " * 100)[:THOUGHT_CHARS]).endswith("word…")
+    assert clip_thought("x" * THOUGHT_CHARS) == "x" * THOUGHT_CHARS + "…"
+
+
+def test_agent_todo_past_due_reads_in_force() -> None:
+    """Same wording as the rest of the site: a past due date is 'in force since', never 'by'."""
+    outcome = AgentOutcome(
+        applicability=Applicability(
+            decision="applies",
+            reasons=["r"],
+            todos=[
+                Todo(text="Old", due=date(2024, 12, 13), quote="q", citation_url="u"),
+                Todo(text="New", due=date(2027, 6, 30), quote="q", citation_url="u"),
+            ],
+        ),
+        reasons=[],
+        evidence=[],
+        facts=[],
+        dropped=[],
+    )
+    ch = RegChange(document_url="u", instrument="I", jurisdiction="EU", summary="s", obligations=[])
+    rv = result_view(outcome, ch, "eur-lex.europa.eu", date(2026, 10, 15))
+    assert [t.in_force for t in rv.todos] == [True, False]

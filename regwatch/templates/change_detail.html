@@ -8,7 +8,7 @@
 {% if a and a.result %}{% include "partials/agent_result.html" %}<p class="muted label">Original check</p>{% endif %}
 {% if not item and is_store %}<div class="card"><h2>Not checked for this example store yet</h2><p>This change arrived after the example store's results were worked out. Run <code>regwatch classify-presets</code> to check it.</p></div>
 {% elif not item %}<div class="card"><h2>Not checked against your profile yet</h2><p>Your profile changed. The next crawl re-checks this change; to do it now run <code>regwatch crawl --stage classify</code>.</p></div>
-{% elif item.decision == "unclear" %}<h2>We couldn't tell from your profile</h2>
+{% elif item.decision == "unclear" %}<h2>One question decides this</h2>
 <ul>{% for r in item.reasons %}<li>{{r}}</li>{% endfor %}</ul>
 {% if a %}{% include "partials/agent_panel.html" %}
 {% if not locked %}<p class="muted"><a href="/profile">Or answer it in your store profile</a> and the next crawl decides.</p>{% endif %}

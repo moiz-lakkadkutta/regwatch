@@ -144,3 +144,38 @@ def test_seed_twice_loads_split_todos_once_and_skips_reference_docs(tmp_path: Pa
         if "wooden furniture" in t["text"]
     )
     assert dues == {WOOD_DUE: 14}
+
+
+def _all_seed_appls() -> list[tuple[str, dict[str, Any]]]:
+    out = [
+        (p.name, json.loads(p.read_text(encoding="utf-8"))["applicability"]) for p in CHANGE_FILES
+    ]
+    for p in sorted((SEED_DIR / "stores").glob("*.applicability.jsonl")):
+        lines = p.read_text(encoding="utf-8").splitlines()
+        out += [(p.name, json.loads(line)["applicability"]) for line in lines if line.strip()]
+    return out
+
+
+def test_every_todo_reads_on_its_own() -> None:
+    """The month view sorts by date, so a leather-goods to-do lands far from its wood twin: no
+    to-do may lean on another ("Extend that procedure to your leather goods")."""
+    leaning = [
+        (name, t["text"])
+        for name, appl in _all_seed_appls()
+        for t in appl["todos"]
+        if t["text"].lower().startswith(("extend that", "add your leather goods to that"))
+        or " that procedure" in t["text"].lower()
+    ]
+    assert leaning == []
+
+
+def test_no_todo_is_repeated_within_a_store() -> None:
+    """One store sees each to-do text once (the withdrawal sources used to repeat each other)."""
+    for name in {n for n, _ in _all_seed_appls()}:
+        texts = [
+            t["text"].strip().lower()
+            for n, appl in _all_seed_appls()
+            if n == name
+            for t in appl["todos"]
+        ]
+        assert len(texts) == len(set(texts)), name

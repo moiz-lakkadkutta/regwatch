@@ -356,11 +356,11 @@ def test_feed_pills_all_three_states(pages_client: TestClient) -> None:
 
 def test_feed_item_meta(pages_client: TestClient) -> None:
     html = pages_client.get("/feed").text
-    # the withdrawal button (Art. 11a): applies, four to-dos, in force since 19 June 2026
+    # the withdrawal button (Art. 11a): applies, three to-dos, in force since 19 June 2026
     art_11a = html.split(f'<a href="/change/{seed_change_id(ART_11A)}">{ART_11A}</a>')
     assert len(art_11a) == 2
     assert '<span class="pill applies">' in art_11a[0].rsplit("<article", 1)[1]
-    assert "4 to-dos · in force since 19 Jun 2026" in art_11a[1].split("</article>")[0]
+    assert "3 to-dos · in force since 19 Jun 2026" in art_11a[1].split("</article>")[0]
     assert "No to-dos yet — see the obligations" in html
     assert "Answer one question to find out" in html
     assert 'class="chip">eur-lex.europa.eu' in html
@@ -520,7 +520,7 @@ def test_detail_applies_todo_due_and_overdue(seed_client: TestClient) -> None:
 def test_detail_unclear_copy(pages_client: TestClient) -> None:
     html = pages_client.get(f"/change/{_change_id(IHK_URL)}").text
     assert "Unclear — one question" in html
-    assert "We couldn't tell from your profile" in html
+    assert "<h2>One question decides this</h2>" in html
     assert escape(UNCLEAR_REASON) in html
     assert 'href="/profile"' in html
     assert "What to do" not in html
