@@ -38,6 +38,7 @@ from regwatch.ingest.diff import upsert_documents
 from regwatch.ingest.extract import extract_documents
 from regwatch.ingest.search import search_all
 from regwatch.ingest.tavily_backend import CreditLedger, TavilyBackend, make_backend
+from regwatch.moves import read_moves, seed_moves
 from regwatch.presets import Store, load_seed_changes, load_stores, read_entries
 from regwatch.schemas import Applicability, Document, Profile
 from regwatch.understand.classify import ClassifySummary, classify_all
@@ -343,6 +344,8 @@ def seed(settings: Settings | None = None) -> int:
                 len(diff.changed),
                 len(diff.unchanged),
             )
+        # 'this rule moved' banners: grounded against the documents just upserted
+        log.info("seed rule moves: %d new", seed_moves(s, read_moves(seed_dir / "rule-moves.json")))
         store_rows = [(st, _store_row(s, st)) for st in stores]
         if store_rows:
             prof = store_rows[0][1]
