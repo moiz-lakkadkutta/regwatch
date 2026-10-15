@@ -186,3 +186,21 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   `ForbiddenError: This request exceeds your plan's set usage limit`, so no crawl ran: 0 Tavily credits, $0 model
   spent. Ask: a warning (email / response header) at e.g. 80 % of the plan, and per-key usage history so a spike can
   be traced to the Endpoint agent, a Job or a developer key.
+
+- (2026-10-15, Tavily pay-as-you-go, scoped crawl of 2024/825 + 2025/40 + 2023/988) With pay-as-you-go enabled
+  (`paygo_limit 10000`), `GET /usage` at 14:04 UTC read `plan_usage 1001 / 1000`, `search_usage 863`,
+  `extract_usage 138`, `paygo_usage 0`; the `key` block equals the `account` block, so all 1,001 plan credits went
+  through this one key — `/usage` has no per-day or per-caller history to find where ~450 of them went on 10-14/15.
+  The crawl (`--regulation` ×3, `--time-range any`) then logged 10 advanced searches (20 credits) + 4 advanced
+  extracts (8 + 4 + 7 + 4 = 23 credits) = 43 credits. `/usage` at 14:42 UTC still read `paygo_usage 0` and
+  `plan_usage 1001`: the spend did not show up within ~35 minutes. Extract: 14 of 69 URLs came back
+  `Failed to fetch url`, 12 of them in one batch of 20 (EUR-Lex `legal-content/…/TXT/HTML`, `/PDF`, `/NIM`, `/HIS`,
+  `EN-FR`/`EN-IT` views, `eli/reg/2023/988/oj?initialSessionID=…`) that was still charged 4 credits for 8 results.
+  Ask: per-request rows in `/usage` (or a usage export), and paygo usage that updates as fast as plan usage.
+- (2026-10-15, Nemotron 3.5 Lightning, act metadata dates) Normalising Directive (EU) 2024/825 per article: the
+  whole-act metadata call returned `effective_dates` 2026-03-27 + 2025-09-27 (the transposition deadline and the
+  Commission's deadline for the harmonised notice) in two of three runs and never 2026-09-27, although Article 4(1)
+  says "They shall apply those measures from 27 September 2026."; the classifier then dated merchant to-dos
+  27 March 2026. The consolidated GPSR text (`eli/reg/2023/988/2026-05-29/eng`) gave sections dated 2026-05-29,
+  the consolidation date. Those sections were left out of the seed. Lightning cost for the whole crawl: $0.1187
+  (13 documents, first run 3/13 ok first try, 9 after the retry); Ultra classify $0.7759 for 107 classifications (84 + 4 + 4 + 15 over four runs).

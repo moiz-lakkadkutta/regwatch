@@ -40,6 +40,7 @@ N_OPEN = len(SEED_TODOS)  # the recorded seed has no undated to-do (test_seed_ru
 N_IN_FORCE = sum(due < TODAY for _, due in SEED_TODOS)
 N_UNCLEAR = sum(seed_payload(p)["applicability"]["decision"] == "unclear" for p in SEED_FILES)
 N_WITHDRAWAL_19 = SEED_TODOS.count(("withdrawal", date(2026, 6, 19)))
+N_GREEN_27 = SEED_TODOS.count(("greenclaims", date(2026, 9, 27)))
 NEXT_EFFECTIVE = min(
     date.fromisoformat(d)
     for p in SEED_FILES
@@ -178,12 +179,14 @@ def _unique_key(html: str) -> str:
 
 
 def test_seed_in_force_and_coming_up(client: TestClient) -> None:
-    assert N_IN_FORCE and N_IN_FORCE < N_OPEN and N_WITHDRAWAL_19 >= 4
+    assert N_IN_FORCE and N_IN_FORCE < N_OPEN and N_WITHDRAWAL_19 >= 4 and N_GREEN_27 >= 2
     html = client.get("/month").text
     assert html.count("<h2>Already in force</h2>") == 1
     assert html.count("<h2>Coming up</h2>") == 1
     assert "The rule already applies — do these now." in html
-    in_force = html[html.index("<h2>Already in force</h2>") : html.index("<h2>Coming up</h2>")]
+    assert html.count("<h2>Due this month</h2>") == 1
+    in_force = html[html.index("<h2>Already in force</h2>") : html.index("<h2>Due this month</h2>")]
+    this_month = html[html.index("<h2>Due this month</h2>") : html.index("<h2>Coming up</h2>")]
     coming_up = html[html.index("<h2>Coming up</h2>") :]
     # the withdrawal button (Art. 11a) is in force since 19 June 2026 — four to-dos
     assert in_force.count(OVERDUE_19) == N_WITHDRAWAL_19
@@ -195,7 +198,10 @@ def test_seed_in_force_and_coming_up(client: TestClient) -> None:
     assert "2026-12-30" not in coming_up
     assert "pill overdue" not in coming_up
     assert html.count('class="pill overdue"') == N_IN_FORCE
-    assert "Due this month" not in html
+    # green claims (Directive (EU) 2024/825) apply from 27 September 2026: due this month
+    assert this_month.count(REGULATION_LABELS["greenclaims"]) == N_GREEN_27
+    assert 'due <time datetime="2026-09-27">27 September 2026</time>' in this_month
+    assert "pill overdue" not in this_month
     assert "No fixed date" not in html
     assert "Nothing due" not in html
     assert _subline(html) == f"September 2026 · {N_OPEN} open · 0 done · {N_UNCLEAR} unclear"

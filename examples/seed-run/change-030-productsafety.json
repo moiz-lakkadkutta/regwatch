@@ -1,0 +1,76 @@
+{
+  "created_at": "2026-10-15T14:33:47.630601+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.013054,
+  "tavily_credits": 6,
+  "change": {
+    "document_url": "https://eur-lex.europa.eu/eli/reg/2023/988/oj",
+    "instrument": "Regulation (EU) 2023/988 — Article 19 – Article 21",
+    "jurisdiction": "EU",
+    "summary": "Online merchants selling distance products must clearly display manufacturer contact details, product identification, and safety warnings in an easily understood language. Accident notifications must be sent via the Safety Business Gateway without undue delay. These obligations apply to manufacturers, importers, distributors, and responsible persons for products placed on the EU market.",
+    "effective_dates": [
+      "2024-12-13"
+    ],
+    "obligations": [
+      {
+        "text": "Provide manufacturer name, contact address, and electronic contact details on distance sales products.",
+        "quote": "name, registered trade name or registered trade mark of the manufacturer, as well as the postal and electronic address at which they can be contacted"
+      },
+      {
+        "text": "Include product identification information such as picture, type, and other identifiers on distance sales products.",
+        "quote": "information allowing the identification of the product, including a picture of it, its type and any other product identifier"
+      },
+      {
+        "text": "Display safety warnings or information in an easily understood language on products or packaging for distance sales.",
+        "quote": "any warning or safety information to be affixed to the product or to the packaging or included in an accompanying document in accordance with this Regulation or the applicable Union harmonisation legislation in a language which can be easily understood by consumers"
+      },
+      {
+        "text": "Notify accidents via the Safety Business Gateway without undue delay after becoming aware of them.",
+        "quote": "The manufacturer shall ensure that, through the Safety Business Gateway, an accident caused by a product placed or made available on the market is notified, without undue delay from the moment it knows about the accident, to the competent authorities of the Member State where the accident has occurred"
+      },
+      {
+        "text": "Inform the manufacturer without undue delay if importers or distributors become aware of a product accident.",
+        "quote": "The importers and the distributors which have knowledge of an accident caused by a product that they placed or made available on the market shall without undue delay inform the manufacturer thereof"
+      },
+      {
+        "text": "Ensure accident notification is made by the responsible person if the manufacturer is not established in the Union.",
+        "quote": "Where the manufacturer of the product is not established in the Union, the responsible person within the meaning of Article 16(1) of this Regulation or Article 4(1) of Regulation (EU) 2019/1020 who has knowledge of an accident shall ensure that the notification is made"
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "applies",
+    "reasons": [
+      "You sell furniture and leather goods online from Germany to multiple EU countries, which makes you a distance seller under this EU regulation.",
+      "The regulation requires online merchants to display manufacturer contact details, product identification, and safety warnings in an easily understood language on distance-sale products.",
+      "As a seller placing products on the EU market, you must also inform the manufacturer without undue delay if you become aware of a product accident.",
+      "The rules took effect on 13 December 2024 and apply to micro and small enterprises like yours."
+    ],
+    "todos": [
+      {
+        "text": "Add the manufacturer's name, registered trade name or trademark, postal address, and electronic contact details to your product pages for distance sales",
+        "due": "2024-12-13",
+        "quote": "name, registered trade name or registered trade mark of the manufacturer, as well as the postal and electronic address at which they can be contacted",
+        "citation_url": "https://eur-lex.europa.eu/eli/reg/2023/988/oj"
+      },
+      {
+        "text": "Include product identification information such as a picture, type, and any other product identifier on your product pages",
+        "due": "2024-12-13",
+        "quote": "information allowing the identification of the product, including a picture of it, its type and any other product identifier",
+        "citation_url": "https://eur-lex.europa.eu/eli/reg/2023/988/oj"
+      },
+      {
+        "text": "Display all safety warnings and information in a language easily understood by consumers on your product pages, packaging, or accompanying documents",
+        "due": "2024-12-13",
+        "quote": "any warning or safety information to be affixed to the product or to the packaging or included in an accompanying document in accordance with this Regulation or the applicable Union harmonisation legislation in a language which can be easily understood by consumers",
+        "citation_url": "https://eur-lex.europa.eu/eli/reg/2023/988/oj"
+      },
+      {
+        "text": "Set up a process to inform the manufacturer without undue delay if you become aware of any accident caused by a product you sell",
+        "due": "2024-12-13",
+        "quote": "The importers and the distributors which have knowledge of an accident caused by a product that they placed or made available on the market shall without undue delay inform the manufacturer thereof",
+        "citation_url": "https://eur-lex.europa.eu/eli/reg/2023/988/oj"
+      }
+    ]
+  }
+}
