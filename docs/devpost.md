@@ -42,7 +42,7 @@ then shows:
   and a link to the official page.
 
 For the demo store (DE, ships to 10 EU countries, wood furniture + leather, Shopify, a small company) the live data
-has 26 changes from 4 official and guidance pages: 9 apply, 16 don't, 1 unclear, 29 to-dos — each with its quote
+has 33 changes from 9 official and guidance pages: 13 apply, 16 don't, 4 unclear, 41 to-dos — each with its quote
 and source. Its deforestation to-dos are due 30 June 2027, the small-company date after the EUDR was postponed
 again by Regulation (EU) 2025/2650, not the 30 December 2026 date for larger companies.
 

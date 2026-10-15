@@ -296,7 +296,13 @@ def test_feed_rows_and_unchecked_from_db(pages_client: TestClient) -> None:
         assert stamps == sorted(stamps, reverse=True)  # newest change first
         # the recorded seed (crawled in October) comes before the July extras
         assert {r.source_domain for r in rows[:SEED_CHANGES]} == SEED_SOURCES
-        assert {r.tag for r in rows} == {"withdrawal", "eudr"}
+        assert {r.tag for r in rows} == {
+            "withdrawal",
+            "eudr",
+            "greenclaims",
+            "packaging",
+            "productsafety",
+        }
         payload = seed_payload(seed_file(ART_11A))
         one = feed_row(s, prof.id, seed_change_id(ART_11A))
         assert one is not None and one.normalize_model == "seed"
@@ -365,9 +371,10 @@ def test_feed_item_meta(pages_client: TestClient) -> None:
 def test_feed_footer_seed_state(seed_client: TestClient) -> None:
     html = seed_client.get("/feed").text
     assert "Showing the recorded seed run" in html
-    # the real Tavily credits of the live crawl the seed was recorded from (run6)
-    assert SEED_CREDITS == 40
-    assert "40 Tavily credits used when it was recorded" in html
+    # the real Tavily credits of the live crawls the seed was recorded from: run6 (40) plus the
+    # green claims / packaging / product safety crawl of 2026-10-15 (43)
+    assert SEED_CREDITS == 83
+    assert "83 Tavily credits used when it was recorded" in html
     assert "no live crawl yet" in html
     assert f"{len(SEED_DOCS)} documents from {len(SEED_SOURCES)} sources " in html
     assert "Last crawl" not in html
@@ -447,10 +454,16 @@ def _blockquotes(html: str) -> list[str]:
 
 
 def test_detail_every_todo_links_citation_url(seed_client: TestClient) -> None:
-    """Grounding guard: every rendered to-do quote cites the change's own document URL."""
+    """Grounding guard: every rendered to-do quote cites the change's own document URL.
+    The page renders to-dos for `applies` only; an `unclear` change shows its question instead."""
     import regwatch.app as appmod
 
-    with_todos = [p for p in SEED_FILES if seed_payload(p)["applicability"]["todos"]]
+    with_todos = [
+        p
+        for p in SEED_FILES
+        if seed_payload(p)["applicability"]["todos"]
+        and seed_payload(p)["applicability"]["decision"] == "applies"
+    ]
     assert seed_file(ART_11A) in with_todos
     for change_id in [SEED_FILES.index(p) + 1 for p in with_todos]:
         with session(appmod.engine) as s:

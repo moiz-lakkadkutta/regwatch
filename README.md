@@ -87,7 +87,7 @@ On a change marked unclear, a button starts an agent: Nemotron 3 Ultra picks one
 
 ## Deploy on Nebius
 
-The public URL serves the recorded run in `examples/seed-run` (recorded with `regwatch record-seed` from the sixth live crawl: 4 documents, 40 Tavily credits; re-classified on 2026-10-14 for a small company, 26 changes); the Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database — Job #1 on 2026-10-10 re-ingested the 4 seed documents as unchanged and left them alone (52 new documents, 47 new changes, 52 Tavily credits, $0.2464 in model tokens; a second pass over one database adding nothing is verified offline by `tests/test_crawl_all.py::test_crawl_all_twice_is_idempotent`) — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
+The public URL serves the recorded run in `examples/seed-run` (recorded with `regwatch record-seed` from the sixth live crawl: 4 documents, 40 Tavily credits; re-classified on 2026-10-14 for a small company, 26 changes; plus 7 changes from 5 documents appended on 2026-10-15 with `record-seed --append` from a live crawl of the green-claims, packaging and product-safety acts: 43 Tavily credits; 33 changes in all); the Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database — Job #1 on 2026-10-10 re-ingested the 4 seed documents as unchanged and left them alone (52 new documents, 47 new changes, 52 Tavily credits, $0.2464 in model tokens; a second pass over one database adding nothing is verified offline by `tests/test_crawl_all.py::test_crawl_all_twice_is_idempotent`) — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
 
 One image, two modes (`ops/entrypoint.sh serve|crawl`; `crawl` exits 2 without both keys and never uses
 fixtures). Console values: `ops/serverless-endpoint.yaml`, `ops/serverless-job.yaml`; daily schedule:
@@ -131,7 +131,9 @@ dropped and the withdrawal function stays; everything else is unchanged.
 
 Directive (EU) 2023/2673 (withdrawal button, § 356a BGB, from 19 June 2026) and Regulation (EU) 2023/1115
 (EUDR, as amended by Regulation (EU) 2025/2650: medium and large operators from 30 December 2026, micro and
-small operators from 30 June 2027).
+small operators from 30 June 2027). Added 2026-10-15: Directive (EU) 2024/825 (green claims and guarantee
+information, applied from 27 September 2026), Regulation (EU) 2025/40 (PPWR, applies from 12 August 2026; the
+e-commerce empty-space rule from 1 January 2030) and Regulation (EU) 2023/988 (GPSR, applies from 13 December 2024).
 
 ## License
 

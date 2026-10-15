@@ -16,17 +16,24 @@ MysteryBox, agent cap $1 + 24 Tavily credits/day). **Job #1 (2026-10-10):** COMP
 **Pending:** daily schedule (service account + 4 repo secrets; `daily-crawl` workflow disabled) ·
 video (Oct 25–26) · clean-machine dry run (Oct 27) · Devpost submission (closes Oct 30, 10:00 PDT).
 
-**2026-10-15, three more regulations (branch only, not in the seed yet):** `config.SEED_REGULATIONS` gains
+**2026-10-15, three more regulations crawled live and in the seed:** `config.SEED_REGULATIONS` has
 `greenclaims` (Directive (EU) 2024/825), `packaging` (Regulation (EU) 2025/40, PPWR) and `productsafety`
-(Regulation (EU) 2023/988, GPSR) on eur-lex / commission / ihk.de (+ help.shopify.com for GPSR): +10 advanced
-searches (~20 credits) per full crawl. `regwatch crawl --regulation TAG --time-range any` scopes a crawl;
-`regwatch record-seed --append` adds to the seed without touching the 26 recorded changes. Not crawled: the Tavily
-plan is used up (1001 / 1000 on 2026-10-15, FEEDBACK.md), so `applies_from` dates are unverified and the seed is
-unchanged (26 changes).
+(Regulation (EU) 2023/988, GPSR) on eur-lex / commission / ihk.de (+ help.shopify.com for GPSR); `applies_from`
+verified against the crawled acts (quotes in `config.py`). Scoped live crawl (`--regulation` ×3 `--time-range any`,
+Tavily pay-as-you-go): 10 searches + 4 extracts = 43 credits, 52 documents (14 extract failures, all eur-lex or a PDF);
+13 kept for normalising; model spend $0.8946 for the default store + $0.1499 for `classify-presets` (21 calls).
+`record-seed --append` added 7 changes from 5 documents (change-027…033; change-001…026 byte-identical):
+greenclaims 2 (IHK guidance on 2024/825 — applies, due 27 Sep 2026; Commission Q&A — unclear), packaging 2
+(PPWR Art. 24 empty space — applies, due 12 Feb 2028 / 1 Jan 2030; IHK PPWR guidance — unclear), productsafety 3
+(GPSR Art. 4–8 and Art. 19–21 — apply, in force since 13 Dec 2024; Art. 11 importers — unclear). Section splitter
+fixed for ELI pages that write `Article\xa0N` (no-break space) and for a headless annex of an amending act. Left out:
+2024/825 act sections (the act-level date step picked the 27 March 2026 transposition / 27 Sep 2025 Commission
+deadlines as merchant due dates, twice), the consolidated GPSR text (to-dos dated 29 May 2026 = consolidation date),
+IHK Frankfurt (instrument named "Richtlinie (EU) 2024/1772", not in the page). **Tests:** 466 passed, 5 live deselected.
 
 **Asks for Moiz:** decide on the daily schedule (Tavily free plan 1000 credits/month vs ~52 per run; results do not reach the Endpoint) · `REGWATCH_REPORT_EMAIL` · check the live URL on a phone.
 
-**Top 5 open issues** (`docs/issues.md`): failed-normalize doc re-selected every crawl · `_todo_key` collision on shared quotes (one seed change has it) · unverified nebius CLI / `--args` syntax. The seed is recorded from a live crawl (`regwatch record-seed`: 4 documents, 26 changes, live Ultra applicabilities re-classified 2026-10-14 for a small company: EUDR to-dos due 30 June 2027).
+**Top 5 open issues** (`docs/issues.md`): failed-normalize doc re-selected every crawl · `_todo_key` collision on shared quotes (one seed change has it) · unverified nebius CLI / `--args` syntax. The seed is recorded from live crawls (`regwatch record-seed`: 9 documents, 33 changes — 13 apply, 16 don't, 4 unclear, 41 to-dos — live Ultra applicabilities; EUDR to-dos due 30 June 2027 for a small company; 83 Tavily credits across the two crawls).
 
 ## Freeze checklist (Oct 24, worktree `day/1024`)
 

@@ -1,0 +1,41 @@
+{
+  "created_at": "2026-10-15T14:11:09.385216+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.006803,
+  "tavily_credits": 6,
+  "change": {
+    "document_url": "https://www.ihk.de/schleswig-holstein/international/aussenwirtschaft-aktuell/eu-pflichten-der-eu-verpackungsverordnung-am-august-2026-7013664",
+    "instrument": "EU-Verpackungsverordnung (PPWR)",
+    "jurisdiction": "EU; transposed in DE as Verpackungsgesetz (VerpackG)",
+    "summary": "From 12 August 2026, online merchants must register with the Central Packaging Register and ensure all packaging placed on the market is reported. The EU Packaging and Packaging Waste Regulation (PPWR) sets new rules for packaging placed on the EU market.",
+    "effective_dates": [
+      "2026-08-12"
+    ],
+    "obligations": [
+      {
+        "text": "Register with the Central Packaging Register by 12 August 2026.",
+        "quote": "Mit der Anwendung der EU-Verpackungsverordnung zum 12. August 2026 verschiebt sich die erweiterte Herstellerverantwortung für Verpackungen von Eigenmarken und Importen ohne inländischen Zwischenhändler grundlegend."
+      },
+      {
+        "text": "Report all packaging placed on the market to the Central Packaging Register.",
+        "quote": "Mit der Anwendung der EU-Verpackungsverordnung zum 12. August 2026 verschiebt sich die erweiterte Herstellerverantwortung für Verpackungen von Eigenmarken und Importen ohne inländischen Zwischenhändler grundlegend."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "unclear",
+    "reasons": [
+      "We couldn't tell from your profile whether you sell own-brand products or import goods from outside the EU without a domestic intermediary.",
+      "The regulation's extended producer responsibility for packaging applies to 'Eigenmarken und Importe ohne inländischen Zwischenhändler'.",
+      "If you buy finished goods from suppliers established in the EU, they may already handle packaging registration and reporting."
+    ],
+    "todos": [
+      {
+        "text": "Clarify with your suppliers whether you are the first to place packaging on the EU market (i.e., you import from outside the EU or manufacture yourself)",
+        "due": "2026-08-12",
+        "quote": "Mit der Anwendung der EU-Verpackungsverordnung zum 12. August 2026 verschiebt sich die erweiterte Herstellerverantwortung für Verpackungen von Eigenmarken und Importen ohne inländischen Zwischenhändler grundlegend.",
+        "citation_url": "https://www.ihk.de/schleswig-holstein/international/aussenwirtschaft-aktuell/eu-pflichten-der-eu-verpackungsverordnung-am-august-2026-7013664"
+      }
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "created_at": "2026-10-15T14:07:58.629851+00:00",
+  "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
+  "cost_usd": 0.00672,
+  "tavily_credits": 7,
+  "change": {
+    "document_url": "https://commission.europa.eu/document/download/3c257883-bb2a-4dd9-a6dc-501d587bb34f_en?filename=faq-empowerting-consumers-gtd.pdf",
+    "instrument": "Directive (EU) 2024/825 of the European Parliament and of the Council of 28 February 2024 amending Directives 2005/29/EC and 2011/83/EU as regards empowering consumers for the green transition through better protection against unfair practices and through better information",
+    "jurisdiction": "EU",
+    "summary": "The ECGT Directive amends the UCPD and CRD to regulate vague environmental claims and sustainability labels, and to mandate better information on legal guarantee rights, repairability and durability. From 27 September 2026, traders must ensure their environmental claims and labels comply with the new rules, including for existing products.",
+    "effective_dates": [
+      "2026-09-27"
+    ],
+    "obligations": [
+      {
+        "text": "Provide reparability score before consumer is bound by contract",
+        "quote": "According to Articles 5(1)(i) and 6(1)(u) of the CRD, as amended by Article 2(2)(c), (3)(d) of the ECGT Directive, whenever harmonised EU requirements are established for a specific product or product group, traders must provide the reparability score to consumers in a clear and comprehensible manner before the consumer is bound by the contract."
+      }
+    ]
+  },
+  "applicability": {
+    "decision": "unclear",
+    "reasons": [
+      "We couldn't tell from your profile: whether the specific furniture, wooden goods, or leather goods you sell fall under product groups for which the EU has established harmonised reparability score requirements.",
+      "The obligation only applies when such harmonised EU requirements exist for a specific product or product group.",
+      "Your shop is established in Germany and ships to multiple EU countries, so you are within the jurisdictional scope of the directive."
+    ],
+    "todos": [
+      {
+        "text": "Check whether your furniture, wooden goods, or leather goods fall under product groups with EU harmonised reparability score requirements",
+        "due": "2026-09-27",
+        "quote": "According to Articles 5(1)(i) and 6(1)(u) of the CRD, as amended by Article 2(2)(c), (3)(d) of the ECGT Directive, whenever harmonised EU requirements are established for a specific product or product group, traders must provide the reparability score to consumers in a clear and comprehensible manner before the consumer is bound by the contract.",
+        "citation_url": "https://commission.europa.eu/document/download/3c257883-bb2a-4dd9-a6dc-501d587bb34f_en?filename=faq-empowerting-consumers-gtd.pdf"
+      }
+    ]
+  }
+}

@@ -22,7 +22,14 @@ _EURLEX_HOST = "eur-lex.europa.eu"
 _ADOPTED = re.compile(
     r"HA(?:VE|S) ADOPTED THIS (?:DIRECTIVE|REGULATION|DECISION)[^\n]*\n?", re.IGNORECASE
 )
-_HEADING = re.compile(r"^(?:Article (\d+[a-z]?)[ \t]*|(ANNEX\b.*?)[ \t]*)$", re.MULTILINE)
+# Newer ELI pages separate "Article"/"ANNEX" from the number with a no-break space (U+00A0).
+# Group 3: the annex of an amending act whose page lost the "ANNEX" heading (Directive (EU)
+# 2024/825 opens it with "Annex I to Directive 2005/29/EC is amended as follows:").
+_HEADING = re.compile(
+    r"^(?:Article[ \xa0](\d+[a-z]?)[ \t\xa0]*$|(ANNEX\b.*?)[ \t\xa0]*$"
+    r"|(?=(Annex [IVXLC]+ to [^\n]* amended as follows:)))",
+    re.MULTILINE,
+)
 _POINT = re.compile(
     r"(?:^|(?<=[\s:]))\((\d+)\) ?"
     r"(?=the following|Articles?\b|in Articles?\b|Annex|point|paragraph)",
@@ -81,7 +88,13 @@ def split_act(markdown: str, *, max_chars: int = 15_000, min_chars: int = 3_000)
 
 
 def _top_level_pieces(body: str) -> list[_Piece]:
-    heads = list(_HEADING.finditer(body))
+    found = list(_HEADING.finditer(body))
+    # A headless-annex opener right under a real "ANNEX …" heading belongs to that heading.
+    heads = [
+        h
+        for i, h in enumerate(found)
+        if not (h.group(3) and i and "\n" not in body[found[i - 1].start() : h.start()].strip())
+    ]
     pieces: list[_Piece] = []
     first = heads[0].start() if heads else len(body)
     if body[:first].strip():
@@ -91,8 +104,11 @@ def _top_level_pieces(body: str) -> list[_Piece]:
         text = body[head.start() : end].strip()
         if head.group(1):
             pieces.extend(_split_points(f"Article {head.group(1)}", text))
+        elif head.group(3):
+            pieces.append(_Piece("ANNEX", "", text))
         else:
-            pieces.append(_Piece(head.group(2)[:_LABEL_CAP], "", text))
+            label = head.group(2).replace("\xa0", " ")[:_LABEL_CAP]
+            pieces.append(_Piece(label, "", text))
     return pieces
 
 
