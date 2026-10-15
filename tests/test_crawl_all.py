@@ -217,7 +217,8 @@ def test_seed_then_crawl_all_leaves_seed_changes_alone(
     assert run.n_changes_new == 15 and run.n_classified == 15 and run.n_applies == 3
     recorded_costs = sorted(seed_payload(p)["cost_usd"] for p in SEED_FILES)
     with Session(make_engine(tmp_settings)) as s:
-        rows = s.exec(select(ApplicabilityRow)).all()
+        # the default store (profile 1); the crawl never classifies the other example stores
+        rows = s.exec(select(ApplicabilityRow).where(ApplicabilityRow.profile_id == 1)).all()
         assert len(rows) == SEED_CHANGES + 15
         assert all(r.model == "nvidia/Nemotron-3-Ultra-550b-a55b" for r in rows)
         seed_ids = [
@@ -315,4 +316,5 @@ def test_seed_loads_several_sections_of_one_act_and_is_idempotent(tmp_path: Path
         ]
         assert len({r.document_url for r in rows}) == 1
         assert all(r.content_hash for r in rows)
-        assert len(s.exec(select(ApplicabilityRow)).all()) == 2
+        default = select(ApplicabilityRow).where(ApplicabilityRow.profile_id == 1)
+        assert len(s.exec(default).all()) == 2

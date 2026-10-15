@@ -458,7 +458,10 @@ def test_detail_every_todo_links_citation_url(seed_client: TestClient) -> None:
             ch = s.get(RegChangeRow, change_id)
             assert ch is not None
             appl = s.exec(
-                select(ApplicabilityRow).where(ApplicabilityRow.regchange_id == change_id)
+                select(ApplicabilityRow).where(
+                    ApplicabilityRow.regchange_id == change_id,
+                    ApplicabilityRow.profile_id == 1,  # the default store the page shows
+                )
             ).one()
         change = ch.to_schema()
         todos = appl.to_schema().todos
