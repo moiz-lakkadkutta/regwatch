@@ -1,7 +1,9 @@
 import json
 import logging
 import re
+from collections import Counter
 from datetime import UTC, date, datetime
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -29,6 +31,7 @@ from regwatch.understand.classify import (
     enforce,
     load_prompt,
     parse_payload,
+    render_date_notes,
     render_profile,
     response_format,
     response_json_schema,
@@ -273,7 +276,78 @@ def test_does_not_todos_are_stripped_and_unclear_keeps_at_most_one() -> None:
         ],
     )
     appl, rejected, nulled = enforce(many, change)
-    assert len(appl.todos) == MAX_TODOS and rejected == [] and nulled == 0
+    assert rejected == [] and nulled == 0
+    per_quote = Counter(t.quote for t in appl.todos)
+    assert len(per_quote) <= MAX_TODOS and max(per_quote.values()) <= 2
+
+
+def test_cap_counts_obligations_and_allows_one_todo_per_product_group() -> None:
+    quotes = [f"Operators shall keep record number {i} for five years." for i in range(9)]
+    change = RegChange(
+        document_url=URL_1115,
+        instrument="Regulation (EU) 2023/1115 — Article 5",
+        jurisdiction="EU",
+        summary="s",
+        effective_dates=[date(2026, 12, 30), date(2027, 6, 30)],
+        obligations=[Obligation(text=f"o{i}", quote=q) for i, q in enumerate(quotes)],
+    )
+    drafts = [TodoDraft(text=f"wood {i}", due="2026-12-30", quote=q) for i, q in enumerate(quotes)]
+    drafts += [TodoDraft(text="leather 0", due="2027-06-30", quote=quotes[0])]
+    drafts += [TodoDraft(text="third 0", due=None, quote=quotes[0])]
+    appl, rejected, _ = enforce(
+        ClassifiedPayload(decision="applies", reasons=["r"], todos=drafts), change
+    )
+    assert rejected == []
+    assert [t.text for t in appl.todos] == [f"wood {i}" for i in range(MAX_TODOS)] + ["leather 0"]
+    assert appl.ungrounded_todos(change) == []
+
+
+def test_classify_all_gives_eudr_changes_the_grounded_date_notes(tmp_path: Path) -> None:
+    """Root cause of 'wood due 2027': the classifier now sees Art. 38(3)'s exception and the
+    995/2010 Annex line for wooden furniture (stored, grounded rule moves) on EUDR changes only."""
+    from regwatch.jobs.crawl import seed
+    from regwatch.moves import read_moves
+
+    settings = Settings(REGWATCH_DB_URL=f"sqlite:///{tmp_path / 'c.db'}")
+    seed(settings)
+    small, larger = sorted(read_moves(SEED_DIR / "rule-moves.json"), key=lambda m: m.new_date)[::-1]
+    wood = small.exceptions[0]
+    backend = StubBackend([_payload("does_not", [])] * 100)
+    store = Profile(
+        establishment_country="DE",
+        ship_to=["DE"],
+        categories=["furniture_wood", "leather"],
+        company_size="small",
+    )
+    with Session(make_engine(settings)) as s:
+        row = ProfileRow.from_schema(store)
+        s.add(row)
+        s.commit()
+        s.refresh(row)
+        summary = classify_all(
+            s,
+            profile_row=row,
+            backend=backend,
+            settings=settings,
+            ledger=ModelLedger.for_classifier(settings),
+        )
+    assert summary.n_changes == len(backend.calls) > 0
+    users = [call[1]["content"] for call in backend.calls]
+    eudr = [u for u in users if "- Instrument: Regulation (EU) 2023/1115" in u]
+    others = [u for u in users if u not in eudr]
+    assert eudr and others
+    for u in eudr:
+        assert "## Date notes for this act (verbatim from stored sources)" in u
+        assert f'sets 2027-06-30: "{small.quote}"' in u
+        assert (
+            "Except wooden furniture (this shop sells furniture_wood): those keep 2026-12-30" in u
+        )
+        assert f'Annex, lists: "{wood.quote}"' in u and f'Article 38(2): "{wood.due_quote}"' in u
+        assert "Pulp and paper" not in u and larger.quote not in u.split("Date notes")[1][:300]
+        assert u.index("Date notes") < u.index("## Regulation change")
+    assert all("Date notes" not in u for u in others)
+    leather_only = render_date_notes(read_moves(SEED_DIR / "rule-moves.json"), _profile_small())
+    assert "sets 2027-06-30" in leather_only and "  - Except" not in leather_only
 
 
 # --- copy, prompt and schema ---------------------------------------------------------------------
@@ -595,3 +669,9 @@ def test_log_lines_name_the_changes_instrument(caplog: pytest.LogCaptureFixture)
     assert calls and all(label in m for m in calls)
     nulled = [r.getMessage() for r in caplog.records if "nulled invented due" in r.getMessage()]
     assert nulled and all(label in nulled[0] for _ in nulled)
+
+
+def _profile_small() -> Profile:
+    return Profile(
+        establishment_country="DE", ship_to=["DE"], categories=["leather"], company_size="small"
+    )

@@ -1,8 +1,22 @@
-{# One "this rule moved" banner; `mv` is a stored, grounded regwatch.moves.RuleMove. #}
+{# One "this rule moved" banner; `mv` is a stored, grounded regwatch.moves.RuleMove narrowed to the
+   store (RuleMove.for_store): `mv.exceptions` are the products it sells that keep an earlier date. #}
+{% set moved = mv.moved_names %}
 <aside class="card moved" role="note">
+{% if mv.exceptions %}
+{% for ex in mv.exceptions %}<p><strong>{{ex.products|capitalize}}: due {{ex.due|dlong}}, not moved to {{mv.new_date|dlong}}</strong></p>
+{% endfor %}
+{% if moved %}<p><strong>{{moved|join(", ")|capitalize}}: moved to {{mv.new_date|dlong}} for {{mv.audience}}</strong></p>{% endif %}
+<p class="note">{% for ex in mv.exceptions %}{% set act = "the " ~ ex.act_name ~ " (" ~ ex.act ~ ")" if ex.act_name else ex.act %}The move to {{mv.new_date|dlong}} leaves out products listed in the {{ex.provision}} to {{act}}, which lists {{ex.products}}. {% endfor %}{% if moved %} {{moved|join(", ")|capitalize}} were due {{mv.old_date|dlong}}.{% endif %} The dates in RegWatch already use these.</p>
+{% else %}
 <p><strong>Deadline moved: now {{mv.new_date|dlong}} for {{mv.audience}}</strong></p>
 <p class="note">It was {{mv.old_date|dlong}}. The dates in RegWatch already use the new one.</p>
+{% endif %}
 {% if mv.caveat %}<p class="note">{{mv.caveat}}</p>{% endif %}
 <p class="moved-law">Moved by <a href="{{mv.amending_url}}" rel="noopener">{{mv.amending_act}}</a>, which amends {{mv.provision}} of {{mv.instrument}}.</p>
-<details><summary>Read the amended text</summary><blockquote class="moved-quote">“{{mv.quote}}”<cite>— {{mv.instrument}}, {{mv.provision}}, as amended by {{mv.amending_act}} · <a href="{{mv.citation_url}}" rel="noopener">{{mv.source_domain}}</a></cite></blockquote></details>
+<details><summary>Read the amended text</summary><blockquote class="moved-quote">“{{mv.quote}}”<cite>— {{mv.instrument}}, {{mv.provision}}, as amended by {{mv.amending_act}} · <a href="{{mv.citation_url}}" rel="noopener">{{mv.source_domain}}</a></cite></blockquote>
+{% for ex in mv.exceptions %}<blockquote class="moved-quote">“{{ex.quote}}”<cite>— {{ex.act}}, {{ex.provision}} · <a href="{{ex.citation_url}}" rel="noopener">{{ex.source_domain}}</a></cite></blockquote>
+{% if loop.first or ex.due_quote != loop.previtem.due_quote %}<blockquote class="moved-quote">“{{ex.due_quote}}”<cite>— {{mv.instrument}}, {{ex.due_provision}}, as amended by {{mv.amending_act}} · <a href="{{ex.due_citation_url}}" rel="noopener">{{ex.due_source_domain}}</a></cite></blockquote>{% endif %}
+{% endfor %}
+{% if mv.old_quote %}<blockquote class="moved-quote">Before: “{{mv.old_quote}}”<cite>— {{mv.instrument}}, {{mv.provision}}, as set by {{mv.old_act}} · <a href="{{mv.old_citation_url}}" rel="noopener">{{mv.old_source_domain}}</a></cite></blockquote>{% endif %}
+</details>
 </aside>

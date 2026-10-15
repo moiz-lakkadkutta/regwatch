@@ -320,8 +320,13 @@ def _fragment(request: Request, panel: AgentPanel) -> Response:
     return resp
 
 
-def _todo_key(quote: str, url: str) -> str:
-    return hashlib.sha1(f"{url}|{quote}".encode()).hexdigest()[:16]
+def _todo_key(quote: str, url: str, text: str, due: date | None) -> str:
+    """Stable id of one to-do. Two to-dos of one change may cite the same obligation quote (e.g.
+    EUDR: wooden furniture due 2026-12-30, leather goods 2027-06-30), so the to-do's own text and
+    due are part of the key. Changing this formula orphans stored TodoStateRows; that is fine
+    because the demo DB is rebuilt from the seed on every boot (no user ticks to migrate)."""
+    raw = f"{url}|{quote}|{text}|{due.isoformat() if due else ''}"
+    return hashlib.sha1(raw.encode()).hexdigest()[:16]
 
 
 def _done_keys(s: Session, profile_id: int) -> set[str]:
@@ -339,8 +344,8 @@ def _item(row: FeedRow, done_keys: set[str], today: date) -> FeedItem:
             due=t.due,
             quote=t.quote,
             citation_url=t.citation_url,
-            key=_todo_key(t.quote, t.citation_url),
-            done=_todo_key(t.quote, t.citation_url) in done_keys,
+            key=_todo_key(t.quote, t.citation_url, t.text, t.due),
+            done=_todo_key(t.quote, t.citation_url, t.text, t.due) in done_keys,
             overdue=bool(t.due and t.due < today),
         )
         for t in row.appl.todos

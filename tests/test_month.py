@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 import pytest
 from fastapi.testclient import TestClient
+from markupsafe import escape
 from sqlmodel import select
 
 from regwatch.config import REGULATION_LABELS
@@ -169,9 +170,33 @@ def _subline(html: str) -> str:
 
 
 def _unique_key(html: str) -> str:
-    """A to-do key shown once (one stored quote can back two to-dos; toggling marks both)."""
+    """A to-do key shown once (every key is, since the key includes the to-do's text and due)."""
     keys = _keys(html)
     return next(k for k in keys if keys.count(k) == 1)
+
+
+def test_todos_sharing_a_quote_are_ticked_separately(client: TestClient) -> None:
+    """EUDR Art. 3 for the default store: one obligation quote backs a wooden-furniture to-do due
+    30 December 2026 and a leather-goods to-do due 30 June 2027. Ticking one leaves the other."""
+    import regwatch.app as appmod
+
+    html = client.get("/month").text
+    keys = _keys(html)
+    assert len(keys) == len(set(keys)) == N_OPEN
+    eudr = next(p for p in SEED_FILES if p.name.endswith("-eudr.json"))
+    wood, leather = seed_payload(eudr)["applicability"]["todos"][:2]
+    assert wood["quote"] == leather["quote"] and wood["due"] < leather["due"]
+
+    def key(t: dict[str, Any]) -> str:
+        return str(
+            appmod._todo_key(t["quote"], t["citation_url"], t["text"], date.fromisoformat(t["due"]))
+        )
+
+    assert key(wood) != key(leather) and {key(wood), key(leather)} <= set(keys)
+    client.post(f"/todo/{key(wood)}/toggle")
+    html = client.get("/month").text
+    done = html.split("<h2>Done (1)</h2>")[1]
+    assert str(escape(wood["text"])) in done and str(escape(leather["text"])) not in done
 
 
 # ---------- 1–2: buckets on the seed run and on added rows ----------
@@ -188,11 +213,15 @@ def test_seed_in_force_and_coming_up(client: TestClient) -> None:
     # the withdrawal button (Art. 11a) is in force since 19 June 2026 — four to-dos
     assert in_force.count(OVERDUE_19) == N_WITHDRAWAL_19
     assert in_force.count(f'href="/change/{seed_change_id(ART_11A)}">' + WITHDRAWAL) == 4
-    # EUDR for a small company starts on 30 June 2027 (Regulation (EU) 2025/2650), not on the
-    # 30 December 2026 date for medium and large companies: none is already in force
+    # EUDR for a small company: leather goods from 30 June 2027 (Regulation (EU) 2025/2650), but
+    # wooden furniture keeps 30 December 2026 (Art. 38(3) leaves out the Annex to Regulation (EU)
+    # No 995/2010, which lists wooden furniture): none is already in force, both are coming up
     assert EUDR not in in_force and EUDR in coming_up
     assert 'due <time datetime="2027-06-30">30 June 2027</time>' in coming_up
-    assert "2026-12-30" not in coming_up
+    assert 'due <time datetime="2026-12-30">30 December 2026</time>' in coming_up
+    n_wood = SEED_TODOS.count(("eudr", date(2026, 12, 30)))
+    assert n_wood == SEED_TODOS.count(("eudr", date(2027, 6, 30))) == 14
+    assert coming_up.count('due <time datetime="2026-12-30">') == n_wood
     assert "pill overdue" not in coming_up
     assert html.count('class="pill overdue"') == N_IN_FORCE
     assert "Due this month" not in html

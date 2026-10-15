@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from regwatch.config import Settings
+from regwatch.moves import read_grounded_moves
 from regwatch.presets import append_entry, load_seed_changes, load_stores, read_entries
 from regwatch.understand.classify import classify
 from regwatch.understand.llm_backend import LLMBackend, ModelLedger
@@ -76,6 +77,7 @@ def classify_presets(
     if unknown:
         raise ValueError(f"unknown store(s): {', '.join(sorted(unknown))}")
     changes = load_seed_changes(seed_dir)
+    moves = read_grounded_moves(seed_dir)  # date notes for the classifier, grounded like seed
     ledger = ModelLedger.for_classifier(settings)
     summary = PresetSummary()
     for store in stores:
@@ -89,7 +91,12 @@ def classify_presets(
                 tally.n_existing += 1
                 continue
             result = classify(
-                sc.change, store.file.profile, backend=backend, settings=settings, ledger=ledger
+                sc.change,
+                store.file.profile,
+                backend=backend,
+                settings=settings,
+                ledger=ledger,
+                moves=[m for m in moves if sc.change.instrument.startswith(m.instrument)],
             )
             tally.cost_usd += result.cost_usd
             appl = result.applicability

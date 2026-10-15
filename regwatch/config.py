@@ -222,6 +222,10 @@ SUPPLY_OPTIONS: list[tuple[str, str]] = [
     ("imports_or_makes", "I import them from outside the EU, or make them myself"),
 ]
 REGULATION_TAGS: frozenset[str] = frozenset(r["tag"] for r in SEED_REGULATIONS)
+# A stored document with this tag is grounding for other records (e.g. the EUDR rule-move
+# exceptions: Regulation (EU) No 995/2010's Annex), never a regulation change of its own:
+# `--stage normalize` skips it.
+REFERENCE_TAG = "reference"
 
 # Plain-language group headings for the feed (what to do first; the instrument name is the subline).
 REGULATION_LABELS: dict[str, str] = {
