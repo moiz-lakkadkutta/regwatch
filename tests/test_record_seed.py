@@ -495,3 +495,73 @@ def test_cli_record_seed_exclude(crawl_db: Settings, monkeypatch: pytest.MonkeyP
     result = CliRunner().invoke(app, [*args, "--exclude", "No such instrument"])
     assert result.exit_code == 1
     assert "No such instrument" in result.output
+
+
+# ---------- --append: add to an existing seed without touching it ----------
+
+
+def test_record_seed_append_keeps_existing_files_and_numbers_after_them(
+    crawl_db: Settings,
+) -> None:
+    out = crawl_db.seed_dir
+    record_seed(crawl_db, [SHOP], out)  # the "existing" seed: change-001-shopify + 1 document
+    (out / "change-007-other.json").write_bytes((out / "change-001-shopify.json").read_bytes())
+    old_change = (out / "change-001-shopify.json").read_bytes()
+    old_docs = (out / "documents.jsonl").read_bytes()
+
+    summary = record_seed(crawl_db, [ACT], out, append=True)
+
+    assert (summary.n_documents, summary.n_changes) == (1, 2)
+    assert (out / "change-001-shopify.json").read_bytes() == old_change
+    assert sorted(p.name for p in out.glob("change-*.json")) == [
+        "change-001-shopify.json",
+        "change-007-other.json",
+        "change-008-withdrawal.json",
+        "change-009-withdrawal.json",
+    ]
+    lines = (out / "documents.jsonl").read_bytes().splitlines(keepends=True)
+    assert [json.loads(line)["url"] for line in lines] == [ACT, SHOP]  # still sorted by url
+    assert old_docs in lines  # the existing line is byte-identical
+    # the source crawl's 40 credits are apportioned over the appended files only
+    added = [json.loads((out / f"change-00{n}-withdrawal.json").read_text()) for n in (8, 9)]
+    assert [a["tavily_credits"] for a in added] == [20, 20]
+
+    fresh = Settings(
+        REGWATCH_DB_URL=f"sqlite:///{out.parent / 'fresh.db'}", REGWATCH_SEED_DIR=str(out)
+    )
+    assert seed(fresh) == 3  # 001 and its copy 007 are one (document_url, instrument)
+    assert seed(fresh) == 0
+
+
+def test_record_seed_append_refuses_a_change_already_in_the_seed(crawl_db: Settings) -> None:
+    out = crawl_db.seed_dir
+    record_seed(crawl_db, [SHOP, ACT], out)
+    before = _files(out)
+    with pytest.raises(RecordError, match="already in the seed"):
+        record_seed(crawl_db, [ACT], out, append=True)
+    assert _files(out) == before
+
+
+def test_record_seed_append_refuses_a_document_with_another_hash(crawl_db: Settings) -> None:
+    out = crawl_db.seed_dir
+    record_seed(crawl_db, [SHOP], out)
+    for path in out.glob("change-*.json"):
+        path.unlink()  # so only the documents.jsonl conflict remains
+    line = json.loads((out / "documents.jsonl").read_text(encoding="utf-8"))
+    line["content_hash"] = "hash-other"
+    (out / "documents.jsonl").write_text(json.dumps(line) + "\n", encoding="utf-8")
+    before = _files(out)
+    with pytest.raises(RecordError, match="another content hash"):
+        record_seed(crawl_db, [SHOP], out, append=True)
+    assert _files(out) == before
+
+
+def test_cli_record_seed_append(crawl_db: Settings, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("REGWATCH_DB_URL", crawl_db.db_url)
+    out = crawl_db.seed_dir
+    base = ["record-seed", "--out", str(out)]
+    assert CliRunner().invoke(app, [*base, "--url", SHOP]).exit_code == 0
+    result = CliRunner().invoke(app, [*base, "--append", "--url", ACT])
+    assert result.exit_code == 0, result.output
+    assert (out / "change-001-shopify.json").exists()
+    assert (out / "change-003-withdrawal.json").exists()

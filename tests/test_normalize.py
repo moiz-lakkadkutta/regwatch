@@ -468,7 +468,7 @@ def test_crawl_stage_normalize_updates_run_row_and_prints_line(
     with Session(make_engine(Settings(REGWATCH_DB_URL=f"sqlite:///{tmp_path / 'all.db'}"))) as s:
         runs = s.exec(select(CrawlRunRow)).all()
         assert len(runs) == 1 and runs[0].stage == "all"
-        assert runs[0].tavily_credits == 36 and runs[0].model_cost_usd > 0
+        assert runs[0].tavily_credits == 56 and runs[0].model_cost_usd > 0
         assert runs[0].n_changes_new == 15
     assert not (tmp_path / "documents.jsonl").exists()
 

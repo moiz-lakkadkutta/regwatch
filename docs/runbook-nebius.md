@@ -57,7 +57,11 @@ Cost line: the Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/
    `REGWATCH_DB_URL=sqlite:////tmp/live.db uv run regwatch record-seed --url <document URL> [--url …]
    [--exclude "<exact instrument>" …]` (writes `examples/seed-run`; keeps `profile.json`; skips
    changes with an undated to-do; refuses ungrounded changes and excludes that match nothing;
-   carries the crawl's Tavily credits into the seed footer). Commit,
+   carries the crawl's Tavily credits into the seed footer). To add regulations without re-recording the
+   existing seed: seed the scratch DB (`regwatch seed`), crawl only them (`regwatch crawl --stage all
+   --regulation <tag> [--regulation …] --time-range any`; `any` = no date filter, for acts published years
+   ago), then `record-seed --append --url …` (existing change files stay byte-identical; new ones are
+   numbered after them). Commit,
    rebuild/push, redeploy, repeat. Paste both summary lines into `FEEDBACK.md`.
 10. **Schedule.** GitHub repository secrets `NEBIUS_SA_ID`, `NEBIUS_SA_PUBLIC_KEY_ID`,
     `NEBIUS_SA_PRIVATE_KEY`, `NEBIUS_PROJECT_ID`; repository variable `REGWATCH_IMAGE`; the workflow

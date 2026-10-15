@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 from markupsafe import escape
 from sqlmodel import select
 
-from regwatch.config import REGULATION_LABELS, SEED_REGULATIONS
+from regwatch.config import REGULATION_LABELS, SEED_REGULATIONS, regulation_instrument
 from regwatch.db import (
     ApplicabilityRow,
     CrawlRunRow,
@@ -314,11 +314,10 @@ def test_feed_rows_and_unchecked_from_db(pages_client: TestClient) -> None:
 
 def test_feed_groups_by_regulation_with_label_and_instrument(pages_client: TestClient) -> None:
     html = pages_client.get("/feed").text
-    for label in REGULATION_LABELS.values():
-        assert label in html
+    for tag in ("withdrawal", "eudr"):  # the regulations the pages fixture has rows for
+        assert REGULATION_LABELS[tag] in html
+        assert regulation_instrument(tag) in html
     assert html.index('id="withdrawal"') < html.index('id="eudr"')
-    for r in SEED_REGULATIONS:
-        assert r["instrument"] in html
     assert "IHK guidance" in _section(html, "eudr")
     assert "Shopify Help" in _section(html, "withdrawal")
 
@@ -658,8 +657,11 @@ def test_feed_single_item_group_omits_instrument_subline(
 
 def test_feed_seed_groups_keep_instrument_subline(seed_client: TestClient) -> None:
     html = seed_client.get("/feed").text
+    seeded = {p.stem.split("-", 2)[2] for p in SEED_FILES}  # change-NNN-<tag>.json
+    assert {"withdrawal", "eudr"} <= seeded
     for r in SEED_REGULATIONS:
-        assert html.count(f'<p class="law">{escape(r["instrument"])}</p>') == 1
+        expected = 1 if r["tag"] in seeded else 0
+        assert html.count(f'<p class="law">{escape(r["instrument"])}</p>') == expected
 
 
 def test_feed_multi_item_group_keeps_instrument_subline(pages_client: TestClient) -> None:
