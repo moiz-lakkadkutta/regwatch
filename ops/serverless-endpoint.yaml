@@ -9,13 +9,13 @@
 # 12b) and redeploy sparingly on video day. Keys: the shared `regwatch-keys` secret (as the Job)
 # until a separate Endpoint key pair exists; then put it in a second secret and change the name below.
 # The shared demo profile is read-only (REGWATCH_PROFILE_LOCKED). Applied only at runbook step 12.
-name: regwatch-web-2          # 2026-10-14: no `endpoint update` in the CLI, so a redeploy is a new endpoint (new URL)
-image: cr.eu-west2.nebius.cloud/e04t3ertpv4dynst9y/regwatch:<GIT_SHA>   # deployed 2026-10-14: 6292d2d (endpoint regwatch-web-2)
+name: regwatch-web-3          # 2026-10-14: no `endpoint update` in the CLI, so a redeploy is a new endpoint (new URL)
+image: ghcr.io/moiz-lakkadkutta/regwatch:<GIT_SHA>   # deployed 2026-10-15: 0d927fd (endpoint regwatch-web-3), built by .github/workflows/publish-image.yml; the Nebius registry (cr.eu-west2.nebius.cloud/e04t3ertpv4dynst9y) needs a local docker push
 platform: cpu-d3
 preset: 2vcpu-8gb           # smallest cpu-d3 preset in eu-west2
 container_port: 8000
 auth: none
-public: true                # --public: tunnel URL + public IP; deployed URL https://port8000-skj2wff6z9w233q.tunnel.applications.eu-west2.nebius.cloud
+public: true                # --public: tunnel URL + public IP; deployed URL https://port8000-tbw06x74c5zg9z6.tunnel.applications.eu-west2.nebius.cloud
 disk_size: 32Gi             # default 250Gi costs ~$17.75/month
 container_command: ""       # image ENTRYPOINT /app/entrypoint.sh; fallback if --args alone is refused
 args: "serve"
@@ -28,4 +28,4 @@ env:
 env_secret:                 # MysteryBox secret `regwatch-keys` (runbook step 4); used by the agent only
   NEBIUS_API_KEY: regwatch-keys
   TAVILY_API_KEY: regwatch-keys
-# cli: nebius ai endpoint create --name regwatch-web-2 --image $IMAGE --platform cpu-d3 --preset 2vcpu-8gb --container-port 8000 --auth none --public --disk-size 32Gi --args serve --env PORT=8000 --env REGWATCH_DB_URL=sqlite:////tmp/regwatch.db --env REGWATCH_AGENT_ENABLED=true --env REGWATCH_PROFILE_LOCKED=true --env REGWATCH_AGENT_DAILY_CREDITS=24 --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys
+# cli: nebius ai endpoint create --name regwatch-web-3 --image $IMAGE --platform cpu-d3 --preset 2vcpu-8gb --container-port 8000 --auth none --public --disk-size 32Gi --args serve --env PORT=8000 --env REGWATCH_DB_URL=sqlite:////tmp/regwatch.db --env REGWATCH_AGENT_ENABLED=true --env REGWATCH_PROFILE_LOCKED=true --env REGWATCH_AGENT_DAILY_CREDITS=24 --env-secret NEBIUS_API_KEY=regwatch-keys --env-secret TAVILY_API_KEY=regwatch-keys

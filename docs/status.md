@@ -9,8 +9,8 @@ Art. 11a → applies) with the feed collapsing non-applying provisions · `regwa
 the sixth live crawl · Token Factory catalog prices set (Lightning $0.06 / $0.24, Ultra $1.00 / $3.00 per Mtok; a full
 live crawl ≈ $0.41 + 40 Tavily credits). **Tests:** 289 passed, 4 live deselected.
 
-**Endpoint cost approved by Moiz 2026-10-10 (~$8–15 through submission).** **Live:** https://port8000-skj2wff6z9w233q.tunnel.applications.eu-west2.nebius.cloud (Serverless Endpoint `regwatch-web-2`,
-cpu-d3 2vcpu-8gb, eu-west2, image `6292d2d`, redeployed 2026-10-14 with "Let the agent check" on: keys from
+**Endpoint cost approved by Moiz 2026-10-10 (~$8–15 through submission).** **Live:** https://port8000-tbw06x74c5zg9z6.tunnel.applications.eu-west2.nebius.cloud (Serverless Endpoint `regwatch-web-3`,
+cpu-d3 2vcpu-8gb, eu-west2, image `ghcr.io/moiz-lakkadkutta/regwatch:0d927fd` (built by the `publish-image` workflow), redeployed 2026-10-15 with "Let the agent check" on: keys from
 MysteryBox, agent cap $1 + 24 Tavily credits/day). **Job #1 (2026-10-10):** COMPLETED in Nebius with keys from MysteryBox `regwatch-keys` — 52 new documents, 47 changes,
 52 Tavily credits, $0.25 model; a Job without the secret FAILED with `crawl: refusing to run` (exit ≠ 0).
 **Pending:** daily schedule (service account + 4 repo secrets; `daily-crawl` workflow disabled) ·

@@ -160,3 +160,12 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   (`6292d2d`). `nebius ai endpoint logs` showed the traceback, which made this a 5-minute fix. Verified through the
   ingress: /healthz 200 in 0.18 s; a non-htmx same-origin agent POST → 303 (the Host-based Origin check works
   behind the tunnel); cross-origin → 403; locked profile POST → 403; the live agent's first step asked the merchant.
+- (2026-10-15, Nebius Serverless Endpoint redeploy, small-company EUDR dates) No local Docker daemon, so the image
+  was built by a manual GitHub Actions workflow (`publish-image`) and pushed to GHCR
+  (`ghcr.io/moiz-lakkadkutta/regwatch:0d927fd`, public package, anonymous pull 200). The Endpoint pulled it with no
+  registry credentials. `--dry-run` passed; create → RUNNING took 253 s (254 s on 10-14). Still no
+  `nebius ai endpoint update`, so this is a third endpoint and a third public URL
+  (`regwatch-web-3`, port8000-tbw06x74c5zg9z6). Verified through the ingress: /healthz, /month, /feed, /profile all
+  200 in 0.57–0.78 s; logs show `seeded 26 change(s)`; /month has 14 rows due 2027-06-30 and none due 2026-12-30;
+  locked profile POST → 403; agent POST cross-origin → 403, same-origin on the unclear change → 303. The agent's
+  steps are not visible in `nebius ai endpoint logs` at the default log level.
