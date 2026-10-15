@@ -1,0 +1,6 @@
+{
+  "slug": "nl-clothing",
+  "name": "Clothing shop, Netherlands",
+  "blurb": "Sells only clothing, only to the Netherlands and Belgium, on WooCommerce; small, buys from EU suppliers.",
+  "profile": {"establishment_country": "NL", "ship_to": ["BE", "NL"], "categories": ["apparel"], "platform": "woocommerce", "company_size": "small", "supply": "eu_suppliers"}
+}

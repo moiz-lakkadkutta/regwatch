@@ -1,0 +1,6 @@
+{
+  "slug": "at-stationery",
+  "name": "Stationery shop, Austria",
+  "blurb": "Not sure of its company size or where its paper and rubber goods come from; Austrian, ships to Austria, Germany and Italy.",
+  "profile": {"establishment_country": "AT", "ship_to": ["AT", "DE", "IT"], "categories": ["paper_print", "rubber"], "platform": "other", "company_size": null, "supply": null}
+}

@@ -1,4 +1,4 @@
-"""regwatch CLI: seed | record-seed | crawl | serve."""
+"""regwatch CLI: seed | record-seed | classify-presets | crawl | serve."""
 
 from __future__ import annotations
 
@@ -52,6 +52,45 @@ def record_seed(
         print(f"record-seed: refused — {e}", file=sys.stderr)
         raise typer.Exit(code=1) from e
     print(summary.line(), file=sys.stderr)
+
+
+@app.command("classify-presets")
+def classify_presets(
+    store: Annotated[
+        list[str] | None,
+        typer.Option("--store", help="Only this store slug (repeat for several; default: all)."),
+    ] = None,
+    seed_dir: Annotated[
+        Path | None, typer.Option(help="Seed directory (default: REGWATCH_SEED_DIR).")
+    ] = None,
+    llm_backend: Annotated[str, typer.Option(help="Token Factory: live | fixtures")] = "live",
+    llm_fixtures_dir: Annotated[Path | None, typer.Option()] = None,
+) -> None:
+    """Classify every seed change for each example store that has no result yet (appends to
+    stores/<slug>.applicability.jsonl; reruns only fill gaps)."""
+    import logging
+
+    from regwatch.config import Settings
+    from regwatch.jobs.presets import classify_presets as _classify
+    from regwatch.understand.llm_backend import make_llm_backend
+
+    if llm_backend not in ("live", "fixtures"):
+        raise typer.BadParameter("llm-backend must be 'live' or 'fixtures'")
+    logging.basicConfig(level=logging.INFO, stream=sys.stderr)
+    settings = Settings()
+    backend = make_llm_backend(
+        "live" if llm_backend == "live" else "fixtures",
+        settings,
+        llm_fixtures_dir,
+        stage="classify",
+    )
+    try:
+        summary = _classify(settings, backend=backend, seed_dir=seed_dir, only=store or [])
+    except ValueError as e:
+        print(f"classify-presets: refused — {e}", file=sys.stderr)
+        raise typer.Exit(code=1) from e
+    for line in summary.lines():
+        print(line, file=sys.stderr)
 
 
 @app.command()

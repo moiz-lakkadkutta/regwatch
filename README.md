@@ -67,7 +67,19 @@ With keys: copy `.env.example` to `.env`, set `TAVILY_API_KEY=` and `NEBIUS_API_
 `uv run regwatch crawl` (live search + extract + both models; writes nothing to `examples/seed-run`).
 The demo seed is recorded from such a crawl with `uv run regwatch record-seed --url … [--exclude …]`
 (grounded changes only; undated to-dos skipped; the crawl's Tavily credits carried into the footer).
-Schema changes are not migrated — delete a stale local `regwatch.db` first.
+Schema changes are not migrated — delete a stale local `regwatch.db` first (the example stores'
+`slug` / `name` / `blurb` columns are the one exception: `make_engine` adds them to an older DB).
+
+## Example stores
+
+The shared demo profile stays locked; a row of example stores on the feed, month and profile pages
+lets a visitor switch between shops whose results were worked out ahead of time (a cookie, nothing
+written). Each is `examples/seed-run/stores/<slug>.json`; the default store (`de-furniture`, equal to
+`profile.json`) uses the change files' own results, every other store reads
+`stores/<slug>.applicability.jsonl`. `uv run regwatch classify-presets` fills that file: Nemotron 3
+Ultra on each (store, seed change) pair that has no line yet, the same `enforce()` grounding and
+`ungrounded_todos()` check as the crawl, one appended line per result. A rerun only fills gaps, so
+after new change files are recorded it classifies just those; `regwatch seed` then loads them.
 
 ## Let the agent check (unclear changes)
 

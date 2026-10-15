@@ -1,0 +1,6 @@
+{
+  "slug": "fr-coffee",
+  "name": "Coffee importer, France",
+  "blurb": "Imports its own coffee and cocoa from outside the EU and has more than 50 staff; French, ships EU-wide on Shopify.",
+  "profile": {"establishment_country": "FR", "ship_to": ["AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR", "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL", "PL", "PT", "RO", "SK", "SI", "ES", "SE"], "categories": ["coffee_cocoa"], "platform": "shopify", "company_size": "larger", "supply": "imports_or_makes"}
+}
