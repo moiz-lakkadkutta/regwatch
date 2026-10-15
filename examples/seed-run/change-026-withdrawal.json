@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-06T11:41:28.135152+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.005761,
+  "cost_usd": 0.008165,
   "tavily_credits": 1,
   "change": {
     "document_url": "https://www.ihk.de/pfalz/recht/widerrufsbutton-kommt-ab-juni-2026-7003518",
@@ -42,43 +42,43 @@
   "applicability": {
     "decision": "applies",
     "reasons": [
-      "Your shop is established in Germany, so the German law § 356a BGB applies directly to you.",
-      "You sell furniture and leather goods to consumers (B2C) via your Shopify storefront, which makes you an 'Online-Händler im B2C-Bereich' covered by the obligations.",
-      "The regulation requires a withdrawal button and related changes by 19 June 2026, with further updates by 27 September 2026."
+      "This applies because you are an online merchant established in Germany selling furniture and leather goods to consumers across the EU.",
+      "The German law § 356a BGB requires all B2C online traders to provide a withdrawal button from 19 June 2026.",
+      "Your Shopify store serves consumers (B2C) in multiple EU countries, so the obligation binds you directly."
     ],
     "todos": [
       {
-        "text": "Add a clearly labelled 'Vertrag widerrufen' button (or equivalent wording) to your Shopify storefront",
+        "text": "Add a clearly labelled 'Vertrag widerrufen' button to your storefront",
         "due": "2026-06-19",
         "quote": "Online-Händler und Online-Dienstleister im B2C-Bereich müssen künftig auf ihren Internetseiten eine gut lesbare Schaltfläche mit der Aufschrift „Vertrag widerrufen“ oder einer gleichwertigen Formulierung bereitstellen.",
         "citation_url": "https://www.ihk.de/pfalz/recht/widerrufsbutton-kommt-ab-juni-2026-7003518"
       },
       {
-        "text": "Make the withdrawal button easy to find, always visible during the withdrawal period, and usable without login, registration, or app download",
+        "text": "Make the withdrawal button easy to find, always visible during the withdrawal period, and usable without login or app download",
         "due": "2026-06-19",
         "quote": "Die Schaltfläche muss ohne Weiteres zu finden und während der gesamten Widerrufsfrist gut sichtbar und durchgehend verfügbar sein – ohne Registrierung, Authentifizierung oder App-Download (außer, der Vertrag wurde über eine App geschlossen).",
         "citation_url": "https://www.ihk.de/pfalz/recht/widerrufsbutton-kommt-ab-juni-2026-7003518"
       },
       {
-        "text": "Design the button accessibly: ensure sufficient font size, contrast, and colour to meet accessibility requirements",
+        "text": "Design the button to meet accessibility requirements for font size, contrast, and colour",
         "due": "2026-06-19",
         "quote": "Dabei sind auch die Anforderungen für Menschen mit Behinderungen nach dem Barrierefreiheitsstärkungsgesetz und der dazu ergangenen Verordnung zu beachten – wie etwa hinsichtlich Schriftgröße, Kontrast oder Schriftfarbe.",
         "citation_url": "https://www.ihk.de/pfalz/recht/widerrufsbutton-kommt-ab-juni-2026-7003518"
       },
       {
-        "text": "Set up an automatic email confirmation sent immediately after a consumer uses the withdrawal button, including the withdrawal content, date, and time",
+        "text": "Set up automatic email confirmation sent immediately when a consumer uses the withdrawal button",
         "due": "2026-06-19",
         "quote": "Nach Ausübung des Widerrufs muss der Unternehmer eine Eingangsbestätigung auf einem dauerhaften Datenträger (zum Beispiel per E-Mail) übermitteln.",
         "citation_url": "https://www.ihk.de/pfalz/recht/widerrufsbutton-kommt-ab-juni-2026-7003518"
       },
       {
-        "text": "Update your withdrawal information text to state the online button's availability and confirm that an email receipt will be sent",
+        "text": "Update your withdrawal notice to state the online button's availability and the email confirmation it triggers",
         "due": "2026-06-19",
         "quote": "Sie können Ihr Widerrufsrecht auch online unter (Internet-Adresse oder anderen geeigneten Hinweis, darüber eingeben, wo die Widerrufsfunktion verfügbar ist) ausüben. Wenn Sie diese Online-Funktion nutzen, übermitteln wir Ihnen auf einem dauerhaften Datenträger (z. B. durch eine E-Mail) unverzüglich eine Eingangsbestätigung mit Informationen zum Inhalt der Widerrufserklärung sowie dem Datum und der Uhrzeit ihres Eingangs.",
         "citation_url": "https://www.ihk.de/pfalz/recht/widerrufsbutton-kommt-ab-juni-2026-7003518"
       },
       {
-        "text": "Revise your privacy policy to cover what personal data the withdrawal button collects, how it is processed, and how long it is stored",
+        "text": "Update your privacy policy to cover data collected, processed, and stored via the withdrawal button",
         "due": "2026-06-19",
         "quote": "Auch die Datenschutzerklärung sollte angepasst werden – hinsichtlich der erhobenen Daten, deren Verarbeitung und Speicherdauer.",
         "citation_url": "https://www.ihk.de/pfalz/recht/widerrufsbutton-kommt-ab-juni-2026-7003518"

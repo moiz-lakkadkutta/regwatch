@@ -22,14 +22,15 @@ nvidia-nemotron, tavily, docker, github-actions
 
 A one-person shop in Germany selling oak tables and leather bags across the EU has no compliance team. In 2026
 alone it has to add a "withdraw from contract" button to its checkout (Directive (EU) 2023/2673, § 356a BGB, from
-19 June 2026) and check whether the EU Deforestation Regulation covers its wood and leather (SME application from
-30 June 2026). The law is public, but it is hundreds of pages across EUR-Lex, German ministries, chambers of
+19 June 2026) and check whether the EU Deforestation Regulation covers its wood and leather (postponed twice; now
+30 June 2027 for micro and small businesses). The law is public, but it is hundreds of pages across EUR-Lex, German ministries, chambers of
 commerce and platform help pages. Generic chatbots answer confidently and cite nothing. A shop owner needs the
 opposite: a short list of what to do by when, and proof for every line.
 
 ## What it does
 
-You describe your store in four fields — country, where you ship, what you sell, which shop platform. RegWatch
+You describe your store in six fields — country, where you ship, what you sell, which shop platform, company size,
+and whether you import your goods or buy them in the EU ("not sure" is allowed). RegWatch
 then shows:
 
 - **This month** (`/month`): to-dos grouped as *Already in force*, *Due this month*, *Coming up*, *No fixed date*,
@@ -40,8 +41,10 @@ then shows:
 - **Change page**: why it applies in your store's terms, the to-dos, the verbatim sentence each to-do comes from,
   and a link to the official page.
 
-For the demo store (DE, ships to 10 EU countries, wood furniture + leather, Shopify) the live data has 29 changes
-from 4 official and guidance pages: 12 apply, 16 don't, 1 unclear, 37 to-dos — each with its quote and source.
+For the demo store (DE, ships to 10 EU countries, wood furniture + leather, Shopify, a small company) the live data
+has 26 changes from 4 official and guidance pages: 9 apply, 16 don't, 1 unclear, 29 to-dos — each with its quote
+and source. Its deforestation to-dos are due 30 June 2027, the small-company date after the EUDR was postponed
+again by Regulation (EU) 2025/2650, not the 30 December 2026 date for larger companies.
 
 ## How we built it
 

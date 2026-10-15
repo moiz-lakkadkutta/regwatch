@@ -98,7 +98,7 @@ Trust design: every to-do carries a quote and a link. The quote is rendered as a
 
 ### 3.3 Screen requirements
 
-- **Profile form**: four fields (establishment country, ship-to countries multi-select with "all EU" shortcut, product categories from a fixed list with plain names, platform). Inline explanation of why each field matters ("ship-to decides which consumer-rights rules apply"). No account, no email.
+- **Profile form**: six fields (establishment country, ship-to countries multi-select with "all EU" shortcut, product categories from a fixed list with plain names, platform, company size, where the goods come from — the last two with a "Not sure" choice, because EUDR dates and duties turn on them). Inline explanation of why each field matters ("ship-to decides which consumer-rights rules apply"). No account, no email.
 - **Feed**: list grouped by instrument; each item: date, instrument short name, applicability pill (Applies / Doesn't apply / Unclear), one-line summary, count of to-dos. Footer: "last crawl <time> · <n> sources · <credits> Tavily credits" — the integration is measured on-screen.
 - **Month view**: to-dos sorted by due date; overdue first with a calm, factual label ("in force since 19 June 2026"); check-off persists; empty state when nothing is due ("Nothing due this month. Next: EUDR SME date, 30 June 2026.").
 - **Change detail**: summary → "why this applies to you" (profile terms) → obligations as quotations with anchor links → to-dos → source metadata. A small "report a wrong call" link (mailto is fine) — it signals honesty and costs nothing.

@@ -188,9 +188,11 @@ def test_seed_in_force_and_coming_up(client: TestClient) -> None:
     # the withdrawal button (Art. 11a) is in force since 19 June 2026 — four to-dos
     assert in_force.count(OVERDUE_19) == N_WITHDRAWAL_19
     assert in_force.count(f'href="/change/{seed_change_id(ART_11A)}">' + WITHDRAWAL) == 4
-    # EUDR obligations for this profile start on 30 December 2026: none is already in force
+    # EUDR for a small company starts on 30 June 2027 (Regulation (EU) 2025/2650), not on the
+    # 30 December 2026 date for medium and large companies: none is already in force
     assert EUDR not in in_force and EUDR in coming_up
-    assert 'due <time datetime="2026-12-30">30 December 2026</time>' in coming_up
+    assert 'due <time datetime="2027-06-30">30 June 2027</time>' in coming_up
+    assert "2026-12-30" not in coming_up
     assert "pill overdue" not in coming_up
     assert html.count('class="pill overdue"') == N_IN_FORCE
     assert "Due this month" not in html

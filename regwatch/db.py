@@ -22,14 +22,31 @@ class ProfileRow(SQLModel, table=True):
     ship_to: str  # JSON list
     categories: str  # JSON list
     platform: str = "shopify"
+    company_size: str | None = None
+    supply: str | None = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
+    @classmethod
+    def from_schema(cls, profile: Profile) -> ProfileRow:
+        return cls(
+            establishment_country=profile.establishment_country,
+            ship_to=json.dumps(profile.ship_to),
+            categories=json.dumps(profile.categories),
+            platform=profile.platform,
+            company_size=profile.company_size,
+            supply=profile.supply,
+        )
+
     def to_schema(self) -> Profile:
-        return Profile(
-            establishment_country=self.establishment_country,
-            ship_to=json.loads(self.ship_to),
-            categories=json.loads(self.categories),
-            platform=self.platform,
+        return Profile.model_validate(
+            {
+                "establishment_country": self.establishment_country,
+                "ship_to": json.loads(self.ship_to),
+                "categories": json.loads(self.categories),
+                "platform": self.platform,
+                "company_size": self.company_size,
+                "supply": self.supply,
+            }
         )
 
 

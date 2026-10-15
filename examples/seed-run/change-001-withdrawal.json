@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-06T11:39:53.440738+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.002955,
+  "cost_usd": 0.003031,
   "tavily_credits": 2,
   "change": {
     "document_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj",
@@ -33,9 +33,8 @@
   "applicability": {
     "decision": "does_not",
     "reasons": [
-      "The regulation covers distance sellers of financial services and applies only to financial services contracts.",
-      "Your shop sells furniture, wooden goods, and leather goods — physical products, not financial services.",
-      "Since you do not offer financial services, the obligations do not bind you."
+      "The regulation covers distance sellers of financial services and specifies which consumer protection articles apply to their contracts.",
+      "Your shop sells furniture, wooden goods, and leather goods — not financial services — so the obligations do not bind you."
     ],
     "todos": []
   }

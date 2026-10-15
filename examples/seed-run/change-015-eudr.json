@@ -1,38 +1,54 @@
 {
-  "created_at": "2026-10-06T11:41:28.111163+00:00",
+  "created_at": "2026-10-06T11:41:28.113656+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.005911,
+  "cost_usd": 0.004107,
   "tavily_credits": 1,
   "change": {
     "document_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226",
-    "instrument": "Regulation (EU) 2023/1115 — Article 9",
+    "instrument": "Regulation (EU) 2023/1115 — Article 16",
     "jurisdiction": "EU",
-    "summary": "Operators must collect and keep product information for five years after placing goods on the market or exporting them. They must also make this information available to authorities upon request.",
+    "summary": "Competent authorities must check operators and traders to verify compliance with the Regulation, using risk-based plans that cover at least 3% of non-SME operators and 3% of relevant product quantity annually. The law applies to all operators, downstream operators, and traders established in the Union placing relevant products on the market.",
     "effective_dates": [
       "2026-12-30",
       "2027-06-30"
     ],
     "obligations": [
       {
-        "text": "Make collected information available to authorities upon request.",
-        "quote": "The operator shall make available to the competent authorities upon request the information, documents and data collected under this Article."
+        "text": "Carry out checks on operators and traders to verify compliance with the Regulation.",
+        "quote": "The competent authorities shall carry out checks within their territory to establish whether operators, downstream operators and traders established in the Union comply with this Regulation."
+      },
+      {
+        "text": "Use a risk-based approach to identify and carry out checks.",
+        "quote": "The competent authorities shall use a risk-based approach to identify the checks to be carried out."
+      },
+      {
+        "text": "Establish annual check plans based on national risk criteria and systematic inclusion of high-risk countries.",
+        "quote": "the competent authorities shall establish annual plans containing at least the following: (a) national risk criteria, established in accordance with paragraph 3, for the purpose of determining the checks that are necessary, which build upon any indicative risk criteria at Union level established by the Commission in accordance with paragraph 4, and systematically include risk criteria in relation to countries or parts thereof classified as high risk;"
+      },
+      {
+        "text": "Select operators, downstream operators and traders to be checked based on risk criteria and due diligence statements.",
+        "quote": "the selection of operators, downstream operators and traders to be checked; that selection is to be based on the national risk criteria referred to in point (a), using, inter alia, information contained in the information system referred to in Article 33 and electronic data-processing techniques; for each operator, downstream operator or trader to be checked, competent authorities may identify specific due diligence statements to be checked."
+      },
+      {
+        "text": "Communicate check plans and updates to other competent authorities and the Commission.",
+        "quote": "Competent authorities shall communicate their plans of checks, as well as updates thereto, to other competent authorities and the Commission."
+      },
+      {
+        "text": "Carry out checks when new information on potential non-compliance becomes available.",
+        "quote": "competent authorities shall carry out checks referred to in paragraph 1 of this Article when they obtain or are made aware of relevant information, including based on substantiated concerns submitted by third parties under Article 31, concerning a potential case of non-compliance with this Regulation."
+      },
+      {
+        "text": "Keep records of all checks for at least 10 years.",
+        "quote": "Records of all checks shall be kept for at least 10 years."
       }
     ]
   },
   "applicability": {
-    "decision": "applies",
+    "decision": "does_not",
     "reasons": [
-      "Your shop is established in Germany and ships to multiple EU countries, placing furniture and wooden goods as well as leather goods on the EU market.",
-      "These product categories fall under the wood and cattle commodities covered by the EU Deforestation Regulation (EU) 2023/1115.",
-      "As an operator placing relevant products on the market, you are required to make collected information available to competent authorities upon request."
+      "The obligations you received are all addressed to competent authorities — government bodies that enforce the regulation — not to operators or traders like your shop.",
+      "Your shop sells furniture, wooden goods and leather goods, which are relevant products under the regulation, but the listed duties (carrying out checks, making risk-based plans, keeping records of checks) belong to the authorities, not to you."
     ],
-    "todos": [
-      {
-        "text": "Prepare to provide collected product information, documents, and data to competent authorities upon request",
-        "due": "2026-12-30",
-        "quote": "The operator shall make available to the competent authorities upon request the information, documents and data collected under this Article.",
-        "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226"
-      }
-    ]
+    "todos": []
   }
 }

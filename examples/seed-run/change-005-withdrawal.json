@@ -1,7 +1,7 @@
 {
   "created_at": "2026-10-06T11:39:53.444953+00:00",
   "model": "nvidia/Nemotron-3-Ultra-550b-a55b",
-  "cost_usd": 0.003808,
+  "cost_usd": 0.003323,
   "tavily_credits": 2,
   "change": {
     "document_url": "https://eur-lex.europa.eu/eli/dir/2023/2673/oj/eng?eliuri=eli%3Adir%3A2023%3A2673%3Aoj",
@@ -25,9 +25,8 @@
   "applicability": {
     "decision": "does_not",
     "reasons": [
-      "The directive covers distance financial services sold online.",
-      "Your shop sells furniture and wooden goods and leather goods — physical products, not financial services.",
-      "The obligations address traders providing financial services at a distance, which your profile does not indicate you do."
+      "The directive covers distance financial services, but you sell furniture and leather goods — physical products, not financial services.",
+      "Your shop is an online retailer of tangible goods, not a provider of financial services such as loans, insurance, or investment products."
     ],
     "todos": []
   }

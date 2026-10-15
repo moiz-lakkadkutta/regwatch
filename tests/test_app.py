@@ -142,3 +142,41 @@ def test_profile_form_renders_when_empty(empty_client: TestClient) -> None:
     r = empty_client.get("/profile")
     assert r.status_code == 200
     assert "selected" not in r.text
+
+
+def test_profile_stores_company_size_and_supply(empty_client: TestClient) -> None:
+    empty_client.post(
+        "/profile",
+        data={
+            "establishment_country": "DE",
+            "ship_to": ["FR"],
+            "categories": ["furniture_wood"],
+            "company_size": "small",
+            "supply": "imports_or_makes",
+        },
+        follow_redirects=False,
+    )
+    stored = _stored_profile(empty_client)
+    assert (stored.company_size, stored.supply) == ("small", "imports_or_makes")
+    r = empty_client.get("/profile")
+    assert 'value="small" checked' in r.text and 'value="imports_or_makes" checked' in r.text
+    assert 'value="larger" checked' not in r.text
+
+
+def test_profile_size_and_supply_default_to_not_given(empty_client: TestClient) -> None:
+    empty_client.post(
+        "/profile",
+        data={"establishment_country": "DE", "ship_to": ["FR"], "categories": ["leather"]},
+        follow_redirects=False,
+    )
+    stored = _stored_profile(empty_client)
+    assert (stored.company_size, stored.supply) == (None, None)
+
+
+def test_profile_rejects_unknown_size(empty_client: TestClient) -> None:
+    r = empty_client.post(
+        "/profile",
+        data={"establishment_country": "DE", "categories": ["leather"], "company_size": "huge"},
+        follow_redirects=False,
+    )
+    assert r.status_code == 422

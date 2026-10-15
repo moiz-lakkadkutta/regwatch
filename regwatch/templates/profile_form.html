@@ -1,7 +1,7 @@
 {% extends "base.html" %}{% block title %}Your store · RegWatch{% endblock %}
 {% block body %}
 <h1>Tell us about your store</h1>
-<p class="muted">Two minutes, once. We use this to decide which rules apply to you — nothing is stored beyond these four answers.</p>
+<p class="muted">Two minutes, once. We use this to decide which rules apply to you — nothing is stored beyond these six answers.</p>
 {% if locked %}<p class="note">This demo shares one store profile with every visitor, so it can't be changed here. On an unclear change, “Let the agent check” asks you what it needs instead.</p>{% endif %}
 <form method="post" action="/profile" class="card"><fieldset class="plain"{% if locked %} disabled{% endif %}>
   <label for="establishment_country">Where is your business established?</label>
@@ -26,6 +26,18 @@
   <label for="platform">Platform</label>
   <select id="platform" name="platform">{% for key,name in platforms %}<option value="{{key}}" {% if profile and profile.platform==key %}selected{% endif %}>{{name}}</option>{% endfor %}</select>
   <p class="help">Platform guidance pages (e.g. Shopify Help) are searched too, so to-dos can point at the setting to change.</p>
+
+  <fieldset class="plain"><legend>How big is your company?</legend>
+    {% for key,name in company_sizes %}<label class="choice"><input type="radio" name="company_size" value="{{key}}"{% if profile and profile.company_size==key %} checked{% endif %}> {{name}}</label>{% endfor %}
+    <label class="choice"><input type="radio" name="company_size" value=""{% if not profile or not profile.company_size %} checked{% endif %}> Not sure</label>
+  </fieldset>
+  <p class="help">Some rules start later for small businesses — the deforestation regulation is one of them.</p>
+
+  <fieldset class="plain"><legend>Where do your goods come from?</legend>
+    {% for key,name in supply_options %}<label class="choice"><input type="radio" name="supply" value="{{key}}"{% if profile and profile.supply==key %} checked{% endif %}> {{name}}</label>{% endfor %}
+    <label class="choice"><input type="radio" name="supply" value=""{% if not profile or not profile.supply %} checked{% endif %}> Not sure</label>
+  </fieldset>
+  <p class="help">Whoever first brings goods into the EU market carries most of the paperwork; buying from an EU supplier usually means less.</p>
 
   </fieldset>{% if not locked %}
     <button class="primary" type="submit">Save and show my changes</button>{% endif %}

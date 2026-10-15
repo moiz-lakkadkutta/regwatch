@@ -41,6 +41,17 @@ MAX_TODOS = 6
 _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _CATEGORY_LABELS = dict(CATEGORIES)
 _PLATFORM_LABELS = dict(PLATFORMS)
+# Stated as the facts the law turns on; the form words them for the owner (config).
+_SIZE_FACTS = {
+    "small": "micro or small enterprise (fewer than 50 staff, turnover up to €10 million)",
+    "larger": "medium-sized or large enterprise",
+}
+_SUPPLY_FACTS = {
+    "eu_suppliers": (
+        "bought from suppliers established in the EU (the shop does not import or make them)"
+    ),
+    "imports_or_makes": "imported by the shop from outside the EU, or made by the shop itself",
+}
 
 
 class TodoDraft(BaseModel):
@@ -92,7 +103,9 @@ def render_profile(profile: Profile) -> str:
         f"({profile.establishment_country})\n"
         f"- Ships to: {ships_to}\n"
         f"- Sells: {sells or 'none given'}\n"
-        f"- Platform: {_PLATFORM_LABELS.get(profile.platform, profile.platform)}"
+        f"- Platform: {_PLATFORM_LABELS.get(profile.platform, profile.platform)}\n"
+        f"- Company size: {_SIZE_FACTS.get(profile.company_size or '', 'not given')}\n"
+        f"- Where the goods come from: {_SUPPLY_FACTS.get(profile.supply or '', 'not given')}"
     )
 
 

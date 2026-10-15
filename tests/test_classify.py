@@ -313,6 +313,19 @@ def test_prompt_renders_profile_and_change() -> None:
         Profile(establishment_country="FR", ship_to=list(EU_COUNTRIES), categories=["other"])
     )
     assert "- Ships to: all 27 EU countries" in everywhere and "France (FR)" in everywhere
+    assert "- Company size: not given" in everywhere
+    assert "- Where the goods come from: not given" in everywhere
+    sized = render_profile(
+        Profile(
+            establishment_country="DE",
+            ship_to=["FR"],
+            categories=["leather"],
+            company_size="small",
+            supply="eu_suppliers",
+        )
+    )
+    assert "- Company size: micro or small enterprise" in sized
+    assert "- Where the goods come from: bought from suppliers established in the EU" in sized
     assert load_prompt() is load_prompt()
     addendum = retry_message(change, [TodoDraft(text="Do x", due=None, quote="bad")])
     assert addendum.startswith("Your previous answer had 1 to-do(s)")
@@ -325,6 +338,11 @@ def test_prompt_unclear_rule_matches_enforce() -> None:
     """The prompt says what enforce() does for "unclear": at most one grounded to-do."""
     assert "at most one\n  to-do that asks the one question that would decide it" in load_prompt()
     assert '"unclear" → an empty list.' not in load_prompt()
+
+
+def test_prompt_picks_the_due_date_for_the_company_size() -> None:
+    assert "company size" in load_prompt().lower()
+    assert "micro or small" in load_prompt()
 
 
 def test_response_format_is_strict() -> None:

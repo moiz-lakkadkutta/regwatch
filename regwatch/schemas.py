@@ -14,6 +14,8 @@ from pydantic import BaseModel, Field, field_validator
 from regwatch.config import SOURCE_DOMAINS
 
 Decision = Literal["applies", "does_not", "unclear"]
+CompanySize = Literal["small", "larger"]
+Supply = Literal["eu_suppliers", "imports_or_makes"]
 
 
 class Profile(BaseModel):
@@ -21,6 +23,8 @@ class Profile(BaseModel):
     ship_to: list[str]
     categories: list[str]
     platform: str = "shopify"
+    company_size: CompanySize | None = None  # None = not given
+    supply: Supply | None = None  # None = not given
 
 
 class Document(BaseModel):

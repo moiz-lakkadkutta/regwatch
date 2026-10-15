@@ -276,12 +276,7 @@ def seed(settings: Settings | None = None) -> int:
             )
         prof = s.exec(select(ProfileRow).order_by(col(ProfileRow.id).desc())).first()
         if prof is None:
-            prof = ProfileRow(
-                establishment_country=profile.establishment_country,
-                ship_to=json.dumps(profile.ship_to),
-                categories=json.dumps(profile.categories),
-                platform=profile.platform,
-            )
+            prof = ProfileRow.from_schema(profile)
             s.add(prof)
             s.commit()
             s.refresh(prof)

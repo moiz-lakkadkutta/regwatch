@@ -47,7 +47,7 @@ help.shopify.com, shopify.com. The feed footer shows the credits and model cost 
 
 ## What the app shows
 
-- `/profile` — four fields (country, ship-to, categories, platform); no account, no email.
+- `/profile` — six fields (country, ship-to, categories, platform, company size, where the goods come from; the last two may be "not sure"); no account, no email.
 - `/feed` — changes grouped by regulation with applies / doesn't / unclear pills; footer with credits and USD.
 - `/month` — to-dos bucketed Already in force → Due this month → Coming up → No fixed date; check-off persists (htmx). `/` lands here.
 - `/change/<id>` — why it applies in your profile's terms, to-dos with their quote and source link, obligations, source metadata.
@@ -75,7 +75,7 @@ On a change marked unclear, a button starts an agent: Nemotron 3 Ultra picks one
 
 ## Deploy on Nebius
 
-The public URL serves the recorded run in `examples/seed-run` (recorded with `regwatch record-seed` from the sixth live crawl: 4 documents, 29 changes, 40 Tavily credits); the Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database — Job #1 on 2026-10-10 re-ingested the 4 seed documents as unchanged and left them alone (52 new documents, 47 new changes, 52 Tavily credits, $0.2464 in model tokens; a second pass over one database adding nothing is verified offline by `tests/test_crawl_all.py::test_crawl_all_twice_is_idempotent`) — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
+The public URL serves the recorded run in `examples/seed-run` (recorded with `regwatch record-seed` from the sixth live crawl: 4 documents, 40 Tavily credits; re-classified on 2026-10-14 for a small company, 26 changes); the Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database — Job #1 on 2026-10-10 re-ingested the 4 seed documents as unchanged and left them alone (52 new documents, 47 new changes, 52 Tavily credits, $0.2464 in model tokens; a second pass over one database adding nothing is verified offline by `tests/test_crawl_all.py::test_crawl_all_twice_is_idempotent`) — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
 
 One image, two modes (`ops/entrypoint.sh serve|crawl`; `crawl` exits 2 without both keys and never uses
 fixtures). Console values: `ops/serverless-endpoint.yaml`, `ops/serverless-job.yaml`; daily schedule:
@@ -118,7 +118,8 @@ dropped and the withdrawal function stays; everything else is unchanged.
 ## Seed regulations
 
 Directive (EU) 2023/2673 (withdrawal button, § 356a BGB, from 19 June 2026) and Regulation (EU) 2023/1115
-(EUDR; SME application from 30 June 2026 — verify, dates have shifted).
+(EUDR, as amended by Regulation (EU) 2025/2650: medium and large operators from 30 December 2026, micro and
+small operators from 30 June 2027).
 
 ## License
 
