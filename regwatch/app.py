@@ -54,6 +54,7 @@ from regwatch.db import (
     unchecked_changes,
     utcnow,
 )
+from regwatch.moves import RuleMove, matching, moves_for
 from regwatch.schemas import Decision, Profile, RegChange
 
 settings = Settings()
@@ -523,6 +524,34 @@ def _month_view(items: list[FeedItem], today: date) -> MonthView:
     )
 
 
+def _item_moves(moves: list[RuleMove], it: FeedItem) -> list[RuleMove]:
+    """'This rule moved' banners for one feed item (stored, grounded moves only)."""
+    return matching(moves, it.change, it.decision, [t.due for t in it.todos if t.due])
+
+
+def _group_moves(groups: list[FeedGroup], moves: list[RuleMove]) -> dict[str, list[RuleMove]]:
+    """Each group's moves, once per move, in the order their first item shows them."""
+    out: dict[str, list[RuleMove]] = {}
+    for g in groups:
+        seen: dict[str, RuleMove] = {}
+        for it in g.items:
+            for mv in _item_moves(moves, it):
+                seen.setdefault(mv.key, mv)
+        if seen:
+            out[g.key] = list(seen.values())
+    return out
+
+
+def _month_moves(m: MonthView, moves: list[RuleMove]) -> list[RuleMove]:
+    """Moves whose new date is the due date of a to-do of the moved act on this page."""
+    todos = m.in_force + m.this_month + m.coming_up + m.no_date + m.done
+    return [
+        mv
+        for mv in moves
+        if any(t.instrument.startswith(mv.instrument) and t.view.due == mv.new_date for t in todos)
+    ]
+
+
 def _load_month(profile_id: int, today: date) -> MonthView:
     with session(engine) as s:
         rows = feed_rows(s, profile_id)
@@ -599,6 +628,7 @@ def feed(request: Request) -> Any:
         done_keys = _done_keys(s, prof.id)
         unchecked = unchecked_changes(s, prof.id)
         footer = _footer(s, rows)
+        moves = moves_for(s, prof.to_schema())
     groups = _group([_item(r, done_keys, today) for r in rows])
     profile = prof.to_schema()
     return templates.TemplateResponse(
@@ -606,6 +636,7 @@ def feed(request: Request) -> Any:
         "feed.html",
         {
             "groups": groups,
+            "moves": _group_moves(groups, moves),
             "unchecked": unchecked,
             "f": footer,
             "profile": profile,
@@ -619,10 +650,13 @@ def feed(request: Request) -> Any:
 def month(request: Request) -> Any:
     with session(engine) as s:
         prof = current_profile(s)
+        moves = moves_for(s, prof.to_schema()) if prof is not None else []
     if prof is None or prof.id is None:
         return RedirectResponse("/profile", status_code=303)
     m = _load_month(prof.id, _today())
-    return templates.TemplateResponse(request, "month.html", {"m": m})
+    return templates.TemplateResponse(
+        request, "month.html", {"m": m, "moves": _month_moves(m, moves)}
+    )
 
 
 @app.post("/todo/{key}/toggle")
@@ -673,6 +707,7 @@ def change_detail(request: Request, change_id: int) -> Any:
                 "content_hash": item.content_hash,
                 "normalize_model": item.normalize_model,
                 "mailto": wrong_call_mailto(change_id, item.decision, settings.report_email),
+                "moves": _item_moves(moves_for(s, prof.to_schema()), item),
             }
         else:
             ch = s.get(RegChangeRow, change_id)
@@ -689,6 +724,7 @@ def change_detail(request: Request, change_id: int) -> Any:
                 "content_hash": ch.content_hash,
                 "normalize_model": ch.model,
                 "mailto": "",
+                "moves": [],
             }
     ctx["change_id"] = change_id
     ctx["profile"] = prof.to_schema()

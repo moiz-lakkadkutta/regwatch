@@ -3,6 +3,7 @@
 <p><a href="/feed">← All changes</a></p>
 {% if item %}<span class="pill {{item.decision}}">{% if item.decision == "applies" %}Applies to you{% elif item.decision == "does_not" %}Doesn't apply to you{% else %}Unclear — one question{% endif %}</span>{% endif %} <span class="muted">· {{created_at|d}} · <span class="chip">{{source_domain}}</span></span>
 <h1>{{change.instrument}}</h1>
+{% for mv in moves %}{% include "partials/rule_move.html" %}{% endfor %}
 <p>{{change.summary}}</p>
 {% if a and a.result %}{% include "partials/agent_result.html" %}<p class="muted label">Original check</p>{% endif %}
 {% if not item %}<div class="card"><h2>Not checked against your profile yet</h2><p>Your profile changed. The next crawl re-checks this change; to do it now run <code>regwatch crawl --stage classify</code>.</p></div>

@@ -169,3 +169,10 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   200 in 0.57–0.78 s; logs show `seeded 26 change(s)`; /month has 14 rows due 2027-06-30 and none due 2026-12-30;
   locked profile POST → 403; agent POST cross-origin → 403, same-origin on the unclear change → 303. The agent's
   steps are not visible in `nebius ai endpoint logs` at the default log level.
+- (2026-10-15, Tavily, rule-moved banner) One advanced extract of a single EUR-Lex URL (Regulation (EU) 2025/2650,
+  `CELEX:32025R2650`) through the repo's `extract_documents` path was refused with `ForbiddenError: This request
+  exceeds your plan's set usage limit` — 0 credits charged, no `usage` in the response. On 10-14 the account stood at
+  549 of 1,000 plan credits, so a set usage limit below the plan size is the likely cause; the error does not say
+  which limit or how many credits remain. Workaround: the banner quotes Article 38(2)/(3) from the consolidated
+  text already in the seed (`CELEX:02023R1115-20251226`, which marks those paragraphs ▼M2 = 2025/2650). Ask: put
+  the limit and the remaining credits in the 403 body.

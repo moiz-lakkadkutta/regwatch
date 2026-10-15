@@ -1,2 +1,2 @@
 {% extends "base.html" %}{% block title %}This month · RegWatch{% endblock %}
-{% block body %}<h1>What to do this month</h1>{% include "partials/month_list.html" %}{% endblock %}
+{% block body %}<h1>What to do this month</h1>{% for mv in moves %}{% include "partials/rule_move.html" %}{% endfor %}{% include "partials/month_list.html" %}{% endblock %}

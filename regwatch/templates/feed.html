@@ -4,6 +4,7 @@
 <p class="muted">Established in {{establishment}} · ships to {{profile.ship_to|length}} countr{% if profile.ship_to|length == 1 %}y{% else %}ies{% endif %} · {{category_names|join(", ")}}</p>
 {% if not groups and not unchecked %}<div class="card"><p>No changes on file yet.</p><p class="muted">Run <code>regwatch seed</code> for the recorded run, or <code>regwatch crawl</code> to fetch from the official sources.</p></div>{% endif %}
 {% for g in groups %}<section class="group" id="{{g.key}}"><h2>{{g.label}}</h2>{% if g.instrument and g.items|length > 1 %}<p class="law">{{g.instrument}}</p>{% endif %}
+  {% for mv in moves.get(g.key, []) %}{% include "partials/rule_move.html" %}{% endfor %}
   {% for it in g.items %}<article class="card item">
     <span class="pill {{it.decision}}">{% if it.decision == "applies" %}Applies to you{% elif it.decision == "does_not" %}Doesn't apply to you{% else %}Unclear — one question{% endif %}</span> <span class="muted">· {{it.created_at|d}}</span>
     <h3><a href="/change/{{it.id}}">{{it.change.instrument}}</a></h3>
