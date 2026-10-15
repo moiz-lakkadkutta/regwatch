@@ -7,7 +7,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session, func, select
 
-from regwatch.config import Settings
+from regwatch.config import Settings, sources_for
 from regwatch.db import CrawlRunRow, DocumentRow, make_engine
 from regwatch.jobs.crawl import (
     DEFAULT_OUT,
@@ -39,8 +39,8 @@ def test_stage_ingest_yields_at_least_15(
     assert _count(tmp_settings, DocumentRow) == summary.n_docs
     assert (tmp_path / "docs.jsonl").exists()
     assert summary.line().startswith(f"ingest: {summary.n_docs} documents ({summary.n_docs} new")
-    assert "36 Tavily credits" in summary.line()
-    assert "14 searches · 1 extract" in summary.line()
+    assert "56 Tavily credits" in summary.line()
+    assert "24 searches · 1 extract" in summary.line()
 
 
 def test_crawl_run_persisted_with_credits(
@@ -52,8 +52,8 @@ def test_crawl_run_persisted_with_credits(
     assert len(runs) == 1
     run = runs[0]
     assert run.stage == "ingest"
-    assert run.tavily_credits == 36
-    assert run.n_search_calls == 14
+    assert run.tavily_credits == 56
+    assert run.n_search_calls == 24
     assert run.n_extract_calls == 1
     assert run.n_docs_new == 16 and run.n_docs_changed == 0 and run.n_docs_unchanged == 0
     assert run.finished_at is not None and run.finished_at >= run.started_at
@@ -111,7 +111,7 @@ def test_main_stage_ingest_cli(
     assert rc == 0
     err = capsys.readouterr().err
     assert re.search(r"^ingest: \d+ documents", err, re.M)
-    assert "36 Tavily credits" in err
+    assert "56 Tavily credits" in err
     assert out.exists()
 
     rc = main(["--stage", "ingest", "--backend", "fixtures", "--no-out"])
@@ -173,7 +173,7 @@ def test_stage_all_runs_end_to_end(
     assert run.stage == "all" and run.finished_at is not None
     assert _count(tmp_settings, CrawlRunRow) == 1
     assert _count(tmp_settings, DocumentRow) == 16
-    assert run.n_docs_new == 16 and run.n_changes_new == 15 and run.tavily_credits == 36
+    assert run.n_docs_new == 16 and run.n_changes_new == 15 and run.tavily_credits == 56
     assert run.n_classified == 0 and run.model_cost_usd > 0 and run.classify_cost_usd == 0.0
     with pytest.raises(ValueError):
         crawl(tmp_settings, stage="bogus", backend=fake_backend, out=None)  # type: ignore[arg-type]
@@ -212,4 +212,40 @@ def test_feed_footer_shows_last_crawl(
     assert r.status_code == 200
     assert "Last crawl" in r.text
     assert "9 sources" in r.text
-    assert "36 Tavily credits used" in r.text
+    assert "56 Tavily credits used" in r.text
+
+
+def test_main_regulation_flag_scopes_the_crawl(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setenv("REGWATCH_DB_URL", f"sqlite:///{tmp_path / 'scoped.db'}")
+    argv = ["--stage", "ingest", "--backend", "fixtures", "--no-out"]
+    rc = main([*argv, "--regulation", "withdrawal", "--time-range", "any"])
+    assert rc == 0
+    n = len(sources_for("withdrawal"))
+    assert f"· {n} searches ·" in capsys.readouterr().err
+    with pytest.raises(SystemExit):
+        main([*argv, "--regulation", "nope"])
+
+
+def test_cli_crawl_passes_regulation_through(monkeypatch: pytest.MonkeyPatch) -> None:
+    from typer.testing import CliRunner
+
+    from regwatch.cli import app
+
+    seen: list[list[str]] = []
+
+    def fake_main(argv: list[str]) -> int:
+        seen.append(argv)
+        return 0
+
+    monkeypatch.setattr("regwatch.jobs.crawl.main", fake_main)
+    args = ["crawl", "--regulation", "packaging", "--regulation", "productsafety"]
+    result = CliRunner().invoke(app, [*args, "--time-range", "any"])
+    assert result.exit_code == 0, result.output
+    argv = seen[0]
+    assert argv[argv.index("--time-range") + 1] == "any"
+    assert [argv[i + 1] for i, a in enumerate(argv) if a == "--regulation"] == [
+        "packaging",
+        "productsafety",
+    ]

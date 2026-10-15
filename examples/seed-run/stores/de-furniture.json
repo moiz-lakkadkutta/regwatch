@@ -1,0 +1,7 @@
+{
+  "slug": "de-furniture",
+  "name": "Wooden furniture, Germany",
+  "blurb": "Small German shop selling wooden furniture and leather goods to 10 EU countries on Shopify.",
+  "default": true,
+  "profile": {"establishment_country": "DE", "ship_to": ["AT", "BE", "DE", "DK", "ES", "FR", "IT", "NL", "PL", "SE"], "categories": ["furniture_wood", "leather"], "platform": "shopify", "company_size": "small", "supply": null}
+}

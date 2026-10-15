@@ -19,7 +19,7 @@ Demo: https://port8000-tbw06x74c5zg9z6.tunnel.applications.eu-west2.nebius.cloud
 | **Nebius Token Factory** — `nvidia/Nemotron-3_5-Lightning` | document → obligations, each with a verbatim quote (`regwatch/understand/normalize.py`) |
 | **Nebius Token Factory** — `nvidia/Nemotron-3-Ultra-550b-a55b` | (change, store profile) → applies / doesn't apply / unclear + grounded to-dos (`regwatch/understand/classify.py`) |
 | **Nebius Serverless Endpoint** + **Serverless Job** | web app and the daily crawl, one container image (`ops/`) |
-| **Tavily** `search` (advanced, `include_domains`, `time_range`) + `extract` (advanced, markdown) | the only ingestion path; one live crawl costs **40 Tavily credits** (14 searches, 2 extracts; 2026-10-06) and 52 in the Nebius Job (2026-10-10, more new pages); 36 Tavily credits measured offline against recorded fixtures |
+| **Tavily** `search` (advanced, `include_domains`, `time_range`) + `extract` (advanced, markdown) | the only ingestion path; one live crawl costs **40 Tavily credits** (14 searches, 2 extracts; 2026-10-06) and 52 in the Nebius Job (2026-10-10, more new pages); 56 Tavily credits measured offline against recorded fixtures (24 searches over five regulations) |
 
 Only nine domains are ever searched or extracted (`config.SOURCE_DOMAINS`): eur-lex.europa.eu,
 commission.europa.eu, green-forum.ec.europa.eu, gesetze-im-internet.de, bmj.de, bmuv.de, ihk.de,
@@ -59,7 +59,7 @@ No keys needed (recorded Tavily and model replies from `tests/fixtures/`):
 ```bash
 uv sync --dev
 uv run regwatch seed
-uv run regwatch crawl --stage all --backend fixtures --llm-backend fixtures --no-out   # prints "… 36 Tavily credits …"
+uv run regwatch crawl --stage all --backend fixtures --llm-backend fixtures --no-out   # prints "… 56 Tavily credits …"
 uv run regwatch serve
 ```
 
@@ -67,7 +67,19 @@ With keys: copy `.env.example` to `.env`, set `TAVILY_API_KEY=` and `NEBIUS_API_
 `uv run regwatch crawl` (live search + extract + both models; writes nothing to `examples/seed-run`).
 The demo seed is recorded from such a crawl with `uv run regwatch record-seed --url … [--exclude …]`
 (grounded changes only; undated to-dos skipped; the crawl's Tavily credits carried into the footer).
-Schema changes are not migrated — delete a stale local `regwatch.db` first.
+Schema changes are not migrated — delete a stale local `regwatch.db` first (the example stores'
+`slug` / `name` / `blurb` columns are the one exception: `make_engine` adds them to an older DB).
+
+## Example stores
+
+The shared demo profile stays locked; a row of example stores on the feed, month and profile pages
+lets a visitor switch between shops whose results were worked out ahead of time (a cookie, nothing
+written). Each is `examples/seed-run/stores/<slug>.json`; the default store (`de-furniture`, equal to
+`profile.json`) uses the change files' own results, every other store reads
+`stores/<slug>.applicability.jsonl`. `uv run regwatch classify-presets` fills that file: Nemotron 3
+Ultra on each (store, seed change) pair that has no line yet, the same `enforce()` grounding and
+`ungrounded_todos()` check as the crawl, one appended line per result. A rerun only fills gaps, so
+after new change files are recorded it classifies just those; `regwatch seed` then loads them.
 
 ## Let the agent check (unclear changes)
 
@@ -89,7 +101,7 @@ figures are fixture replays and are labelled as such.
 
 | Item | Figure | Basis |
 |---|---|---|
-| Tavily credits per crawl | 40 live (14 searches, 2 extracts); 36 offline (14 searches, 1 extract of 16 URLs) | `usage` on every Tavily response; documented pricing for the offline row |
+| Tavily credits per crawl | 40 live (14 searches, 2 extracts); 56 offline (24 searches, 1 extract of 16 URLs; the three regulations added 2026-10-15 replay empty searches) | `usage` on every Tavily response; documented pricing for the offline row |
 | Lightning (normalise), 29 documents → 60 changes | 682,890 prompt / 58,210 completion tokens, 115 calls | $0.0549 live |
 | Ultra (classify), 60 changes | 102,279 prompt / 84,830 completion tokens, 61 calls | $0.3568 live |
 | Full crawl | 8 min 03 s | $0.4117 live in model tokens + 40 Tavily credits |

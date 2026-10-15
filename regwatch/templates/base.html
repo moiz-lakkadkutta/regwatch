@@ -38,6 +38,10 @@ a.wrong{color:var(--ink3)}
 .note{font-size:14px;color:var(--ink2)}.agent-result{border-color:var(--accent)}.label{margin:20px 0 0;text-transform:uppercase;letter-spacing:.04em;font-size:12px}
 fieldset.plain{border:0;padding:0;margin:0;min-width:0}
 fieldset.plain legend{font-weight:600;margin:16px 0 4px;padding:0}label.choice{display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:6px 0;min-height:24px}label.choice input{width:auto;margin:3px 0 0;flex:none}
+.stores{margin:12px 0 4px}.stores ul{list-style:none;display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 0;padding:0}
+.stores a{display:inline-flex;align-items:center;min-height:36px;padding:4px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--ink2);text-decoration:none;font-size:14px}
+.stores a[aria-current]{border-color:var(--accent);color:var(--accent);font-weight:600}.stores .blurb{margin:8px 0 0}
+.moved{border-left:4px solid var(--accent)}.moved p{margin:4px 0}.moved .moved-law{color:var(--ink3);font-size:13px;overflow-wrap:anywhere}.moved summary{cursor:pointer;color:var(--accent);font-size:14px;margin-top:6px}.moved blockquote{overflow-wrap:anywhere}
 @media(max-width:420px){h1{font-size:1.3rem}.card{padding:12px 14px}}
 </style>
 <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
@@ -45,6 +49,6 @@ fieldset.plain legend{font-weight:600;margin:16px 0 4px;padding:0}label.choice{d
 </head>
 <body>
 <header><a class="brand" href="/feed">RegWatch</a><nav><a href="/month">This month</a><a href="/feed">Changes</a><a href="/profile">Store profile</a></nav></header>
-<main>{% block body %}{% endblock %}</main>
+<main>{% if stores %}{% include "partials/store_switcher.html" %}{% endif %}{% block body %}{% endblock %}</main>
 <footer>{% block footer %}{% endblock %}</footer>
 </body></html>

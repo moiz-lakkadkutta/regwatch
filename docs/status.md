@@ -16,6 +16,14 @@ MysteryBox, agent cap $1 + 24 Tavily credits/day). **Job #1 (2026-10-10):** COMP
 **Pending:** daily schedule (service account + 4 repo secrets; `daily-crawl` workflow disabled) ·
 video (Oct 25–26) · clean-machine dry run (Oct 27) · Devpost submission (closes Oct 30, 10:00 PDT).
 
+**2026-10-15, three more regulations (branch only, not in the seed yet):** `config.SEED_REGULATIONS` gains
+`greenclaims` (Directive (EU) 2024/825), `packaging` (Regulation (EU) 2025/40, PPWR) and `productsafety`
+(Regulation (EU) 2023/988, GPSR) on eur-lex / commission / ihk.de (+ help.shopify.com for GPSR): +10 advanced
+searches (~20 credits) per full crawl. `regwatch crawl --regulation TAG --time-range any` scopes a crawl;
+`regwatch record-seed --append` adds to the seed without touching the 26 recorded changes. Not crawled: the Tavily
+plan is used up (1001 / 1000 on 2026-10-15, FEEDBACK.md), so `applies_from` dates are unverified and the seed is
+unchanged (26 changes).
+
 **Asks for Moiz:** decide on the daily schedule (Tavily free plan 1000 credits/month vs ~52 per run; results do not reach the Endpoint) · `REGWATCH_REPORT_EMAIL` · check the live URL on a phone.
 
 **Top 5 open issues** (`docs/issues.md`): failed-normalize doc re-selected every crawl · `_todo_key` collision on shared quotes (one seed change has it) · unverified nebius CLI / `--args` syntax. The seed is recorded from a live crawl (`regwatch record-seed`: 4 documents, 26 changes, live Ultra applicabilities re-classified 2026-10-14 for a small company: EUDR to-dos due 30 June 2027).

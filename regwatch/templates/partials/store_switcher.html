@@ -1,0 +1,3 @@
+<nav class="stores" aria-label="Example stores"><span class="muted">See the results for another example store:</span>
+<ul>{% for o in stores.options %}<li><a href="/store/{{o.slug}}?next={{stores.next}}"{% if o.current %} aria-current="true"{% endif %}>{{o.name}}</a></li>{% endfor %}</ul>
+{% if stores.blurb %}<p class="muted blurb">{{stores.blurb}}</p>{% endif %}</nav>

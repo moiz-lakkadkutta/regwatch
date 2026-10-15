@@ -1,8 +1,11 @@
 {% extends "base.html" %}{% block title %}Your store · RegWatch{% endblock %}
 {% block body %}
-<h1>Tell us about your store</h1>
+{% if locked and store_name %}<h1>Example store: {{store_name}}</h1>
+<p class="note">These six answers decide what this example store sees. Its results are worked out ahead of time, so the answers can't be changed here — pick another store above to compare. On an unclear change, “Let the agent check” asks you what it needs instead.</p>
+{% else %}<h1>Tell us about your store</h1>
 <p class="muted">Two minutes, once. We use this to decide which rules apply to you — nothing is stored beyond these six answers.</p>
-{% if locked %}<p class="note">This demo shares one store profile with every visitor, so it can't be changed here. On an unclear change, “Let the agent check” asks you what it needs instead.</p>{% endif %}
+{% if locked %}<p class="note">This demo shares one store profile with every visitor, so it can't be changed here. On an unclear change, “Let the agent check” asks you what it needs instead.</p>
+{% elif store_name %}<p class="note">Filled in from the example store “{{store_name}}”. Change any answer and save to make it your own store.</p>{% endif %}{% endif %}
 <form method="post" action="/profile" class="card"><fieldset class="plain"{% if locked %} disabled{% endif %}>
   <label for="establishment_country">Where is your business established?</label>
   <select id="establishment_country" name="establishment_country" required>

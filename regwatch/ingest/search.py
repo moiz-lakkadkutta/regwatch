@@ -10,7 +10,7 @@ Non-en/de language copies are dropped the same way.
 from __future__ import annotations
 
 import logging
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 from dataclasses import dataclass, replace
 from typing import Any
 
@@ -79,9 +79,10 @@ def search_regulation(
     query: str,
     *,
     ledger: CreditLedger,
-    time_range: str = "year",
+    time_range: str | None = "year",
 ) -> list[Hit]:
-    """One search per allow-listed domain for `tag`. Failures are logged and skipped."""
+    """One search per allow-listed domain for `tag`. Failures are logged and skipped.
+    `time_range=None` searches without a date filter (acts published years ago)."""
     hits: list[Hit] = []
     for domain in domains_for(tag):
         try:
@@ -132,11 +133,21 @@ def dedupe_hits(hits: Iterable[Hit]) -> list[Hit]:
 
 
 def search_all(
-    backend: TavilyBackend, *, ledger: CreditLedger, time_range: str = "year"
+    backend: TavilyBackend,
+    *,
+    ledger: CreditLedger,
+    time_range: str | None = "year",
+    tags: Collection[str] | None = None,
 ) -> list[Hit]:
-    """SEED_REGULATIONS × their allow-listed domains, deduped."""
+    """SEED_REGULATIONS × their allow-listed domains, deduped. `tags` limits the crawl to those
+    regulations (a scoped crawl spends credits only on them); None searches every regulation."""
+    unknown = sorted(set(tags or ()) - {r["tag"] for r in SEED_REGULATIONS})
+    if unknown:
+        raise ValueError(f"unknown regulation tag(s): {', '.join(unknown)}")
     hits: list[Hit] = []
     for reg in SEED_REGULATIONS:
+        if tags is not None and reg["tag"] not in tags:
+            continue
         hits.extend(
             search_regulation(
                 backend, reg["tag"], reg["query"], ledger=ledger, time_range=time_range

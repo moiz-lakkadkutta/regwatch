@@ -1,0 +1,28 @@
+[
+  {
+    "instrument": "Regulation (EU) 2023/1115",
+    "company_size": "small",
+    "audience": "small companies",
+    "old_date": "2026-06-30",
+    "new_date": "2027-06-30",
+    "amending_act": "Regulation (EU) 2025/2650",
+    "amending_url": "https://eur-lex.europa.eu/legal-content/EN/AUTO/?uri=celex:32025R2650",
+    "provision": "Article 38(3)",
+    "quote": "Except as regards the products covered by the Annex to Regulation (EU)No 995/2010, for operators, whether natural persons or micro- or small undertakings within the meaning of Article 3(1) or Article 3(2), first subparagraph, respectively, of Directive 2013/34/EU, irrespective of their legal form, who were established as such by 31 December 2024, the Articles referred to in paragraph 2 of this Article shall apply from 30 June 2027.",
+    "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226#M2-44",
+    "caveat": "This applies if your company was already small by 31 December 2024. Timber products already covered by the EU Timber Regulation (No 995/2010) are left out of this postponement and keep the general date, 30 December 2026."
+  },
+  {
+    "instrument": "Regulation (EU) 2023/1115",
+    "company_size": "larger",
+    "audience": "medium and large companies",
+    "old_date": "2025-12-30",
+    "new_date": "2026-12-30",
+    "amending_act": "Regulation (EU) 2025/2650",
+    "amending_url": "https://eur-lex.europa.eu/legal-content/EN/AUTO/?uri=celex:32025R2650",
+    "provision": "Article 38(2)",
+    "quote": "Subject to paragraph 3 of this Article, Articles 3 to 13, Articles 16 to 24 and Articles 26, 31 and 32 shall apply from 30 December 2026.",
+    "citation_url": "https://eur-lex.europa.eu/legal-content/EN/TXT/HTML?uri=CELEX%3A02023R1115-20251226#M2-44",
+    "caveat": ""
+  }
+]

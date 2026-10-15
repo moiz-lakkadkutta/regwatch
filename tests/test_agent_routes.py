@@ -18,7 +18,14 @@ from sqlmodel import col, select
 from regwatch.agent import runner
 from regwatch.agent.budget import NO_BUDGET
 from regwatch.agent.runner import Backends
-from regwatch.db import AgentFactRow, AgentRunRow, ProfileRow, session, utcnow
+from regwatch.db import (
+    AgentFactRow,
+    AgentRunRow,
+    ApplicabilityRow,
+    ProfileRow,
+    session,
+    utcnow,
+)
 from tests.conftest import ART_11A, EUDR_UNCLEAR, seed_change_id
 from tests.fakes import (
     IHK_URL,
@@ -296,6 +303,8 @@ def test_untrusted_strings_are_escaped(make: Callable[..., Harness]) -> None:
 
 def test_profile_lock(make: Callable[..., Harness]) -> None:
     h = make(locked=True)
+    with session(h.app.engine) as s:
+        n_profiles = len(s.exec(select(ProfileRow)).all())  # the example stores
     page = h.client.get("/profile").text
     assert "can't be changed here" in page and 'class="plain" disabled' in page
     assert 'type="submit"' not in page
@@ -306,7 +315,7 @@ def test_profile_lock(make: Callable[..., Harness]) -> None:
     )
     assert r.status_code == 403
     with session(h.app.engine) as s:
-        assert len(s.exec(select(ProfileRow)).all()) == 1
+        assert len(s.exec(select(ProfileRow)).all()) == n_profiles
     html = h.client.get(f"/change/{EUDR_ID}").text
     assert "Let the agent check" in html
     assert 'href="/profile"' not in html.split("<main", 1)[-1].split("<footer>", 1)[0]
@@ -347,3 +356,33 @@ def test_non_htmx_answer_refusals_keep_their_status_codes(make: Callable[..., Ha
     ok = h.client.post(url, data={"option": "1"}, headers=same, follow_redirects=False)
     assert ok.status_code == 303
     assert h.client.post(url, data={"option": "1"}, headers=same).status_code == 409
+
+
+def test_agent_runs_follow_the_chosen_store(make: Callable[..., Harness]) -> None:
+    """A run started on an example store belongs to that store's profile: switching back to the
+    default store hides it, switching again shows it."""
+    h = make(locked=True, replies=[*until_question(), decide_does_not()])
+    with session(h.app.engine) as s:
+        nl = s.exec(select(ProfileRow).where(ProfileRow.slug == "nl-clothing")).one()
+        appl = s.exec(
+            select(ApplicabilityRow).where(
+                ApplicabilityRow.profile_id == nl.id, ApplicabilityRow.regchange_id == EUDR_ID
+            )
+        ).one()
+        appl.decision = "unclear"  # whatever the recorded call was, the button needs unclear
+        s.add(appl)
+        s.commit()
+        nl_id = nl.id
+    h.client.get("/store/nl-clothing")
+    assert f'hx-post="{START}"' in h.client.get(f"/change/{EUDR_ID}").text
+    assert h.client.post(START, headers=HX).status_code == 200
+    (run,) = h.runs()
+    assert run.profile_id == nl_id and run.id is not None
+    assert h.client.get(f"/agent/{run.id}", headers=HX).status_code == 200
+    h.client.get("/store/de-furniture")
+    assert h.client.get(f"/agent/{run.id}", headers=HX).status_code == 404
+    assert str(escape(QUESTION)) not in h.client.get(f"/change/{EUDR_ID}").text
+    h.client.get("/store/nl-clothing")
+    r = h.client.post(f"/agent/{run.id}/answer", data={"option": "1"}, headers=HX)
+    assert r.status_code == 200 and f"Decided: <strong>{DOESNT}</strong>" in r.text
+    assert f"Agent: {DOESNT}" in h.client.get(f"/change/{EUDR_ID}").text

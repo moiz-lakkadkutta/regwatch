@@ -169,3 +169,20 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   200 in 0.57–0.78 s; logs show `seeded 26 change(s)`; /month has 14 rows due 2027-06-30 and none due 2026-12-30;
   locked profile POST → 403; agent POST cross-origin → 403, same-origin on the unclear change → 303. The agent's
   steps are not visible in `nebius ai endpoint logs` at the default log level.
+- (2026-10-15, Tavily, rule-moved banner) One advanced extract of a single EUR-Lex URL (Regulation (EU) 2025/2650,
+  `CELEX:32025R2650`) through the repo's `extract_documents` path was refused with `ForbiddenError: This request
+  exceeds your plan's set usage limit` — 0 credits charged, no `usage` in the response. On 10-14 the account stood at
+  549 of 1,000 plan credits, so a set usage limit below the plan size is the likely cause; the error does not say
+  which limit or how many credits remain. Workaround: the banner quotes Article 38(2)/(3) from the consolidated
+  text already in the seed (`CELEX:02023R1115-20251226`, which marks those paragraphs ▼M2 = 2025/2650). Ask: put
+  the limit and the remaining credits in the 403 body.
+
+- (2026-10-15, Tavily plan exhausted before a scoped crawl) Before a planned crawl of three new regulations
+  (Directive (EU) 2024/825, Regulation (EU) 2025/40 PPWR, Regulation (EU) 2023/988 GPSR; ~20 search credits for
+  10 advanced searches plus extracts, budget 150), `GET https://api.tavily.com/usage` returned
+  `plan_usage 1001 / plan_limit 1000` on the Researcher plan (`search_usage 863`, `extract_usage 138`,
+  `paygo_usage 0`, `paygo_limit null`). On 2026-10-14 the same endpoint showed 549 used, so ~452 credits went in
+  about a day (not by this branch). One probe search (basic, max_results 1) then failed with
+  `ForbiddenError: This request exceeds your plan's set usage limit`, so no crawl ran: 0 Tavily credits, $0 model
+  spent. Ask: a warning (email / response header) at e.g. 80 % of the plan, and per-key usage history so a spike can
+  be traced to the Endpoint agent, a Job or a developer key.

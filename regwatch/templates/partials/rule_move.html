@@ -1,0 +1,8 @@
+{# One "this rule moved" banner; `mv` is a stored, grounded regwatch.moves.RuleMove. #}
+<aside class="card moved" role="note">
+<p><strong>Deadline moved: now {{mv.new_date|dlong}} for {{mv.audience}}</strong></p>
+<p class="note">It was {{mv.old_date|dlong}}. The dates in RegWatch already use the new one.</p>
+{% if mv.caveat %}<p class="note">{{mv.caveat}}</p>{% endif %}
+<p class="moved-law">Moved by <a href="{{mv.amending_url}}" rel="noopener">{{mv.amending_act}}</a>, which amends {{mv.provision}} of {{mv.instrument}}.</p>
+<details><summary>Read the amended text</summary><blockquote class="moved-quote">“{{mv.quote}}”<cite>— {{mv.instrument}}, {{mv.provision}}, as amended by {{mv.amending_act}} · <a href="{{mv.citation_url}}" rel="noopener">{{mv.source_domain}}</a></cite></blockquote></details>
+</aside>

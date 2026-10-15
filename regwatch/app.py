@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Literal
 from urllib.parse import quote, urlsplit
 
-from fastapi import FastAPI, Form, Request
+from fastapi import FastAPI, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
@@ -51,9 +51,11 @@ from regwatch.db import (
     make_engine,
     session,
     source_domain_for,
+    store_profiles,
     unchecked_changes,
     utcnow,
 )
+from regwatch.moves import RuleMove, matching, moves_for
 from regwatch.schemas import Decision, Profile, RegChange
 
 settings = Settings()
@@ -179,6 +181,57 @@ VISITOR_MAX_AGE = 60 * 60 * 24 * 30
 PROFILE_LOCKED_NOTE = (
     "This demo shares one store profile with every visitor, so it can't be changed here."
 )
+# The visitor's example store (regwatch.presets): a slug; none or unknown → the default store.
+STORE_COOKIE = "rw_store"
+MINE = "mine"  # the switcher entry for the profile saved on /profile (never a store slug)
+SWITCH_PAGES = ("/feed", "/month", "/profile")
+
+
+def _profile(request: Request, s: Session) -> ProfileRow | None:
+    """The profile this request is shown: the visitor's example store, else the default one."""
+    return current_profile(s, request.cookies.get(STORE_COOKIE))
+
+
+def _precomputed_only(s: Session, prof: ProfileRow) -> bool:
+    """An example store other than the default: crawls classify the default store only, so new
+    changes reach these stores through `regwatch classify-presets`."""
+    stores = store_profiles(s)
+    return prof.slug is not None and bool(stores) and stores[0].id != prof.id
+
+
+@dataclass(frozen=True)
+class StoreOption:
+    slug: str
+    name: str
+    current: bool
+
+
+@dataclass(frozen=True)
+class StoreSwitcher:
+    options: list[StoreOption]
+    blurb: str
+    next: str  # the page the switcher sits on; /store/{slug} returns there
+
+
+def _switcher(s: Session, prof: ProfileRow, page: str) -> StoreSwitcher | None:
+    """The example-store row for feed / month / profile; None with fewer than two choices. The
+    visitor's own saved profile is a choice only while the profile is unlocked."""
+    options = [
+        StoreOption(slug=r.slug, name=r.name or r.slug, current=r.id == prof.id)
+        for r in store_profiles(s)
+        if r.slug is not None
+    ]
+    if not settings.profile_locked:
+        saved = s.exec(
+            select(ProfileRow)
+            .where(col(ProfileRow.slug).is_(None))
+            .order_by(col(ProfileRow.id).desc())
+        ).first()
+        if saved is not None:
+            options.append(StoreOption(slug=MINE, name="Your store", current=saved.id == prof.id))
+    if len(options) < 2:
+        return None
+    return StoreSwitcher(options=options, blurb=prof.blurb or "", next=page)
 
 
 def _same_origin(request: Request) -> bool:
@@ -225,7 +278,7 @@ def _visitor_run(request: Request, run_id: int) -> tuple[AgentRunRow, RegChange,
         run = s.get(AgentRunRow, run_id)
         if run is None or not visitor or run.visitor_id != visitor:
             return None
-        prof = current_profile(s)
+        prof = _profile(request, s)
         if prof is None or prof.id != run.profile_id:
             return None
         ch = s.get(RegChangeRow, run.regchange_id)
@@ -523,6 +576,34 @@ def _month_view(items: list[FeedItem], today: date) -> MonthView:
     )
 
 
+def _item_moves(moves: list[RuleMove], it: FeedItem) -> list[RuleMove]:
+    """'This rule moved' banners for one feed item (stored, grounded moves only)."""
+    return matching(moves, it.change, it.decision, [t.due for t in it.todos if t.due])
+
+
+def _group_moves(groups: list[FeedGroup], moves: list[RuleMove]) -> dict[str, list[RuleMove]]:
+    """Each group's moves, once per move, in the order their first item shows them."""
+    out: dict[str, list[RuleMove]] = {}
+    for g in groups:
+        seen: dict[str, RuleMove] = {}
+        for it in g.items:
+            for mv in _item_moves(moves, it):
+                seen.setdefault(mv.key, mv)
+        if seen:
+            out[g.key] = list(seen.values())
+    return out
+
+
+def _month_moves(m: MonthView, moves: list[RuleMove]) -> list[RuleMove]:
+    """Moves whose new date is the due date of a to-do of the moved act on this page."""
+    todos = m.in_force + m.this_month + m.coming_up + m.no_date + m.done
+    return [
+        mv
+        for mv in moves
+        if any(t.instrument.startswith(mv.instrument) and t.view.due == mv.new_date for t in todos)
+    ]
+
+
 def _load_month(profile_id: int, today: date) -> MonthView:
     with session(engine) as s:
         rows = feed_rows(s, profile_id)
@@ -533,7 +614,7 @@ def _load_month(profile_id: int, today: date) -> MonthView:
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request) -> Any:
     with session(engine) as s:
-        prof = current_profile(s)
+        prof = _profile(request, s)
     if prof is None:
         return RedirectResponse("/profile", status_code=303)
     return RedirectResponse("/month", status_code=303)
@@ -542,7 +623,8 @@ def home(request: Request) -> Any:
 @app.get("/profile", response_class=HTMLResponse)
 def profile_form(request: Request) -> Any:
     with session(engine) as s:
-        prof = current_profile(s)
+        prof = _profile(request, s)
+        stores = _switcher(s, prof, "/profile") if prof is not None else None
     return templates.TemplateResponse(
         request,
         "profile_form.html",
@@ -553,9 +635,26 @@ def profile_form(request: Request) -> Any:
             "company_sizes": COMPANY_SIZES,
             "supply_options": SUPPLY_OPTIONS,
             "profile": prof.to_schema() if prof else None,
+            "store_name": prof.name if prof is not None and prof.slug is not None else None,
+            "stores": stores,
             "locked": settings.profile_locked,
         },
     )
+
+
+@app.get("/store/{slug}")
+def choose_store(slug: str, next_page: str = Query("/feed", alias="next")) -> Any:
+    """The switcher: remember the visitor's example store in a cookie and go back. `mine` (or an
+    unknown slug) forgets it, so the visitor sees their own saved profile or the default store."""
+    target = next_page if next_page in SWITCH_PAGES else "/feed"
+    resp = RedirectResponse(target, status_code=303)
+    with session(engine) as s:
+        known = s.exec(select(ProfileRow.id).where(ProfileRow.slug == slug)).first() is not None
+    if known:
+        resp.set_cookie(STORE_COOKIE, slug, max_age=VISITOR_MAX_AGE, httponly=True, samesite="lax")
+    else:
+        resp.delete_cookie(STORE_COOKIE)
+    return resp
 
 
 @app.post("/profile")
@@ -585,20 +684,25 @@ def profile_save(
     with session(engine) as s:
         s.add(ProfileRow.from_schema(profile))
         s.commit()
-    return RedirectResponse("/feed", status_code=303)
+    resp = RedirectResponse("/feed", status_code=303)
+    resp.delete_cookie(STORE_COOKIE)  # show the profile just saved, not an example store
+    return resp
 
 
 @app.get("/feed", response_class=HTMLResponse)
 def feed(request: Request) -> Any:
     today = _today()
     with session(engine) as s:
-        prof = current_profile(s)
+        prof = _profile(request, s)
         if prof is None or prof.id is None:
             return RedirectResponse("/profile", status_code=303)
         rows = feed_rows(s, prof.id)
         done_keys = _done_keys(s, prof.id)
         unchecked = unchecked_changes(s, prof.id)
         footer = _footer(s, rows)
+        stores = _switcher(s, prof, "/feed")
+        is_store = _precomputed_only(s, prof)
+        moves = moves_for(s, prof.to_schema())
     groups = _group([_item(r, done_keys, today) for r in rows])
     profile = prof.to_schema()
     return templates.TemplateResponse(
@@ -606,11 +710,14 @@ def feed(request: Request) -> Any:
         "feed.html",
         {
             "groups": groups,
+            "moves": _group_moves(groups, moves),
             "unchecked": unchecked,
             "f": footer,
             "profile": profile,
             "establishment": country_name(prof.establishment_country),
             "category_names": [CATEGORY_NAMES.get(c, c) for c in profile.categories],
+            "stores": stores,
+            "is_store": is_store,
         },
     )
 
@@ -618,11 +725,15 @@ def feed(request: Request) -> Any:
 @app.get("/month", response_class=HTMLResponse)
 def month(request: Request) -> Any:
     with session(engine) as s:
-        prof = current_profile(s)
+        prof = _profile(request, s)
+        stores = _switcher(s, prof, "/month") if prof is not None else None
+        moves = moves_for(s, prof.to_schema()) if prof is not None else []
     if prof is None or prof.id is None:
         return RedirectResponse("/profile", status_code=303)
     m = _load_month(prof.id, _today())
-    return templates.TemplateResponse(request, "month.html", {"m": m})
+    return templates.TemplateResponse(
+        request, "month.html", {"m": m, "stores": stores, "moves": _month_moves(m, moves)}
+    )
 
 
 @app.post("/todo/{key}/toggle")
@@ -630,7 +741,7 @@ def toggle_todo(request: Request, key: str) -> Any:
     """Flip one to-do's done mark. htmx callers (HX-Request: true) get the refreshed
     #month-list fragment; a plain form post is redirected back to /month."""
     with session(engine) as s:
-        prof = current_profile(s)
+        prof = _profile(request, s)
         if prof is None or prof.id is None:
             return RedirectResponse("/profile", status_code=303)
         row = s.exec(
@@ -657,7 +768,7 @@ def change_detail(request: Request, change_id: int) -> Any:
     """Stored rows only: nothing is classified from a web route."""
     today = _today()
     with session(engine) as s:
-        prof = current_profile(s)
+        prof = _profile(request, s)
         if prof is None or prof.id is None:
             return RedirectResponse("/profile", status_code=303)
         row = feed_row(s, prof.id, change_id)
@@ -673,6 +784,7 @@ def change_detail(request: Request, change_id: int) -> Any:
                 "content_hash": item.content_hash,
                 "normalize_model": item.normalize_model,
                 "mailto": wrong_call_mailto(change_id, item.decision, settings.report_email),
+                "moves": _item_moves(moves_for(s, prof.to_schema()), item),
             }
         else:
             ch = s.get(RegChangeRow, change_id)
@@ -689,9 +801,12 @@ def change_detail(request: Request, change_id: int) -> Any:
                 "content_hash": ch.content_hash,
                 "normalize_model": ch.model,
                 "mailto": "",
+                "moves": [],
             }
     ctx["change_id"] = change_id
     ctx["profile"] = prof.to_schema()
+    with session(engine) as s:
+        ctx["is_store"] = _precomputed_only(s, prof)
     ctx["locked"] = settings.profile_locked
     ctx["a"] = None
     shown = ctx["item"]
@@ -710,7 +825,7 @@ def agent_start(request: Request, change_id: int) -> Any:
     if not _same_origin(request):
         return HTMLResponse("Forbidden", status_code=403)
     with session(engine) as s:
-        prof = current_profile(s)
+        prof = _profile(request, s)
         profile_id = prof.id if prof is not None else None
         row = feed_row(s, profile_id, change_id) if profile_id is not None else None
     if profile_id is None or row is None or row.appl.decision != "unclear":

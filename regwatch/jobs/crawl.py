@@ -23,7 +23,7 @@ from typing import Literal, cast
 
 from sqlmodel import Session, col, select
 
-from regwatch.config import DEFAULT_SEED_DIR, Settings
+from regwatch.config import DEFAULT_SEED_DIR, REGULATION_TAGS, Settings
 from regwatch.db import (
     ApplicabilityRow,
     CrawlRunRow,
@@ -38,7 +38,9 @@ from regwatch.ingest.diff import upsert_documents
 from regwatch.ingest.extract import extract_documents
 from regwatch.ingest.search import search_all
 from regwatch.ingest.tavily_backend import CreditLedger, TavilyBackend, make_backend
-from regwatch.schemas import Applicability, Document, Profile, RegChange
+from regwatch.moves import read_moves, seed_moves
+from regwatch.presets import Store, load_seed_changes, load_stores, read_entries
+from regwatch.schemas import Applicability, Document, Profile
 from regwatch.understand.classify import ClassifySummary, classify_all
 from regwatch.understand.llm_backend import LLMBackend, ModelLedger, make_llm_backend
 from regwatch.understand.normalize import NormalizeSummary, normalize_all
@@ -125,17 +127,19 @@ def run_ingest(
     settings: Settings | None = None,
     *,
     backend: TavilyBackend | None = None,
-    time_range: str = "year",
+    time_range: str | None = "year",
     out: Path | None = None,
     stage: Stage = "ingest",
+    regulations: Sequence[str] | None = None,
 ) -> IngestSummary:
-    """Search → extract → diff. Persists a `CrawlRunRow` with the Tavily credits used."""
+    """Search → extract → diff. Persists a `CrawlRunRow` with the Tavily credits used.
+    `regulations` (tags) scopes the search to those SEED_REGULATIONS; None = all."""
     settings = settings or Settings()
     backend = backend or make_backend(settings, "live")
     engine = make_engine(settings)
     started = datetime.now(UTC)
     ledger = CreditLedger()
-    hits = search_all(backend, ledger=ledger, time_range=time_range)
+    hits = search_all(backend, ledger=ledger, time_range=time_range, tags=regulations)
     docs = extract_documents(backend, hits, ledger=ledger, fetched_at=started)
     docs.sort(key=lambda d: d.url)
     with session(engine) as s:
@@ -251,18 +255,86 @@ def _classify_stage(
     return summary, run
 
 
+def _store_row(s: Session, store: Store) -> ProfileRow:
+    """The ProfileRow of an example store, created on first seed. A DB seeded before stores
+    existed has the demo profile without a slug: the matching row is adopted (its results and
+    to-do ticks kept) instead of a duplicate being made."""
+    row = s.exec(select(ProfileRow).where(ProfileRow.slug == store.slug)).first()
+    if row is None and store.file.default:
+        row = next(
+            (
+                r
+                for r in s.exec(
+                    select(ProfileRow)
+                    .where(col(ProfileRow.slug).is_(None))
+                    .order_by(col(ProfileRow.id))
+                ).all()
+                if r.to_schema() == store.file.profile
+            ),
+            None,
+        )
+    if row is None:
+        row = ProfileRow.from_schema(store.file.profile)
+    row.slug, row.name, row.blurb = store.slug, store.file.name, store.file.blurb
+    s.add(row)
+    s.commit()
+    s.refresh(row)
+    return row
+
+
+def _has_applicability(s: Session, profile_id: int, regchange_id: int) -> bool:
+    return (
+        s.exec(
+            select(ApplicabilityRow.id).where(
+                ApplicabilityRow.profile_id == profile_id,
+                ApplicabilityRow.regchange_id == regchange_id,
+            )
+        ).first()
+        is not None
+    )
+
+
+def _add_applicability(
+    s: Session,
+    *,
+    profile_id: int,
+    regchange_id: int,
+    appl: Applicability,
+    model: str,
+    cost_usd: float,
+    tavily_credits: int = 0,
+) -> None:
+    s.add(
+        ApplicabilityRow(
+            profile_id=profile_id,
+            regchange_id=regchange_id,
+            decision=appl.decision,
+            reasons=json.dumps(appl.reasons),
+            todos=json.dumps([t.model_dump(mode="json") for t in appl.todos]),
+            model=model,
+            cost_usd=cost_usd,
+            tavily_credits=tavily_credits,
+        )
+    )
+    s.commit()
+
+
 def seed(settings: Settings | None = None) -> int:
     """Load the recorded seed run. Idempotent: skips changes whose (document_url, instrument)
     already exists, so several sections of one act (`"<act> — <label>"`) all load once.
 
     Upserts examples/seed-run/documents.jsonl first (by url + content hash) so each seed change
     carries the content_hash of its source document and `--stage normalize` leaves it alone.
+    With a `stores/` directory (regwatch.presets) every example store gets a ProfileRow (the
+    default store first) and its precomputed results; each (store, change) pair is filled once,
+    so a rerun after new change files or new jsonl lines adds only what is missing.
     Returns the number of changes added.
     """
     settings = settings or Settings()
     engine = make_engine(settings)
     seed_dir = settings.seed_dir
-    profile = Profile.model_validate_json((seed_dir / "profile.json").read_text(encoding="utf-8"))
+    stores = load_stores(seed_dir)
+    changes = load_seed_changes(seed_dir)
     added = 0
     with session(engine) as s:
         documents_jsonl = seed_dir / "documents.jsonl"
@@ -274,17 +346,28 @@ def seed(settings: Settings | None = None) -> int:
                 len(diff.changed),
                 len(diff.unchanged),
             )
-        prof = s.exec(select(ProfileRow).order_by(col(ProfileRow.id).desc())).first()
-        if prof is None:
-            prof = ProfileRow.from_schema(profile)
-            s.add(prof)
-            s.commit()
-            s.refresh(prof)
+        # 'this rule moved' banners: grounded against the documents just upserted
+        log.info("seed rule moves: %d new", seed_moves(s, read_moves(seed_dir / "rule-moves.json")))
+        store_rows = [(st, _store_row(s, st)) for st in stores]
+        if store_rows:
+            prof = store_rows[0][1]
+        else:
+            profile = Profile.model_validate_json(
+                (seed_dir / "profile.json").read_text(encoding="utf-8")
+            )
+            maybe = s.exec(select(ProfileRow).order_by(col(ProfileRow.id).desc())).first()
+            if maybe is None:
+                maybe = ProfileRow.from_schema(profile)
+                s.add(maybe)
+                s.commit()
+                s.refresh(maybe)
+            prof = maybe
         assert prof.id is not None
-        for path in sorted(seed_dir.glob("change-*.json")):
-            payload = json.loads(path.read_text(encoding="utf-8"))
-            change = RegChange.model_validate(payload["change"])
-            appl = Applicability.model_validate(payload["applicability"])
+        change_ids: dict[tuple[str, str], int] = {}
+        for sc in changes:
+            change, appl, payload = sc.change, sc.applicability, sc.payload
+            if appl.ungrounded_todos(change):
+                raise ValueError(f"{sc.path.name}: to-do quote not grounded in obligations")
             doc = s.get(DocumentRow, change.document_url)
             content_hash = doc.content_hash if doc is not None else ""
             existing = s.exec(
@@ -294,44 +377,63 @@ def seed(settings: Settings | None = None) -> int:
                 )
             ).first()
             if existing is not None:
+                assert existing.id is not None
+                change_ids[sc.key] = existing.id
                 if not existing.content_hash and content_hash:
                     existing.content_hash = content_hash
                     s.add(existing)
                     s.commit()
-                continue
-            if appl.ungrounded_todos(change):
-                raise ValueError(f"{path.name}: to-do quote not grounded in obligations")
-            row = RegChangeRow(
-                document_url=change.document_url,
-                content_hash=content_hash,
-                model="seed",
-                instrument=change.instrument,
-                jurisdiction=change.jurisdiction,
-                summary=change.summary,
-                effective_dates=json.dumps([d.isoformat() for d in change.effective_dates]),
-                obligations=json.dumps([o.model_dump() for o in change.obligations]),
-                created_at=datetime.fromisoformat(
-                    payload.get("created_at", datetime.now(UTC).isoformat())
-                ),
-            )
-            s.add(row)
-            s.commit()
-            s.refresh(row)
-            assert row.id is not None
-            s.add(
-                ApplicabilityRow(
+                if not store_rows:
+                    continue  # an older seed: as before, nothing more for a known change
+            else:
+                row = RegChangeRow(
+                    document_url=change.document_url,
+                    content_hash=content_hash,
+                    model="seed",
+                    instrument=change.instrument,
+                    jurisdiction=change.jurisdiction,
+                    summary=change.summary,
+                    effective_dates=json.dumps([d.isoformat() for d in change.effective_dates]),
+                    obligations=json.dumps([o.model_dump() for o in change.obligations]),
+                    created_at=datetime.fromisoformat(
+                        payload.get("created_at", datetime.now(UTC).isoformat())
+                    ),
+                )
+                s.add(row)
+                s.commit()
+                s.refresh(row)
+                assert row.id is not None
+                change_ids[sc.key] = row.id
+                added += 1
+            if not _has_applicability(s, prof.id, change_ids[sc.key]):
+                _add_applicability(
+                    s,
                     profile_id=prof.id,
-                    regchange_id=row.id,
-                    decision=appl.decision,
-                    reasons=json.dumps(appl.reasons),
-                    todos=json.dumps([t.model_dump(mode="json") for t in appl.todos]),
+                    regchange_id=change_ids[sc.key],
+                    appl=appl,
                     model=payload.get("model", settings.classifier_model),
                     cost_usd=float(payload.get("cost_usd", 0.0)),
                     tavily_credits=int(payload.get("tavily_credits", 0)),
                 )
-            )
-            s.commit()
-            added += 1
+        by_key = {sc.key: sc.change for sc in changes}
+        for store, store_row in store_rows[1:]:
+            assert store_row.id is not None
+            for key, entry in read_entries(store.appl_path).items():
+                if key not in by_key:
+                    log.warning("seed %s: no change file for %s [%s]; skipped", store.slug, *key)
+                    continue
+                if entry.applicability.ungrounded_todos(by_key[key]):
+                    raise ValueError(f"{store.appl_path.name}: to-do quote not grounded: {key[1]}")
+                if _has_applicability(s, store_row.id, change_ids[key]):
+                    continue
+                _add_applicability(
+                    s,
+                    profile_id=store_row.id,
+                    regchange_id=change_ids[key],
+                    appl=entry.applicability,
+                    model=entry.model or settings.classifier_model,
+                    cost_usd=entry.cost_usd,
+                )
     return added
 
 
@@ -352,8 +454,9 @@ def crawl(
     llm_backend: LLMBackend | None = None,
     classify_backend: LLMBackend | None = None,
     llm_fixtures_dir: Path | None = None,
-    time_range: str = "year",
+    time_range: str | None = "year",
     out: Path | None = None,
+    regulations: Sequence[str] | None = None,
 ) -> CrawlRunRow:
     """`run_crawl` without the in-memory normalize summary."""
     run, _ = run_crawl(
@@ -365,6 +468,7 @@ def crawl(
         llm_fixtures_dir=llm_fixtures_dir,
         time_range=time_range,
         out=out,
+        regulations=regulations,
     )
     return run
 
@@ -377,8 +481,9 @@ def run_crawl(
     llm_backend: LLMBackend | None = None,
     classify_backend: LLMBackend | None = None,
     llm_fixtures_dir: Path | None = None,
-    time_range: str = "year",
+    time_range: str | None = "year",
     out: Path | None = None,
+    regulations: Sequence[str] | None = None,
 ) -> tuple[CrawlRunRow, NormalizeSummary | None]:
     """Run one stage (or all); return its `CrawlRunRow` and, when normalize ran, its summary
     (the row stores changes, not documents, so only the summary can print the normalize line).
@@ -392,7 +497,9 @@ def run_crawl(
         raise ValueError(f"unknown stage {stage!r}; expected one of {STAGES}")
     settings = settings or Settings()
     if stage == "ingest":
-        ingest = run_ingest(settings, backend=backend, time_range=time_range, out=out)
+        ingest = run_ingest(
+            settings, backend=backend, time_range=time_range, out=out, regulations=regulations
+        )
         return _load_run(settings, ingest.run_id), None
     llm = llm_backend or make_llm_backend("live", settings, llm_fixtures_dir)
     classify_llm = classify_backend or llm
@@ -402,7 +509,14 @@ def run_crawl(
     if stage == "classify":
         _, run = _classify_stage(settings, llm_backend=classify_llm)
         return run, None
-    ingest = run_ingest(settings, backend=backend, time_range=time_range, out=out, stage="all")
+    ingest = run_ingest(
+        settings,
+        backend=backend,
+        time_range=time_range,
+        out=out,
+        stage="all",
+        regulations=regulations,
+    )
     summary, _ = run_normalize(settings, llm_backend=llm, run_id=ingest.run_id)
     _, run = _classify_stage(settings, llm_backend=classify_llm, run_id=ingest.run_id)
     return run, summary
@@ -456,7 +570,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--fixtures-dir", type=Path, default=None)
     parser.add_argument("--llm-backend", choices=["live", "fixtures"], default="live")
     parser.add_argument("--llm-fixtures-dir", type=Path, default=None)
-    parser.add_argument("--time-range", default="year")
+    parser.add_argument(
+        "--time-range", default="year", help="day | week | month | year | any (no date filter)"
+    )
+    parser.add_argument(
+        "--regulation",
+        action="append",
+        choices=sorted(REGULATION_TAGS),
+        default=None,
+        help="only search this regulation tag (repeat for several; default: all)",
+    )
     parser.add_argument(
         "--out",
         type=Path,
@@ -492,8 +615,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         backend=backend,
         llm_backend=llm,
         classify_backend=classify_llm,
-        time_range=args.time_range,
+        time_range=None if args.time_range == "any" else args.time_range,
         out=out,
+        regulations=args.regulation,
     )
     for line in summary_lines(run, out, normalize_summary):
         print(line, file=sys.stderr)

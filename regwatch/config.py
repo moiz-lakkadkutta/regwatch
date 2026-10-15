@@ -69,14 +69,14 @@ class Settings(BaseSettings):
 
 # Only these domains are ever searched or extracted. Official sources first, platform guidance last.
 SOURCE_DOMAINS: dict[str, list[str]] = {
-    "eur-lex.europa.eu": ["withdrawal", "eudr"],
-    "commission.europa.eu": ["withdrawal", "eudr"],
+    "eur-lex.europa.eu": ["withdrawal", "eudr", "greenclaims", "packaging", "productsafety"],
+    "commission.europa.eu": ["withdrawal", "eudr", "greenclaims", "packaging", "productsafety"],
     "green-forum.ec.europa.eu": ["eudr"],
     "gesetze-im-internet.de": ["withdrawal"],
     "bmj.de": ["withdrawal"],
     "bmuv.de": ["eudr"],
-    "ihk.de": ["withdrawal", "eudr"],
-    "help.shopify.com": ["withdrawal", "eudr"],
+    "ihk.de": ["withdrawal", "eudr", "greenclaims", "packaging", "productsafety"],
+    "help.shopify.com": ["withdrawal", "eudr", "productsafety"],
     "shopify.com": ["withdrawal", "eudr"],
 }
 
@@ -108,6 +108,27 @@ SEED_REGULATIONS: list[dict[str, str]] = [
         "query": "EUDR Regulation 2023/1115 as amended by Regulation 2025/2650 application date micro small enterprises due diligence statement wood leather furniture",
         # Micro and small operators; medium and large from 2026-12-30 (Regulation (EU) 2025/2650).
         "applies_from": "2027-06-30",
+    },
+    # Added 2026-10-15. `applies_from` below is NOT yet checked against crawled text (Tavily plan
+    # exhausted, see FEEDBACK.md 2026-10-15); it is unused at runtime. To-do dates in the feed
+    # come from grounded quotes only, never from here.
+    {
+        "tag": "greenclaims",
+        "instrument": "Directive (EU) 2024/825 — empowering consumers for the green transition",
+        "query": "Directive (EU) 2024/825 empowering consumers for the green transition generic environmental claims sustainability labels durability information apply from 27 September 2026",
+        "applies_from": "2026-09-27",
+    },
+    {
+        "tag": "packaging",
+        "instrument": "Regulation (EU) 2025/40 — Packaging and Packaging Waste Regulation (PPWR)",
+        "query": "Regulation (EU) 2025/40 packaging and packaging waste PPWR obligations distributors e-commerce empty space ratio labelling application 12 August 2026",
+        "applies_from": "2026-08-12",
+    },
+    {
+        "tag": "productsafety",
+        "instrument": "Regulation (EU) 2023/988 — General Product Safety Regulation (GPSR)",
+        "query": "Regulation (EU) 2023/988 General Product Safety Regulation GPSR distance sales online marketplace product information Article 19 applies from 13 December 2024",
+        "applies_from": "2024-12-13",
     },
 ]
 
@@ -206,6 +227,9 @@ REGULATION_TAGS: frozenset[str] = frozenset(r["tag"] for r in SEED_REGULATIONS)
 REGULATION_LABELS: dict[str, str] = {
     "withdrawal": "Withdrawal button for online orders",
     "eudr": "Deforestation-free products (EUDR)",
+    "greenclaims": "Green claims and durability info on product pages",
+    "packaging": "Packaging rules for shipped orders (PPWR)",
+    "productsafety": "Product safety info on every listing (GPSR)",
 }
 
 

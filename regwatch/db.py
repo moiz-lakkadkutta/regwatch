@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from urllib.parse import urlparse
 
+from sqlalchemy import inspect, text
 from sqlmodel import Field, Session, SQLModel, col, create_engine, func, select
 from sqlmodel.sql.expression import Select
 
@@ -17,7 +18,13 @@ from regwatch.schemas import Applicability, Document, Profile, RegChange
 
 
 class ProfileRow(SQLModel, table=True):
+    """A store profile. `slug` is set on the example stores `regwatch seed` loads from
+    examples/seed-run/stores (the visitor's switcher); a profile saved on /profile has none."""
+
     id: int | None = Field(default=None, primary_key=True)
+    slug: str | None = Field(default=None, index=True)
+    name: str | None = None
+    blurb: str | None = None
     establishment_country: str
     ship_to: str  # JSON list
     categories: str  # JSON list
@@ -228,10 +235,30 @@ class AgentFactRow(SQLModel, table=True):
     chosen_text: str = ""
 
 
+# Columns added after the first deploy: `create_all` never alters an existing table, so a DB
+# made before them gets them here (nullable, no default — what the model declares).
+_ADDED_COLUMNS: dict[str, tuple[str, ...]] = {"profilerow": ("slug", "name", "blurb")}
+
+
+def _add_missing_columns(engine) -> None:  # type: ignore[no-untyped-def]
+    insp = inspect(engine)
+    for table, columns in _ADDED_COLUMNS.items():
+        if not insp.has_table(table):
+            continue
+        have = {c["name"] for c in insp.get_columns(table)}
+        missing = [c for c in columns if c not in have]
+        if not missing:
+            continue
+        with engine.begin() as conn:
+            for column in missing:
+                conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {column} VARCHAR"))
+
+
 def make_engine(settings: Settings):  # type: ignore[no-untyped-def]
     connect_args = {"check_same_thread": False} if settings.db_url.startswith("sqlite") else {}
     engine = create_engine(settings.db_url, connect_args=connect_args)
     SQLModel.metadata.create_all(engine)
+    _add_missing_columns(engine)
     return engine
 
 
@@ -241,8 +268,29 @@ def session(engine) -> Iterator[Session]:  # type: ignore[no-untyped-def]
         yield s
 
 
-def current_profile(s: Session) -> ProfileRow | None:
-    return s.exec(select(ProfileRow).order_by(col(ProfileRow.id).desc())).first()
+def store_profiles(s: Session) -> list[ProfileRow]:
+    """The example stores (rows with a slug), the default store first (seed loads it first)."""
+    return list(
+        s.exec(
+            select(ProfileRow).where(col(ProfileRow.slug).is_not(None)).order_by(col(ProfileRow.id))
+        ).all()
+    )
+
+
+def current_profile(s: Session, store: str | None = None) -> ProfileRow | None:
+    """The profile a request is shown: the example store `store` (the visitor's switcher cookie)
+    when it exists; else the newest profile saved on /profile; else the default example store
+    (the first one seeded). An unknown `store` falls through, so a stale cookie never 404s."""
+    if store:
+        chosen = s.exec(select(ProfileRow).where(ProfileRow.slug == store)).first()
+        if chosen is not None:
+            return chosen
+    saved = s.exec(
+        select(ProfileRow).where(col(ProfileRow.slug).is_(None)).order_by(col(ProfileRow.id).desc())
+    ).first()
+    if saved is not None:
+        return saved
+    return s.exec(select(ProfileRow).order_by(col(ProfileRow.id))).first()
 
 
 def last_crawl(s: Session) -> CrawlRunRow | None:
