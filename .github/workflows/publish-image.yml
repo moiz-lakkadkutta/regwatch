@@ -1,0 +1,19 @@
+name: publish-image
+# Builds ops/Dockerfile on GitHub's runner and pushes ghcr.io/<owner>/regwatch:<short sha> for the
+# Nebius Endpoint/Job to pull (runbook step 3 fallback when no local Docker daemon is available).
+# The image carries no keys: they come from the MysteryBox secret at runtime.
+on: workflow_dispatch
+permissions:
+  contents: read
+  packages: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: tag
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+      - run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+      - run: docker build --platform linux/amd64 -f ops/Dockerfile -t ${{ steps.tag.outputs.image }} .
+      - run: docker push ${{ steps.tag.outputs.image }}
+      - run: echo "pushed ${{ steps.tag.outputs.image }}" >> "$GITHUB_STEP_SUMMARY"
