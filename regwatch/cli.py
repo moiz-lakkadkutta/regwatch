@@ -34,6 +34,12 @@ def record_seed(
         list[str] | None,
         typer.Option("--exclude", help="Exact instrument to leave out (repeat for several)."),
     ] = None,
+    append: Annotated[
+        bool,
+        typer.Option(
+            "--append", help="Add after the existing change files instead of replacing them."
+        ),
+    ] = False,
 ) -> None:
     """Record chosen documents of a crawl in the DB (REGWATCH_DB_URL) as the demo seed."""
     import logging
@@ -46,7 +52,11 @@ def record_seed(
     settings = Settings()
     try:
         summary = _record(
-            settings, url, out if out is not None else settings.seed_dir, exclude=exclude or []
+            settings,
+            url,
+            out if out is not None else settings.seed_dir,
+            exclude=exclude or [],
+            append=append,
         )
     except RecordError as e:
         print(f"record-seed: refused — {e}", file=sys.stderr)
@@ -61,7 +71,13 @@ def crawl(
     fixtures_dir: Annotated[Path | None, typer.Option()] = None,
     llm_backend: Annotated[str, typer.Option(help="Token Factory: live | fixtures")] = "live",
     llm_fixtures_dir: Annotated[Path | None, typer.Option()] = None,
-    time_range: Annotated[str, typer.Option()] = "year",
+    time_range: Annotated[
+        str, typer.Option(help="day | week | month | year | any (no date filter)")
+    ] = "year",
+    regulation: Annotated[
+        list[str] | None,
+        typer.Option("--regulation", help="Only search this regulation tag (repeat for several)."),
+    ] = None,
     out: Annotated[
         Path | None,
         typer.Option(help="write the ingested documents.jsonl here (default: nothing is written)"),
@@ -80,6 +96,8 @@ def crawl(
             raise typer.BadParameter(f"{name} must be 'live' or 'fixtures'")
     argv = ["--stage", stage, "--backend", backend, "--llm-backend", llm_backend]
     argv += ["--time-range", time_range]
+    for tag in regulation or []:
+        argv += ["--regulation", tag]
     if fixtures_dir is not None:
         argv += ["--fixtures-dir", str(fixtures_dir)]
     if llm_fixtures_dir is not None:

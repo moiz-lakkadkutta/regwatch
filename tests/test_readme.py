@@ -35,7 +35,7 @@ def test_readme_quotes_the_fixture_crawl_figures(tmp_settings: Settings) -> None
     ):
         assert needle in head, f"{needle!r} must appear in the first 40 lines"
 
-    credit_lines = [ln for ln in lines if "Tavily credits" in ln and "36" in ln]
+    credit_lines = [ln for ln in lines if "Tavily credits" in ln and "56" in ln]
     assert credit_lines
     for ln in credit_lines:
         low = ln.lower()

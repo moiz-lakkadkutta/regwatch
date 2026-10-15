@@ -7,6 +7,11 @@ named by `--exclude` (exact instrument) are skipped with a WARNING — never giv
 Nothing is written when a URL is missing from the DB, an exclude matches no candidate change, or any
 candidate change fails grounding.
 
+`--append` keeps the existing change files byte for byte: the new files are numbered after the
+highest existing `change-NNN`, and documents.jsonl gains the new documents (existing lines kept).
+It refuses a change already in the seed (same document URL + instrument) and a document URL already
+in documents.jsonl with a different content hash.
+
 Tavily credits: live applicabilities carry `tavily_credits=0` (credits are spent per crawl, on
 the `CrawlRunRow`). So that the seeded feed footer ("N Tavily credits used when it was recorded",
 the sum over the seeded applicabilities) shows the source crawl's real number, the credits of the
@@ -39,8 +44,8 @@ from regwatch.db import (
     make_engine,
     regulation_tag_for,
 )
-from regwatch.jobs.crawl import write_documents_jsonl
-from regwatch.schemas import Profile
+from regwatch.jobs.crawl import read_documents_jsonl, write_documents_jsonl
+from regwatch.schemas import Document, Profile
 
 log = logging.getLogger(__name__)
 
@@ -197,30 +202,77 @@ def _collect(
     return docs, kept, n_skipped
 
 
+_CHANGE_NUM = re.compile(r"^change-(\d+)-")
+
+
+def _existing_seed(out: Path) -> tuple[int, set[tuple[str, str]], list[Document]]:
+    """Highest change-NNN number, the (document_url, instrument) pairs and documents in `out`."""
+    last = 0
+    pairs: set[tuple[str, str]] = set()
+    for path in sorted(out.glob("change-*.json")):
+        m = _CHANGE_NUM.match(path.name)
+        if m:
+            last = max(last, int(m.group(1)))
+        change = json.loads(path.read_text(encoding="utf-8"))["change"]
+        pairs.add((change["document_url"], change["instrument"]))
+    jsonl = out / "documents.jsonl"
+    documents = read_documents_jsonl(jsonl) if jsonl.exists() else []
+    return last, pairs, documents
+
+
+def _merge_documents(existing: list[Document], new: list[Document]) -> list[Document]:
+    by_url = {d.url: d for d in existing}
+    for d in new:
+        old = by_url.get(d.url)
+        if old is not None and old.content_hash != d.content_hash:
+            raise RecordError(
+                f"--append: {d.url} is already in documents.jsonl with another content hash"
+            )
+        by_url.setdefault(d.url, d)
+    return list(by_url.values())
+
+
 def record_seed(
-    settings: Settings, urls: Sequence[str], out: Path, *, exclude: Sequence[str] = ()
+    settings: Settings,
+    urls: Sequence[str],
+    out: Path,
+    *,
+    exclude: Sequence[str] = (),
+    append: bool = False,
 ) -> RecordSummary:
     """Record `urls` from the DB in `settings` into `out`, leaving out the changes whose instrument
-    is in `exclude`. Raises RecordError, writing nothing."""
+    is in `exclude`. `append` adds them after the existing seed instead of replacing it.
+    Raises RecordError, writing nothing."""
     engine = make_engine(settings)
+    first, seeded, seeded_docs = _existing_seed(out) if append else (0, set(), [])
     with Session(engine) as s:
         docs, kept, n_skipped = _collect(s, urls, exclude)
+        dupes = [
+            f"{ch.instrument} ({ch.document_url})"
+            for _, ch, _ in kept
+            if (ch.document_url, ch.instrument) in seeded
+        ]
+        if dupes:
+            raise RecordError("--append: already in the seed: " + "; ".join(dupes))
         credits = apportion(_source_crawl_credits(s), len(kept))
         profile = current_profile(s)
         assert profile is not None
         db_profile = profile.to_schema()
         profile_json = json.dumps(db_profile.model_dump(), ensure_ascii=False) + "\n"
         files: list[tuple[str, str]] = []
-        for n, (doc, ch, ap) in enumerate(kept, start=1):
+        for i, (doc, ch, ap) in enumerate(kept):
             tag = regulation_tag_for(doc)
             slug = _safe(tag) if tag else host_slug(doc.url)
-            body = json.dumps(_payload(ch, ap, credits[n - 1]), indent=2, ensure_ascii=False) + "\n"
-            files.append((f"change-{n:03d}-{slug}.json", body))
+            body = json.dumps(_payload(ch, ap, credits[i]), indent=2, ensure_ascii=False) + "\n"
+            files.append((f"change-{first + i + 1:03d}-{slug}.json", body))
         documents = [d.to_schema() for d in docs]
+    if append:
+        documents = _merge_documents(seeded_docs, documents)
 
     out.mkdir(parents=True, exist_ok=True)
-    for stale in out.glob("change-*.json"):
-        stale.unlink()
+    if not append:
+        for stale in out.glob("change-*.json"):
+            stale.unlink()
     profile_path = out / "profile.json"
     if not profile_path.exists():
         profile_path.write_text(profile_json, encoding="utf-8")

@@ -75,7 +75,7 @@ def test_stage_all_fixtures_offline_end_to_end(
     profile_id = _seed_profile(tmp_settings)
     run = _crawl_all(tmp_settings, fake_backend, tmp_path / "docs.jsonl")
     assert run.stage == "all" and run.finished_at is not None
-    assert run.n_docs_new == 16 and run.tavily_credits == 36
+    assert run.n_docs_new == 16 and run.tavily_credits == 56
     assert run.n_changes_new == 15 and run.n_normalize_failed == 1
     assert run.n_classified == run.n_changes_new > 0
     assert (run.n_applies, run.n_does_not, run.n_unclear) == (3, 7, 5)
@@ -87,7 +87,7 @@ def test_stage_all_fixtures_offline_end_to_end(
         "classify: 15 changes · 3 apply · 7 don't · 5 unclear · 1 retried · 0 failed · "
         "7 to-dos (0 dropped) · $"
     )
-    assert lines[3].startswith("crawl: 16 new documents · 15 new changes · 15 classified · 36 Tav")
+    assert lines[3].startswith("crawl: 16 new documents · 15 new changes · 15 classified · 56 Tav")
     assert lines[3].endswith(f"${run.model_cost_usd:.4f} model")
     with Session(make_engine(tmp_settings)) as s:
         rows = s.exec(select(ApplicabilityRow)).all()
@@ -112,11 +112,11 @@ def test_crawl_all_twice_is_idempotent(
     first = _crawl_all(tmp_settings, fake_backend, tmp_path / "docs.jsonl")
     second = _crawl_all(tmp_settings, fake_backend, tmp_path / "docs.jsonl")
     assert (second.n_docs_new, second.n_changes_new, second.n_classified) == (0, 0, 0)
-    assert second.n_docs_unchanged == 16 and second.tavily_credits == 36
+    assert second.n_docs_unchanged == 16 and second.tavily_credits == 56
     assert second.classify_cost_usd == 0.0 and second.n_todos == 0
     assert second.n_normalize_failed == 1  # the ungrounded doc is retried every crawl (issues.md)
     assert summary_lines(second, None)[3].startswith(
-        "crawl: 0 new documents · 0 new changes · 0 classified · 36 Tavily credits · $"
+        "crawl: 0 new documents · 0 new changes · 0 classified · 56 Tavily credits · $"
     )
     with Session(make_engine(tmp_settings)) as s:
         runs = s.exec(select(CrawlRunRow).order_by(col(CrawlRunRow.id))).all()
@@ -276,7 +276,7 @@ def test_main_cli_prints_summary(
         r"^classify: \d+ changes · 3 apply · 7 don't · 5 unclear · 1 retried", err, re.M
     )
     assert re.search(
-        r"^crawl: 16 new documents · 15 new changes · 15 classified · 36 Tavily credits · \$\d",
+        r"^crawl: 16 new documents · 15 new changes · 15 classified · 56 Tavily credits · \$\d",
         err,
         re.M,
     )

@@ -23,7 +23,7 @@ from typing import Literal, cast
 
 from sqlmodel import Session, col, select
 
-from regwatch.config import DEFAULT_SEED_DIR, Settings
+from regwatch.config import DEFAULT_SEED_DIR, REGULATION_TAGS, Settings
 from regwatch.db import (
     ApplicabilityRow,
     CrawlRunRow,
@@ -125,17 +125,19 @@ def run_ingest(
     settings: Settings | None = None,
     *,
     backend: TavilyBackend | None = None,
-    time_range: str = "year",
+    time_range: str | None = "year",
     out: Path | None = None,
     stage: Stage = "ingest",
+    regulations: Sequence[str] | None = None,
 ) -> IngestSummary:
-    """Search → extract → diff. Persists a `CrawlRunRow` with the Tavily credits used."""
+    """Search → extract → diff. Persists a `CrawlRunRow` with the Tavily credits used.
+    `regulations` (tags) scopes the search to those SEED_REGULATIONS; None = all."""
     settings = settings or Settings()
     backend = backend or make_backend(settings, "live")
     engine = make_engine(settings)
     started = datetime.now(UTC)
     ledger = CreditLedger()
-    hits = search_all(backend, ledger=ledger, time_range=time_range)
+    hits = search_all(backend, ledger=ledger, time_range=time_range, tags=regulations)
     docs = extract_documents(backend, hits, ledger=ledger, fetched_at=started)
     docs.sort(key=lambda d: d.url)
     with session(engine) as s:
@@ -352,8 +354,9 @@ def crawl(
     llm_backend: LLMBackend | None = None,
     classify_backend: LLMBackend | None = None,
     llm_fixtures_dir: Path | None = None,
-    time_range: str = "year",
+    time_range: str | None = "year",
     out: Path | None = None,
+    regulations: Sequence[str] | None = None,
 ) -> CrawlRunRow:
     """`run_crawl` without the in-memory normalize summary."""
     run, _ = run_crawl(
@@ -365,6 +368,7 @@ def crawl(
         llm_fixtures_dir=llm_fixtures_dir,
         time_range=time_range,
         out=out,
+        regulations=regulations,
     )
     return run
 
@@ -377,8 +381,9 @@ def run_crawl(
     llm_backend: LLMBackend | None = None,
     classify_backend: LLMBackend | None = None,
     llm_fixtures_dir: Path | None = None,
-    time_range: str = "year",
+    time_range: str | None = "year",
     out: Path | None = None,
+    regulations: Sequence[str] | None = None,
 ) -> tuple[CrawlRunRow, NormalizeSummary | None]:
     """Run one stage (or all); return its `CrawlRunRow` and, when normalize ran, its summary
     (the row stores changes, not documents, so only the summary can print the normalize line).
@@ -392,7 +397,9 @@ def run_crawl(
         raise ValueError(f"unknown stage {stage!r}; expected one of {STAGES}")
     settings = settings or Settings()
     if stage == "ingest":
-        ingest = run_ingest(settings, backend=backend, time_range=time_range, out=out)
+        ingest = run_ingest(
+            settings, backend=backend, time_range=time_range, out=out, regulations=regulations
+        )
         return _load_run(settings, ingest.run_id), None
     llm = llm_backend or make_llm_backend("live", settings, llm_fixtures_dir)
     classify_llm = classify_backend or llm
@@ -402,7 +409,14 @@ def run_crawl(
     if stage == "classify":
         _, run = _classify_stage(settings, llm_backend=classify_llm)
         return run, None
-    ingest = run_ingest(settings, backend=backend, time_range=time_range, out=out, stage="all")
+    ingest = run_ingest(
+        settings,
+        backend=backend,
+        time_range=time_range,
+        out=out,
+        stage="all",
+        regulations=regulations,
+    )
     summary, _ = run_normalize(settings, llm_backend=llm, run_id=ingest.run_id)
     _, run = _classify_stage(settings, llm_backend=classify_llm, run_id=ingest.run_id)
     return run, summary
@@ -456,7 +470,16 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--fixtures-dir", type=Path, default=None)
     parser.add_argument("--llm-backend", choices=["live", "fixtures"], default="live")
     parser.add_argument("--llm-fixtures-dir", type=Path, default=None)
-    parser.add_argument("--time-range", default="year")
+    parser.add_argument(
+        "--time-range", default="year", help="day | week | month | year | any (no date filter)"
+    )
+    parser.add_argument(
+        "--regulation",
+        action="append",
+        choices=sorted(REGULATION_TAGS),
+        default=None,
+        help="only search this regulation tag (repeat for several; default: all)",
+    )
     parser.add_argument(
         "--out",
         type=Path,
@@ -492,8 +515,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         backend=backend,
         llm_backend=llm,
         classify_backend=classify_llm,
-        time_range=args.time_range,
+        time_range=None if args.time_range == "any" else args.time_range,
         out=out,
+        regulations=args.regulation,
     )
     for line in summary_lines(run, out, normalize_summary):
         print(line, file=sys.stderr)

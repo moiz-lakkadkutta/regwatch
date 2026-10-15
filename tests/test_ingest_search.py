@@ -81,10 +81,10 @@ def test_search_all_covers_every_tag_domain_pair(fake_backend: RecordingBackend)
         for d, tags in SOURCE_DOMAINS.items()
         if r["tag"] in tags
     }
-    assert len(fake_backend.search_calls) == 14
+    assert len(fake_backend.search_calls) == 24
     assert pairs == expected
-    assert ledger.n_search_calls == 14
-    assert ledger.credits == 28
+    assert ledger.n_search_calls == 24
+    assert ledger.credits == 48
     assert ledger.n_extract_calls == 0
     assert len(hits) == 16
 
@@ -203,3 +203,26 @@ def test_search_drops_foreign_language_hits(caplog: pytest.LogCaptureFixture) ->
 )
 def test_normalize_url_drops_language_query_params(url: str, expected: str) -> None:
     assert normalize_url(url) == expected
+
+
+def test_search_all_scoped_to_regulation_tags(fake_backend: RecordingBackend) -> None:
+    ledger = CreditLedger()
+    search_all(fake_backend, ledger=ledger, tags=["eudr"])
+    eudr = next(r for r in SEED_REGULATIONS if r["tag"] == "eudr")
+    assert {kw["query"] for kw in fake_backend.search_calls} == {eudr["query"]}
+    assert [kw["include_domains"][0] for kw in fake_backend.search_calls] == [
+        d for d, tags in SOURCE_DOMAINS.items() if "eudr" in tags
+    ]
+    assert ledger.n_search_calls == len(fake_backend.search_calls)
+
+
+def test_search_all_rejects_an_unknown_tag(fake_backend: RecordingBackend) -> None:
+    with pytest.raises(ValueError, match="nope"):
+        search_all(fake_backend, ledger=CreditLedger(), tags=["withdrawal", "nope"])
+    assert fake_backend.search_calls == []
+
+
+def test_search_without_time_range(fake_backend: RecordingBackend) -> None:
+    search_all(fake_backend, ledger=CreditLedger(), tags=["withdrawal"], time_range=None)
+    assert fake_backend.search_calls
+    assert all(kw["time_range"] is None for kw in fake_backend.search_calls)
