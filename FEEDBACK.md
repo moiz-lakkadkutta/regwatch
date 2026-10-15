@@ -215,3 +215,10 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   27 March 2026. The consolidated GPSR text (`eli/reg/2023/988/2026-05-29/eng`) gave sections dated 2026-05-29,
   the consolidation date. Those sections were left out of the seed. Lightning cost for the whole crawl: $0.1187
   (13 documents, first run 3/13 ok first try, 9 after the retry); Ultra classify $0.7759 for 107 classifications (84 + 4 + 4 + 15 over four runs).
+- (2026-10-15, Nebius Serverless Endpoint redeploy, example stores + 3 new regulations) Image built by `publish-image`
+  on GitHub (`ghcr.io/moiz-lakkadkutta/regwatch:817cd67`, anonymous manifest pull 200). `nebius ai endpoint create`
+  outlived the local 120 s tool timeout but exited 0; the endpoint showed RUNNING after about 4 min. Still no
+  `endpoint update`, so this is a fourth endpoint and URL (`regwatch-web-4`, port8000-pjh6xh7mwmhtxnp). Verified
+  through the ingress: /healthz, /feed, /month, /profile 200 in 0.32–0.51 s; logs `seeded 33 change(s)`; each of the
+  4 example stores shows 5 regulation groups and its own banner; de-furniture /month has 14 to-dos due 2026-12-30 and
+  14 due 2027-06-30; locked profile POST → 403; cross-origin agent POST → 403.
