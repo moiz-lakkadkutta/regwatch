@@ -1,7 +1,7 @@
 <section class="card agent-result">
 <span class="pill {{a.result.decision}}">Agent: {{a.result.label}}</span>
-{% if a.result.todos %}<h2>What to do</h2>{% for t in a.result.todos %}<div class="todo"><div class="body"><div class="text">{{t.text}}</div>
-<div class="due">{% if t.due %}by {{t.due|d}}{% else %}no fixed date{% endif %}</div>
+{% if a.result.todos %}<h2>What to do</h2>{% for at in a.result.todos %}{% set t = at.todo %}<div class="todo"><div class="body"><div class="text">{{t.text}}</div>
+<div class="due">{% if t.due %}{% if at.in_force %}<span class="pill overdue">in force since {{t.due|d}}</span>{% else %}by {{t.due|d}}{% endif %}{% else %}no fixed date{% endif %}</div>
 <blockquote>“{{t.quote}}”<cite>— <a href="{{t.citation_url}}" rel="noopener">{{a.result.source_domain}}</a></cite></blockquote></div></div>{% endfor %}{% endif %}
 <h2>Why</h2>
 <ul>{% for reason in a.result.reasons %}<li>{{reason.text}}{% for c in reason.citations %}{% if c.kind == "fact" %}<div class="muted">{{c.text}}</div>{% else %}<blockquote>“{{c.text}}”<cite>— <a href="{{c.url}}" rel="noopener">{{c.label}}</a></cite></blockquote>{% endif %}{% endfor %}</li>{% endfor %}</ul>

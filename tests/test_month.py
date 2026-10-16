@@ -213,9 +213,10 @@ def test_seed_in_force_and_coming_up(client: TestClient) -> None:
     in_force = html[html.index("<h2>Already in force</h2>") : html.index("<h2>Due this month</h2>")]
     this_month = html[html.index("<h2>Due this month</h2>") : html.index("<h2>Coming up</h2>")]
     coming_up = html[html.index("<h2>Coming up</h2>") :]
-    # the withdrawal button (Art. 11a) is in force since 19 June 2026 — four to-dos
+    # the withdrawal button (Art. 11a) is in force since 19 June 2026 — three to-dos
     assert in_force.count(OVERDUE_19) == N_WITHDRAWAL_19
-    assert in_force.count(f'href="/change/{seed_change_id(ART_11A)}">' + WITHDRAWAL) == 4
+    assert in_force.count(f'href="/change/{seed_change_id(ART_11A)}">Details</a>') == 3
+    assert f"<strong>{WITHDRAWAL}</strong>" in in_force  # the group, not each row, names it
     # EUDR for a small company: leather goods from 30 June 2027 (Regulation (EU) 2025/2650), but
     # wooden furniture keeps 30 December 2026 (Art. 38(3) leaves out the Annex to Regulation (EU)
     # No 995/2010, which lists wooden furniture): none is already in force, both are coming up
@@ -228,7 +229,8 @@ def test_seed_in_force_and_coming_up(client: TestClient) -> None:
     assert "pill overdue" not in coming_up
     assert html.count('class="pill overdue"') == N_IN_FORCE
     # green claims (Directive (EU) 2024/825) apply from 27 September 2026: due this month
-    assert this_month.count(REGULATION_LABELS["greenclaims"]) == N_GREEN_27
+    assert f"<strong>{REGULATION_LABELS['greenclaims']}</strong>" in this_month
+    assert this_month.count('">Details</a>') == N_GREEN_27
     assert 'due <time datetime="2026-09-27">27 September 2026</time>' in this_month
     assert "pill overdue" not in this_month
     assert "No fixed date" not in html
@@ -528,3 +530,20 @@ def test_month_redirects_to_profile_when_empty(
     c = TestClient(appmod.app)
     assert c.get("/month", follow_redirects=False).headers["location"] == "/profile"
     assert c.post("/todo/abc/toggle", follow_redirects=False).headers["location"] == "/profile"
+
+
+def test_month_groups_by_regulation_and_folds_long_coming_up(client: TestClient) -> None:
+    """A phone-length page: each section shows one group per regulation; a long group under
+    "Coming up" (the default store's 28 EUDR to-dos) starts closed behind a one-line summary,
+    while in-force groups stay open. Every to-do is still on the page (and tickable)."""
+    html = client.get("/month").text
+    coming_up = html[html.index("<h2>Coming up</h2>") :]
+    n_eudr = SEED_TODOS.count(("eudr", date(2026, 12, 30))) + SEED_TODOS.count(
+        ("eudr", date(2027, 6, 30))
+    )
+    eudr = coming_up.split(f"<strong>{EUDR}</strong>")
+    assert len(eudr) == 2 and '<details class="card reg" id="coming_up-0">' in eudr[0]
+    assert f"· {n_eudr} to-dos · 30 December 2026 to 30 June 2027" in eudr[1].split("</summary>")[0]
+    in_force = html[html.index("<h2>Already in force</h2>") : html.index("<h2>Coming up</h2>")]
+    assert in_force.count('<details class="card reg"') == in_force.count(" open><summary>") >= 2
+    assert html.count('rel="noopener">source</a>') == N_OPEN

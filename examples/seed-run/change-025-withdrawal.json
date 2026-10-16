@@ -35,21 +35,9 @@
     ],
     "todos": [
       {
-        "text": "Add a clearly visible withdrawal button or link to your storefront",
-        "due": "2026-06-19",
-        "quote": "you need to provide a clearly visible electronic withdrawal function, such as a button or link, that customers can use to exercise their withdrawal right directly from your store.",
-        "citation_url": "https://help.shopify.com/en/manual/compliance/legal/eu-right-of-withdrawal"
-      },
-      {
         "text": "Set up a two-step confirmation flow where customers confirm withdrawal and provide their name and order details",
         "due": "2026-06-19",
         "quote": "After a customer clicks a withdrawal button or link, they confirm the withdrawal and provide their name and the details of the contract or order they're canceling.",
-        "citation_url": "https://help.shopify.com/en/manual/compliance/legal/eu-right-of-withdrawal"
-      },
-      {
-        "text": "Configure automatic email confirmation sent to customers when they withdraw",
-        "due": "2026-06-19",
-        "quote": "Your store needs to send a confirmation of the withdrawal request to the customer on a durable medium, such as email.",
         "citation_url": "https://help.shopify.com/en/manual/compliance/legal/eu-right-of-withdrawal"
       }
     ]

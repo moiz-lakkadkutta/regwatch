@@ -48,7 +48,7 @@
     ],
     "todos": [
       {
-        "text": "Add a clearly labelled 'Vertrag widerrufen' button to your storefront",
+        "text": "Label the withdrawal button 'Vertrag widerrufen' for your German-speaking customers",
         "due": "2026-06-19",
         "quote": "Online-Händler und Online-Dienstleister im B2C-Bereich müssen künftig auf ihren Internetseiten eine gut lesbare Schaltfläche mit der Aufschrift „Vertrag widerrufen“ oder einer gleichwertigen Formulierung bereitstellen.",
         "citation_url": "https://www.ihk.de/pfalz/recht/widerrufsbutton-kommt-ab-juni-2026-7003518"
@@ -63,12 +63,6 @@
         "text": "Design the button to meet accessibility requirements for font size, contrast, and colour",
         "due": "2026-06-19",
         "quote": "Dabei sind auch die Anforderungen für Menschen mit Behinderungen nach dem Barrierefreiheitsstärkungsgesetz und der dazu ergangenen Verordnung zu beachten – wie etwa hinsichtlich Schriftgröße, Kontrast oder Schriftfarbe.",
-        "citation_url": "https://www.ihk.de/pfalz/recht/widerrufsbutton-kommt-ab-juni-2026-7003518"
-      },
-      {
-        "text": "Set up automatic email confirmation sent immediately when a consumer uses the withdrawal button",
-        "due": "2026-06-19",
-        "quote": "Nach Ausübung des Widerrufs muss der Unternehmer eine Eingangsbestätigung auf einem dauerhaften Datenträger (zum Beispiel per E-Mail) übermitteln.",
         "citation_url": "https://www.ihk.de/pfalz/recht/widerrufsbutton-kommt-ab-juni-2026-7003518"
       },
       {

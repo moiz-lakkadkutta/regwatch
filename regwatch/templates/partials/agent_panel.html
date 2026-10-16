@@ -11,16 +11,14 @@
 {% elif st.kind == "read" %}Read <strong>{{st.where}}</strong> · {{st.credits}} credit{% if st.credits != 1 %}s{% endif %}
 {% elif st.kind == "ask" %}Asked you: {{st.question}} → <em>{% if st.answer %}{{st.answer}}{% else %}waiting for your answer{% endif %}</em>
 {% elif st.kind == "decide" %}Decided: <strong>{{st.decision}}</strong>
-{% elif st.kind == "retry" %}{{st.note}}
-{% elif st.kind == "refused" %}Refused: {{st.note}} · 0 credits
-{% else %}Didn't work: {{st.note}}{% if st.credits %} · {{st.credits}} credit{% if st.credits != 1 %}s{% endif %}{% endif %}{% endif %}
+{% elif st.kind == "refused" %}Refused: {{st.note}} · 0 credits{% endif %}
 {% if st.thought %}<div class="muted">{{st.thought}}</div>{% endif %}</li>{% endfor %}</ol>
 {% if a.question %}<form class="answer" method="post" action="/agent/{{a.run_id}}/answer" hx-post="/agent/{{a.run_id}}/answer" hx-target="#agent-run" hx-swap="outerHTML">
 <p><strong>{{a.question.question}}</strong></p>
 {% for opt in a.question.options %}<button type="submit" name="option" value="{{loop.index0}}">{{opt}}</button>{% endfor %}</form>{% endif %}
 {% if a.status in ("stopped", "failed", "expired") %}<p class="note">Stopped: {{a.stop_reason}}. The original check still holds.</p>
 {% if a.can_start %}<form method="post" action="/change/{{a.change_id}}/agent" hx-post="/change/{{a.change_id}}/agent" hx-target="#agent-run" hx-swap="outerHTML"><button type="submit">Try again</button></form>{% elif a.message %}<p class="note">{{a.message}}</p>{% endif %}{% endif %}
-<p class="muted">{{a.n_steps}} step{% if a.n_steps != 1 %}s{% endif %} · {{a.credits}} credit{% if a.credits != 1 %}s{% endif %} · ${{"%.3f"|format(a.cost_usd)}}</p>
+<p class="muted">{{a.n_steps}} step{% if a.n_steps != 1 %}s{% endif %}{% if a.n_redone %} ({{a.n_redone}} redone){% endif %} · {{a.credits}} credit{% if a.credits != 1 %}s{% endif %} · ${{"%.3f"|format(a.cost_usd)}}</p>
 {% endif %}
 <p class="muted">Agent today, all visitors: {{a.today_credits}} of {{a.credits_cap}} Tavily credits · ${{"%.2f"|format(a.today_usd)}} of ${{"%.2f"|format(a.usd_cap)}}</p>
 </div>

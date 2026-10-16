@@ -508,6 +508,66 @@ class MonthView:
     nothing_due: bool  # no open item in force or due this month
     next_hint: tuple[str, date] | None  # (label, date): earliest date >= today
 
+    def sections(self) -> list[MonthSection]:
+        """The non-empty sections, each split into one group per regulation."""
+        return [
+            MonthSection(heading, hint, _reg_groups(bucket, getattr(self, bucket)))
+            for bucket, heading, hint in SECTIONS
+            if getattr(self, bucket)
+        ]
+
+
+@dataclass(frozen=True)
+class RegGroup:
+    """The to-dos of one regulation inside one month-view section, in due-date order."""
+
+    key: str  # "<bucket>-<n>": a stable id, so a re-rendered list can keep it open
+    label: str
+    todos: list[MonthTodo]
+    first: date | None
+    last: date | None
+    open: bool  # shown expanded on load
+
+
+@dataclass(frozen=True)
+class MonthSection:
+    heading: str
+    hint: str
+    groups: list[RegGroup]
+
+
+# Above this many to-dos, a regulation's group under "Coming up" / "No fixed date" starts closed
+# (one summary line): the month view leads with what is due now, not two years of EUDR work.
+COLLAPSE_OVER = 3
+SECTIONS: tuple[tuple[Bucket, str, str], ...] = (
+    ("in_force", "Already in force", "The rule already applies — do these now."),
+    ("this_month", "Due this month", ""),
+    ("coming_up", "Coming up", ""),
+    ("no_date", "No fixed date", ""),
+)
+
+
+def _reg_groups(bucket: Bucket, todos: list[MonthTodo]) -> list[RegGroup]:
+    """Group a section's (date-ordered) to-dos by regulation; groups keep first-seen order."""
+    by_label: dict[str, list[MonthTodo]] = {}
+    for t in todos:
+        by_label.setdefault(t.label, []).append(t)
+    groups: list[RegGroup] = []
+    for n, (label, ts) in enumerate(by_label.items()):
+        dues = [t.view.due for t in ts if t.view.due is not None]
+        collapsible = bucket in ("coming_up", "no_date")
+        groups.append(
+            RegGroup(
+                key=f"{bucket}-{n}",
+                label=label,
+                todos=ts,
+                first=min(dues) if dues else None,
+                last=max(dues) if dues else None,
+                open=not (collapsible and len(ts) > COLLAPSE_OVER),
+            )
+        )
+    return groups
+
 
 UNCLEAR_FALLBACK = "We couldn't tell from your profile."
 
