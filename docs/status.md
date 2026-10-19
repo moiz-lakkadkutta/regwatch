@@ -1,4 +1,22 @@
-# Status — Oct 24 freeze (offline)
+# Status — 2026-10-19
+
+**Live:** https://port8000-fje4arxh07epk8b.tunnel.applications.eu-west2.nebius.cloud — Serverless Endpoint `regwatch-web-5` (cpu-d3 2vcpu-8gb, eu-west2), image
+`ghcr.io/moiz-lakkadkutta/regwatch:f01e14d`, deployed 2026-10-19 and kept up through judging (Dec 1–15, 2026).
+web-4 was deleted first (the account's instance quota is 2; the other one is `warden-console`). Agent on
+($1 + 24 Tavily credits per day, shared `regwatch-keys`); `REGWATCH_REPORT_EMAIL` set.
+
+**Decisions (owner, 2026-10-19):** host through Dec 15 · current keys and caps for the agent · no daily schedule
+(the workflow stays disabled) · report email = the owner's address. The Tavily key is shared with another
+project, which accounts for the plan credits not spent by RegWatch.
+
+**Since web-4:** PR #8 review fixes deployed · fr-coffee Article 33 to-dos undated (were 2024-12-30) · reference
+tag survives a re-extract · live check that Ultra splits wood 2026-12-30 / leather 2027-06-30 by itself ($0.2363) ·
+Devpost text rewritten. **Tests:** 492 passed, 5 live deselected.
+
+**Pending (owner):** phone check of the live URL · video (Oct 25–26) · clean-machine dry run (Oct 27) · Devpost
+submission (target Oct 28; closes Oct 30, 10:00 PDT) · confirm the official rules.
+
+## History — Oct 24 freeze (offline)
 
 **Days merged:** Oct 17 `83ce7ed` · 18 `2cec1c3` · 19 `f831474` · 20 `16474d0` · 21 `2266495` · 22 `9a02a38` · 23 `37a80bc` · 24 `ebe8246`.
 

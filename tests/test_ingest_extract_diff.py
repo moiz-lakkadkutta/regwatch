@@ -7,7 +7,7 @@ from typing import Any
 import pytest
 from sqlmodel import Session, select
 
-from regwatch.config import SOURCE_DOMAINS, Settings
+from regwatch.config import REFERENCE_TAG, SOURCE_DOMAINS, Settings
 from regwatch.db import DocumentRow, make_engine
 from regwatch.ingest.diff import content_hash, upsert_documents
 from regwatch.ingest.extract import EXTRACT_BATCH, batched, extract_documents
@@ -139,6 +139,25 @@ def test_upsert_new_changed_unchanged(fake_backend: RecordingBackend, tmp_path: 
         assert row.markdown.endswith("Amended.")
         assert row.to_schema().regulation_tags == edited.regulation_tags
         assert json.loads(row.regulation_tags) == edited.regulation_tags
+
+
+def test_upsert_keeps_the_reference_tag_when_a_crawl_reextracts_the_page(
+    fake_backend: RecordingBackend, tmp_path: Path
+) -> None:
+    """Reference acts (995/2010, 2024/3234, 2025/2650) are never normalised; a crawl that extracts
+    one again with an EUDR hit's tags must not turn it into changes on the next normalise."""
+    doc = _all_docs(fake_backend)[0]
+    ref = doc.model_copy(update={"regulation_tags": ["eudr", REFERENCE_TAG]})
+    edited = doc.model_copy(update={"markdown": doc.markdown + "\n\nAmended."})
+    edited = edited.model_copy(
+        update={"content_hash": content_hash(edited.markdown), "regulation_tags": ["eudr"]}
+    )
+    engine = make_engine(Settings(REGWATCH_DB_URL=f"sqlite:///{tmp_path / 'd.db'}"))
+    with Session(engine) as s:
+        upsert_documents(s, [ref])
+        assert upsert_documents(s, [edited]).changed == [doc.url]
+        row = s.exec(select(DocumentRow).where(DocumentRow.url == doc.url)).one()
+        assert REFERENCE_TAG in row.to_schema().regulation_tags
 
 
 def test_seed_quotes_are_verbatim_in_recorded_documents() -> None:

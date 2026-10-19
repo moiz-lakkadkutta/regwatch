@@ -222,3 +222,19 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   through the ingress: /healthz, /feed, /month, /profile 200 in 0.32–0.51 s; logs `seeded 33 change(s)`; each of the
   4 example stores shows 5 regulation groups and its own banner; de-furniture /month has 14 to-dos due 2026-12-30 and
   14 due 2027-06-30; locked profile POST → 403; cross-origin agent POST → 403.
+- (2026-10-19, Nemotron 3 Ultra, live classify of the furniture store with the EUDR date notes) `classify-presets`
+  on a scratch copy of the seed (store = the default DE furniture + leather profile, small company): 33 changes,
+  35 calls, 72,631 prompt / 54,558 completion tokens, $0.2363, 2 min 35 s, 0 refused ungrounded. Ultra wrote one
+  to-do per product group on its own: Articles 3, 5, 6–8, 9 and 10 give wooden furniture 2026-12-30 and leather
+  2027-06-30 (the Art. 38(3) exception for 995/2010 products), matching the hand-split seed. Two differences from the
+  seed: Articles 6–8 came out `applies` (seed: `unclear`, kept because the agent demo starts there) and the
+  leather to-dos of Articles 17–24 had their 2027-06-30 nulled by code (not an effective date of that section).
+- (2026-10-19, Nebius Serverless Endpoint redeploy, final URL) `nebius ai endpoint create` for `regwatch-web-5` failed
+  with `ResourceExhausted … compute.instance.count (limit 2, requested 3)`: web-4 and an endpoint of another project
+  held both instances. The error names the quota but the hint lines ("check the active profile", "configure
+  authentication") point elsewhere. web-4 was deleted first (demo down for about 5 minutes); the second create
+  exited 0 with the endpoint RUNNING. Still no `endpoint update`, so this is a fifth URL
+  (port8000-fje4arxh07epk8b). Ask: an in-place image update, or a stable URL per endpoint name. Verified through
+  the ingress: /healthz, /month, /feed, /profile, /change/12 200 in 0.34–1.34 s; 4 example stores 200; locked
+  profile POST → 403; cross-origin agent POST → 403; the report link mails the owner. Change ids moved (the
+  unclear EUDR Art. 6–8 is /change/12, was 14), so the runbook and the video script now use 12.

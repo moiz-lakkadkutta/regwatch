@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 
 from sqlmodel import Session
 
+from regwatch.config import REFERENCE_TAG
 from regwatch.db import DocumentRow
 from regwatch.schemas import Document
 
@@ -57,7 +58,10 @@ def upsert_documents(s: Session, docs: Sequence[Document]) -> DiffResult:
             row.content_hash = doc.content_hash
             row.fetched_at = doc.fetched_at
             row.published_date = doc.published_date
-            row.regulation_tags = json.dumps(doc.regulation_tags)
+            tags = list(doc.regulation_tags)
+            if REFERENCE_TAG in json.loads(row.regulation_tags) and REFERENCE_TAG not in tags:
+                tags.append(REFERENCE_TAG)  # a reference act stays out of normalise
+            row.regulation_tags = json.dumps(tags)
             s.add(row)
             result.changed.append(doc.url)
         else:

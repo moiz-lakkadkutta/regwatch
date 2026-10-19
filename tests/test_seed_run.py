@@ -179,3 +179,16 @@ def test_no_todo_is_repeated_within_a_store() -> None:
             for t in appl["todos"]
         ]
         assert len(texts) == len(set(texts)), name
+
+
+def test_no_eudr_todo_is_due_before_the_rules_reach_merchants() -> None:
+    """Article 33 dates the Commission's information system (30 Dec 2024); a merchant's EUDR
+    duties start 30 Dec 2026 at the earliest (Regulation (EU) 2025/2650). An EUDR to-do is
+    undated or due on or after that, never "already in force" since 2024."""
+    early = [
+        (name, t["text"], t["due"])
+        for name, appl in _all_seed_appls()
+        for t in appl["todos"]
+        if "2023R1115" in t["citation_url"] and t["due"] and t["due"] < "2026-12-30"
+    ]
+    assert early == []
