@@ -10,7 +10,7 @@ uv run regwatch seed     # loads the recorded run in examples/seed-run (idempote
 uv run regwatch serve    # http://localhost:8000  →  /month
 ```
 
-Demo: https://port8000-pjh6xh7mwmhtxnp.tunnel.applications.eu-west2.nebius.cloud (Nebius Serverless Endpoint, eu-west2, redeployed 2026-10-15 with the agent on and the small-company EUDR dates; serves the recorded seed run).
+Demo: https://port8000-fje4arxh07epk8b.tunnel.applications.eu-west2.nebius.cloud (Nebius Serverless Endpoint `regwatch-web-5`, eu-west2, deployed 2026-10-19 with four example stores, the agent on and five EU laws; serves the recorded seed run; stays up through judging, Dec 1–15).
 
 ## Runs on Nebius · NVIDIA Nemotron · Tavily
 
@@ -18,7 +18,7 @@ Demo: https://port8000-pjh6xh7mwmhtxnp.tunnel.applications.eu-west2.nebius.cloud
 |---|---|
 | **Nebius Token Factory** — `nvidia/Nemotron-3_5-Lightning` | document → obligations, each with a verbatim quote (`regwatch/understand/normalize.py`) |
 | **Nebius Token Factory** — `nvidia/Nemotron-3-Ultra-550b-a55b` | (change, store profile) → applies / doesn't apply / unclear + grounded to-dos (`regwatch/understand/classify.py`) |
-| **Nebius Serverless Endpoint** + **Serverless Job** | web app and the daily crawl, one container image (`ops/`) |
+| **Nebius Serverless Endpoint** + **Serverless Job** | web app and the crawl, one container image (`ops/`) |
 | **Tavily** `search` (advanced, `include_domains`, `time_range`) + `extract` (advanced, markdown) | the only ingestion path; one live crawl costs **40 Tavily credits** (14 searches, 2 extracts; 2026-10-06) and 52 in the Nebius Job (2026-10-10, more new pages); 56 Tavily credits measured offline against recorded fixtures (24 searches over five regulations) |
 
 Only nine domains are ever searched or extracted (`config.SOURCE_DOMAINS`): eur-lex.europa.eu,
@@ -90,8 +90,8 @@ On a change marked unclear, a button starts an agent: Nemotron 3 Ultra picks one
 The public URL serves the recorded run in `examples/seed-run` (recorded with `regwatch record-seed` from the sixth live crawl: 4 documents, 40 Tavily credits; re-classified on 2026-10-14 for a small company, 26 changes; plus 7 changes from 5 documents appended on 2026-10-15 with `record-seed --append` from a live crawl of the green-claims, packaging and product-safety acts: 43 Tavily credits; 33 changes in all); the Serverless Job runs the same image with the live crawl entrypoint against a freshly seeded database — Job #1 on 2026-10-10 re-ingested the 4 seed documents as unchanged and left them alone (52 new documents, 47 new changes, 52 Tavily credits, $0.2464 in model tokens; a second pass over one database adding nothing is verified offline by `tests/test_crawl_all.py::test_crawl_all_twice_is_idempotent`) — live results reach the URL by re-recording the seed and rebuilding the image, not by a shared database, because Serverless Endpoints have no persistent volume we could verify.
 
 One image, two modes (`ops/entrypoint.sh serve|crawl`; `crawl` exits 2 without both keys and never uses
-fixtures). Console values: `ops/serverless-endpoint.yaml`, `ops/serverless-job.yaml`; daily schedule:
-`.github/workflows/daily-crawl.yml` (Jobs have no cron field); step-by-step: `docs/runbook-nebius.md`.
+fixtures). Console values: `ops/serverless-endpoint.yaml`, `ops/serverless-job.yaml`; step-by-step: `docs/runbook-nebius.md`.
+A daily schedule exists as `.github/workflows/daily-crawl.yml` (Jobs have no cron field) but is switched off.
 
 ## Costs and measurement
 
@@ -118,12 +118,12 @@ dropped and the withdrawal function stays; everything else is unchanged.
 
 - Live since 2026-10-10: the web app on a Nebius Serverless Endpoint (URL above) and the crawl as a Nebius Serverless
   Job, with keys from a Nebius MysteryBox secret; a Job without the secret refuses to run (exit 2, never fixtures).
-- The daily schedule (`.github/workflows/daily-crawl.yml`) is off: a daily crawl at ~40–52 credits outruns the
-  1,000-credit Tavily free plan, and its results reach the URL only by re-recording the seed. Crawls run on demand.
-- The demo serves the recorded seed run. "Report a wrong call" opens a mail draft to `REGWATCH_REPORT_EMAIL`,
-  which is not yet set on the demo (the draft opens with an empty recipient).
-- "Let the agent check" ships off by default (`REGWATCH_AGENT_ENABLED`); turning it on for the public Endpoint,
-  with keys and the read-only demo profile, is the owner's step 12 of `docs/runbook-nebius.md`.
+- No daily schedule (decided 2026-10-19): `.github/workflows/daily-crawl.yml` stays off, because a crawl's results
+  reach the URL only by re-recording the seed and redeploying. Crawls run on demand.
+- The demo serves the recorded seed run. "Report a wrong call" opens a mail draft to `REGWATCH_REPORT_EMAIL`
+  (set on the demo).
+- "Let the agent check" ships off by default (`REGWATCH_AGENT_ENABLED`); the public Endpoint has it on, with keys
+  and the read-only demo profile (runbook step 12), capped at $1 and 24 Tavily credits per day.
 - Not done: dates in English only (no locale), no re-classification right after a profile change (the next crawl
   does it). Open issues: `docs/issues.md`.
 

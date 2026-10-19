@@ -101,9 +101,9 @@ Cost line: the Endpoint runs 24/7 — ~$0.05–0.10/h at 4 vCPU (≈ $1.2–2.4/
        `docs/devpost.md`, `docs/status.md`, the yaml and `tests/test_readme.py` before the video (Oct 25–26).
     e. After the redeploy, verify a non-htmx same-origin POST is not refused: the agent POST guard compares
        the `Origin` header with the `Host` header, which behind the Nebius ingress may differ from what the
-       app sees locally. Send the agent start route `POST $URL/change/14/agent` without `HX-Request` and
+       app sees locally. Send the agent start route `POST $URL/change/12/agent` without `HX-Request` and
        with `Origin: $URL`; it must not answer 403 (a 303 redirect, or 429 when a limit is reached, is fine).
-    f. Verify on a phone: `$URL/change/14` (Regulation (EU) 2023/1115 — Article 6 – Article 8, the seed's
+    f. Verify on a phone: `$URL/change/12` (Regulation (EU) 2023/1115 — Article 6 – Article 8, the seed's
        unclear change) → "Let the agent check" → steps appear with credits, one question, answer → the
        "Agent: …" card above "Original check"; the card's "Agent today" line moves; the `/feed` footer's
        credits are unchanged. The Endpoint runs one uvicorn worker (`regwatch serve`); never add workers.
