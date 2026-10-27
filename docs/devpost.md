@@ -84,6 +84,14 @@ pages: 13 apply, 16 don't, 4 unclear, 51 to-dos, each with its quote and source.
 8. **Measure everything.** Every Tavily response's `usage` and every model call's tokens are logged; the feed
    footer shows the credits and dollars of each crawl, and the agent card shows them per step.
 
+**Where Token Factory sped us up.** Both Nemotron models sit behind one OpenAI-compatible API and one key, so
+the extractor and the classifier are two env vars (`REGWATCH_EXTRACTOR_MODEL`, `REGWATCH_CLASSIFIER_MODEL`). Trying
+Ultra as the extractor, or Lightning with thinking on, took a config change and a rerun, not a new client. Every
+response carries token `usage`, which is how the app prices each crawl and each agent step at catalog rates
+(Lightning $0.06 / $0.24, Ultra $1.00 / $3.00 per Mtok). Lightning does the bulk work cheaply: 115 calls, 683k
+prompt tokens, $0.05 per crawl. Ultra is used only where judgement matters, which is where about 87% of the spend
+goes.
+
 | Live run | Figure |
 |---|---|
 | Full crawl, 2026-10-06 | 8 min 03 s, 40 Tavily credits (14 searches, 2 extracts), $0.41 in tokens |
@@ -135,6 +143,53 @@ pages: 13 apply, 16 don't, 4 unclear, 51 to-dos, each with its quote and source.
   mattered.
 - Restricting Tavily to a short allow-list of official domains makes the search both better and cheaper.
 - Dates are the hardest part of legal text: an act has many dates, and only some of them are a shop's deadline.
+
+## Testing instructions
+
+- Open the live demo. No login, no keys, no cost to the tester. It lands on **This month** for the default store
+  (wooden furniture, Germany, small company).
+- Use **"See the results for another example store"** (top of each page) to switch to the other three: coffee importer in France,
+  clothing in the Netherlands, stationery in Austria. Each was classified live in advance. The shared profile is
+  locked so testers can't overwrite each other.
+- Open any to-do to see its verbatim quote and the source link. `/feed` lists every change with its verdict, and the
+  footer shows the credits and dollars of the crawl.
+- **Let the agent check:** open the unclear deforestation change (`/change/12`) and press the button. It runs live
+  on Nemotron 3 Ultra + Tavily. All visitors together share a cap of $1 + 24 Tavily credits per day. The card shows
+  today's spend; if the cap is reached it says "Try again tomorrow (UTC)", and everything else keeps working.
+- Run it yourself without keys: `uv sync --dev && uv run regwatch seed && uv run regwatch serve` (see README). The
+  whole pipeline also replays offline: `uv run pytest -q`.
+- The demo URL stays up until the end of judging (15 December 2026, 12:00 PT).
+
+## Feedback on Nebius Token Factory, AI Cloud and NVIDIA models
+
+Full dated log with numbers: `FEEDBACK.md` in the repo. The points that cost us the most:
+
+1. **Nemotron 3.5 Lightning writes its reasoning into `content`.** By default it reasons, puts the trace
+   ("Here's a thinking process: …") in `message.content` and leaves `reasoning_content` empty. In our second live
+   crawl, 53 of 63 calls ended at exactly 4,096 completion tokens mid-JSON, and 24 of 36 documents failed.
+   `/no_think` and `reasoning_effort="low"` changed nothing. `chat_template_kwargs: {enable_thinking: false}` gave
+   262 tokens of valid JSON in 1.3 s instead of 13.9 s. Ask: document the switch on the model card and return the
+   trace in `reasoning_content`.
+2. **No in-place update for Serverless Endpoints.** `nebius ai endpoint` has create / delete / start / stop /
+   restart but no `update`, so a new image means a new endpoint and a new public URL. We went through five URLs
+   (web → web-5) and had to edit every doc each time. Create → RUNNING was a steady ~254 s. Ask: `endpoint update`,
+   or a stable URL per endpoint name.
+3. **No storage shared between a Job and an Endpoint.** We found no documented persistent volume for Endpoints, so a
+   Serverless Job (which ran fine: 531 s, 52 documents, $0.25) cannot update the web app's database. Jobs also have
+   no schedule field. A daily crawl would have needed a GitHub Actions workflow and 4 repo secrets, and its results
+   still would not reach the demo.
+4. **Token Factory access doesn't mean an AI Cloud tenant.** With only a Token Factory project,
+   `iam v2 project get` said "id must be a project id with 'project-' prefix", `tenant list` returned `{}` and
+   `registry list` returned PermissionDenied "unknown subject". Nothing in the hackathon resources says AI Cloud
+   needs its own tenant and billing. It worked within seconds once those existed.
+5. **Misleading CLI errors.** A Job whose container started and exited 2 reported "Job failed before startup
+   completed". An instance-quota failure (`compute.instance.count (limit 2, requested 3)`) came with hints about
+   profiles and authentication. `nebius profile create` fails under a non-TTY with `Error: ^D`.
+6. **What worked well:** `--dry-run` on endpoint and job create (please make it more prominent in the docs),
+   MysteryBox secrets via `--env-secret` first time, anonymous pulls from a public GHCR image, `endpoint logs`
+   showing a startup traceback (a 5-minute fix), and Nemotron 3 Ultra's judgement. With per-product date notes it
+   split wooden furniture (30 Dec 2026) from leather (30 June 2027) with no hand-written rules, for $0.24 for a
+   whole store.
 
 ## What's next
 
