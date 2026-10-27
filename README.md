@@ -125,7 +125,9 @@ dropped and the withdrawal function stays; everything else is unchanged.
 - The demo serves the recorded seed run. "Report a wrong call" opens a mail draft to `REGWATCH_REPORT_EMAIL`
   (set on the demo).
 - "Let the agent check" ships off by default (`REGWATCH_AGENT_ENABLED`); the public Endpoint has it on, with keys
-  and the read-only demo profile (runbook step 12), capped at $1 and 24 Tavily credits per day.
+  and the read-only demo profile (runbook step 12), capped at $1 and 24 Tavily credits per day. From the next
+  image there is also an all-time cap over every agent step in the database (`REGWATCH_AGENT_TOTAL_USD`, default
+  $10; `REGWATCH_AGENT_TOTAL_CREDITS`, default 300). Once either is used up, the agent switches itself off.
 - Not done: dates in English only (no locale), no re-classification right after a profile change (the next crawl
   does it). Open issues: `docs/issues.md`.
 

@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 from sqlalchemy.engine import Engine
 from sqlmodel import col, select
 
-from regwatch.agent.budget import BUDGET, NO_BUDGET, Budget, worst_case_usd
+from regwatch.agent.budget import BUDGET, NO_BUDGET, NO_TOTAL_BUDGET, Budget, worst_case_usd
 from regwatch.agent.loop import THOUGHT_CHARS
 from regwatch.agent.schemas import AgentOutcome
 from regwatch.config import Settings
@@ -101,7 +101,7 @@ class QuestionView:
 @dataclass(frozen=True)
 class AgentPanel:
     change_id: int
-    can_start: bool  # today's budget allows a new run ("Try again")
+    can_start: bool  # today's and the total budget allow a new run ("Try again")
     today_credits: int
     today_usd: float
     credits_cap: int
@@ -202,7 +202,9 @@ def build_panel(
     budget: Budget = BUDGET,
 ) -> AgentPanel:
     usd_left, credits_left = budget.day_left(engine, settings, now)
-    can_start = usd_left >= worst_case_usd(settings, 0) and credits_left >= 1
+    total_usd_left, total_credits_left = budget.total_left(engine, settings)
+    total_ok = total_usd_left >= worst_case_usd(settings, 0) and total_credits_left >= 1
+    can_start = total_ok and usd_left >= worst_case_usd(settings, 0) and credits_left >= 1
     base = AgentPanel(
         change_id=change_id,
         can_start=can_start,
@@ -210,8 +212,8 @@ def build_panel(
         today_usd=max(0.0, settings.agent_daily_usd - usd_left),
         credits_cap=settings.agent_daily_credits,
         usd_cap=settings.agent_daily_usd,
-        # said once: a start refused for budget already carries NO_BUDGET as its message
-        message=message or ("" if can_start else NO_BUDGET),
+        # said once: a start refused for budget already carries the refusal as its message
+        message=message or ("" if can_start else NO_BUDGET if total_ok else NO_TOTAL_BUDGET),
     )
     if run is None or run.id is None:
         return base

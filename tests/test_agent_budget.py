@@ -6,11 +6,14 @@ import pytest
 from regwatch.agent.budget import (
     DAILY_BUDGET_USED,
     NO_BUDGET,
+    NO_TOTAL_BUDGET,
     RUN_BUDGET_USED,
+    TOTAL_BUDGET_USED,
     Budget,
     Reservation,
     StartCheck,
     spent_today,
+    spent_total,
     start_check,
     worst_case_usd,
 )
@@ -131,3 +134,36 @@ def test_start_refused_without_daily_budget(engine: Any, tmp_settings: Settings)
         engine, tmp_settings, visitor_id="v", regchange_id=14, now=NOW, budget=Budget()
     )
     assert check.refusal == NO_BUDGET
+
+
+def test_total_usd_cap_spans_days(engine: Any, tmp_settings: Settings) -> None:
+    run = _run(engine)
+    for day in range(1, 11):  # $0.999 a day for ten days: under the daily cap every day
+        _spend(engine, run, usd=0.999, at=NOW - timedelta(days=day))
+    with session(engine) as s:
+        assert spent_total(s) == pytest.approx((9.99, 0))
+    got = Budget().reserve_model(engine, tmp_settings, run, prompt_chars=0, now=NOW)
+    assert got == TOTAL_BUDGET_USED
+
+
+def test_total_credit_cap_spans_days_and_counts_in_flight(
+    engine: Any, tmp_settings: Settings
+) -> None:
+    a, b = _run(engine), _run(engine, visitor="w")
+    for day in range(1, 11):
+        _spend(engine, a, credits=29, at=NOW - timedelta(days=day))
+    _spend(engine, a, credits=9)  # 299 of 300 in all
+    budget = Budget()
+    held = budget.reserve_tavily(engine, tmp_settings, b, now=NOW)
+    assert isinstance(held, Reservation)
+    assert budget.reserve_tavily(engine, tmp_settings, b, now=NOW) == TOTAL_BUDGET_USED
+
+
+def test_start_refused_once_the_total_is_used(engine: Any, tmp_settings: Settings) -> None:
+    run = _run(engine, visitor="other", status="done")
+    for day in range(1, 12):
+        _spend(engine, run, usd=0.95, at=NOW - timedelta(days=day))
+    check = start_check(
+        engine, tmp_settings, visitor_id="v", regchange_id=14, now=NOW, budget=Budget()
+    )
+    assert check.refusal == NO_TOTAL_BUDGET
