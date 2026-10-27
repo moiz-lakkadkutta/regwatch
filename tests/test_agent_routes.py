@@ -16,7 +16,7 @@ from markupsafe import escape
 from sqlmodel import col, select
 
 from regwatch.agent import runner
-from regwatch.agent.budget import NO_BUDGET
+from regwatch.agent.budget import NO_BUDGET, NO_TOTAL_BUDGET
 from regwatch.agent.loop import THOUGHT_CHARS
 from regwatch.agent.runner import Backends
 from regwatch.agent.schemas import AgentOutcome
@@ -239,6 +239,16 @@ def test_budget_refusal_is_said_once(make: Callable[..., Harness]) -> None:
     assert page.count(str(escape(NO_BUDGET))) == 1 and f'hx-post="{START}"' not in page
     r = h.client.post(START, headers=HX)
     assert r.status_code == 200 and r.text.count(str(escape(NO_BUDGET))) == 1
+    assert h.runs() == []
+
+
+def test_total_budget_used_switches_the_agent_off(make: Callable[..., Harness]) -> None:
+    h = make(env={"REGWATCH_AGENT_TOTAL_CREDITS": "0"})
+    page = h.client.get(f"/change/{EUDR_ID}").text
+    assert page.count(str(escape(NO_TOTAL_BUDGET))) == 1 and f'hx-post="{START}"' not in page
+    assert str(escape(NO_BUDGET)) not in page
+    r = h.client.post(START, headers=HX)
+    assert r.status_code == 200 and r.text.count(str(escape(NO_TOTAL_BUDGET))) == 1
     assert h.runs() == []
 
 

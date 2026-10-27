@@ -58,6 +58,10 @@ class Settings(BaseSettings):
     agent_enabled: bool = Field(default=False, alias="REGWATCH_AGENT_ENABLED")
     agent_daily_usd: float = Field(default=1.0, alias="REGWATCH_AGENT_DAILY_USD")
     agent_daily_credits: int = Field(default=60, alias="REGWATCH_AGENT_DAILY_CREDITS")
+    # All-time ceiling over every agent step this database has seen, so a demo left running for
+    # weeks can never spend more than this in total, whatever the daily caps allow.
+    agent_total_usd: float = Field(default=10.0, alias="REGWATCH_AGENT_TOTAL_USD")
+    agent_total_credits: int = Field(default=300, alias="REGWATCH_AGENT_TOTAL_CREDITS")
     agent_run_steps: int = Field(default=6, alias="REGWATCH_AGENT_RUN_STEPS")
     agent_run_credits: int = Field(default=10, alias="REGWATCH_AGENT_RUN_CREDITS")
     agent_visitor_runs_per_hour: int = Field(
