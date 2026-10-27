@@ -9,7 +9,7 @@ Every figure below is from a live run unless it says otherwise; sources are `REA
 to-do quotes the official sentence it comes from. Nemotron on Nebius + Tavily.
 
 **Links**
-- Live demo: https://port8000-fje4arxh07epk8b.tunnel.applications.eu-west2.nebius.cloud (stays up through judging, Dec 1–15)
+- Live demo: https://port8000-jmda1596h1jt4g9.tunnel.applications.eu-west2.nebius.cloud (stays up through judging, Dec 1–15)
 - Code (MIT): https://github.com/moiz-lakkadkutta/regwatch
 - Video: _add after upload_
 

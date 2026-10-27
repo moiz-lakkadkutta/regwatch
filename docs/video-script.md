@@ -1,6 +1,6 @@
 # Video script — RegWatch (as recorded 2026-10-27, 2:23, limit < 3:00)
 
-Recorded on the live URL (`https://port8000-fje4arxh07epk8b.tunnel.applications.eu-west2.nebius.cloud`) by a
+Recorded on the live URL (`https://port8000-jmda1596h1jt4g9.tunnel.applications.eu-west2.nebius.cloud`) by a
 Playwright script: a 1920 × 1080 viewport with the page at 150 % zoom, a visible cursor, and an orange outline
 on whatever the voice-over names. The voice-over is Amazon Polly (generative, voice "Matthew"), and the audio is
 loudness-normalised to −16 LUFS. There is no music. The agent segment is a real live run on `/change/12`: it
