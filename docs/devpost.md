@@ -48,7 +48,9 @@ and whether you import your goods or buy them in the EU ("not sure" is allowed).
   credits and model cost, and its result passes the same grounding checks as the crawl.
 - **Four example stores**, each classified live in advance: wooden furniture in Germany (small), a coffee
   importer in France (larger), a clothing shop in the Netherlands and a stationery shop in Austria. Judges can
-  switch between them without touching the shared profile.
+  switch between them without touching the shared profile. Entering your own store is closed on the public
+  demo on purpose: the URL is open to anyone with no login, and every new store costs about 35 Nemotron 3 Ultra
+  calls (about $0.24). Running locally, `/profile` takes your own six answers.
 
 The demo covers five EU laws: the withdrawal button (2023/2673), the Deforestation Regulation (2023/1115), the
 green-claims directive (2024/825), the packaging regulation (PPWR, 2025/40) and the product-safety regulation
@@ -149,8 +151,11 @@ goes.
 - Open the live demo. No login, no keys, no cost to the tester. It lands on **This month** for the default store
   (wooden furniture, Germany, small company).
 - Use **"See the results for another example store"** (top of each page) to switch to the other three: coffee importer in France,
-  clothing in the Netherlands, stationery in Austria. Each was classified live in advance. The shared profile is
-  locked so testers can't overwrite each other.
+  clothing in the Netherlands, stationery in Austria. Each was classified live in advance. Entering a new store is
+  switched off on the public demo: it is an open URL with no login, and checking a new store costs real AI API
+  spend (about 35 Ultra calls, ~$0.24 each time), so the shared profile stays locked. To try your own store, run
+  it locally (below), fill in `/profile`, then run `uv run regwatch crawl --stage classify` with a
+  `NEBIUS_API_KEY`.
 - Open any to-do to see its verbatim quote and the source link. `/feed` lists every change with its verdict, and the
   footer shows the credits and dollars of the crawl.
 - **Let the agent check:** open the unclear deforestation change (`/change/12`) and press the button. It runs live
@@ -193,6 +198,8 @@ Full dated log with numbers: `FEEDBACK.md` in the repo. The points that cost us 
 
 ## What's next
 
+- "Check my store" on the hosted app: a profile per visitor, checked on demand in the background under a daily
+  spend cap. It is closed today because the demo URL is public and each check costs Nemotron calls.
 - The European Accessibility Act and more EU countries' guidance pages.
 - A persistent database shared by the Job and the Endpoint, so a scheduled crawl updates the app directly.
 - Alerts when a change that applies to you is published, and dates in the owner's language.
