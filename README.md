@@ -72,7 +72,9 @@ Schema changes are not migrated — delete a stale local `regwatch.db` first (th
 
 ## Example stores
 
-The shared demo profile stays locked; a row of example stores on the feed, month and profile pages
+The shared demo profile stays locked (`REGWATCH_PROFILE_LOCKED=true`). The demo URL is open to anyone with
+no login, and checking a new store costs about 35 Nemotron 3 Ultra calls (~$0.24), so entering your own store
+works only when you run RegWatch yourself. A row of example stores on the feed, month and profile pages
 lets a visitor switch between shops whose results were worked out ahead of time (a cookie, nothing
 written). Each is `examples/seed-run/stores/<slug>.json`; the default store (`de-furniture`, equal to
 `profile.json`) uses the change files' own results, every other store reads
