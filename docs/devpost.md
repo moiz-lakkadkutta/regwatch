@@ -74,7 +74,8 @@ pages: 13 apply, 16 don't, 4 unclear, 51 to-dos, each with its quote and source.
    (live: wooden furniture 30 Dec 2026, leather 30 June 2027).
 5. **Agent — Nemotron 3 Ultra + Tavily.** For an unclear change, a loop of at most 6 steps where the model picks
    one tool per step: Tavily search on one allow-listed domain, read a page it was shown, ask the owner, or
-   decide. Capped in code at 10 credits per run and $1 + 24 Tavily credits per day for all visitors together.
+   decide. Capped in code at 10 credits per run, $1 + 24 Tavily credits per day and $10 + 300 credits in total, for all
+   visitors together.
 6. **Check in code, not in the prompt.** A quote is stored only if it is a substring of the full page
    (`RegChange.validate_quotes()`); a to-do only if its quote is one of the change's obligations
    (`Applicability.ungrounded_todos()`). One retry with the rejected quotes listed, then anything still
@@ -159,7 +160,7 @@ goes.
 - Open any to-do to see its verbatim quote and the source link. `/feed` lists every change with its verdict, and the
   footer shows the credits and dollars of the crawl.
 - **Let the agent check:** open the unclear deforestation change (`/change/12`) and press the button. It runs live
-  on Nemotron 3 Ultra + Tavily. All visitors together share a cap of $1 + 24 Tavily credits per day. The card shows
+  on Nemotron 3 Ultra + Tavily. All visitors together share a cap of $1 + 24 Tavily credits per day and $10 + 300 credits in total. The card shows
   today's spend; if the cap is reached it says "Try again tomorrow (UTC)", and everything else keeps working.
 - Run it yourself without keys: `uv sync --dev && uv run regwatch seed && uv run regwatch serve` (see README). The
   whole pipeline also replays offline: `uv run pytest -q`.
@@ -176,8 +177,9 @@ Full dated log with numbers: `FEEDBACK.md` in the repo. The points that cost us 
    262 tokens of valid JSON in 1.3 s instead of 13.9 s. Ask: document the switch on the model card and return the
    trace in `reasoning_content`.
 2. **No in-place update for Serverless Endpoints.** `nebius ai endpoint` has create / delete / start / stop /
-   restart but no `update`, so a new image means a new endpoint and a new public URL. We went through five URLs
-   (web → web-5) and had to edit every doc each time. Create → RUNNING was a steady ~254 s. Ask: `endpoint update`,
+   restart but no `update`, so a new image means a new endpoint and a new public URL. We went through six URLs
+   (web → web-6) and had to edit every doc each time. Even a key rotation needed a new endpoint: `endpoint restart`
+   on a RUNNING endpoint failed with "This Endpoint/Devlab is outdated. Please create a new one." Create → RUNNING was a steady ~254 s. Ask: `endpoint update`,
    or a stable URL per endpoint name.
 3. **No storage shared between a Job and an Endpoint.** We found no documented persistent volume for Endpoints, so a
    Serverless Job (which ran fine: 531 s, 52 documents, $0.25) cannot update the web app's database. Jobs also have
