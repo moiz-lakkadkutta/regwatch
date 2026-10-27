@@ -238,3 +238,11 @@ console-step figure; the Oct 23 entry is a template with `__` blanks, filled on 
   the ingress: /healthz, /month, /feed, /profile, /change/12 200 in 0.34–1.34 s; 4 example stores 200; locked
   profile POST → 403; cross-origin agent POST → 403; the report link mails the owner. Change ids moved (the
   unclear EUDR Art. 6–8 is /change/12, was 14), so the runbook and the video script now use 12.
+- (2026-10-27, Nebius Serverless Endpoint, key rotation) After the owner revoked the Token Factory key (no spend limit on
+  the key), a new key went into a new primary version of the `regwatch-keys` MysteryBox secret. The endpoint reads secrets
+  only at start, so the plan was `nebius ai endpoint restart aiendpoint-e04w2tksx7y5mzbvw8`, which failed with
+  `FailedPrecondition: This Endpoint/Devlab is outdated. Please create a new one.` (request 77a499f5-b205-4dcf-bfd9-146f6b74e1b6),
+  while the endpoint itself was RUNNING and serving 200s. So rotating a key meant a sixth endpoint and a sixth public URL
+  (`regwatch-web-6`, port8000-jmda1596h1jt4g9): `--dry-run` first (it checks the instance quota, limit 2), delete web-5
+  (1 min 44 s), create web-6 (exit 0, RUNNING, `seeded 33 change(s)`). Asks: a restart that works on any RUNNING endpoint, or
+  secret versions that reach a running endpoint without one; a spend limit per Token Factory key.

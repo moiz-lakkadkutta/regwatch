@@ -1,9 +1,16 @@
-# Status — 2026-10-19
+# Status — 2026-10-27
 
-**Live:** https://port8000-fje4arxh07epk8b.tunnel.applications.eu-west2.nebius.cloud — Serverless Endpoint `regwatch-web-5` (cpu-d3 2vcpu-8gb, eu-west2), image
-`ghcr.io/moiz-lakkadkutta/regwatch:f01e14d`, deployed 2026-10-19 and kept up through judging (Dec 1–15, 2026).
-web-4 was deleted first (the account's instance quota is 2; the other one is `warden-console`). Agent on
-($1 + 24 Tavily credits per day, shared `regwatch-keys`); `REGWATCH_REPORT_EMAIL` set.
+**Live:** https://port8000-jmda1596h1jt4g9.tunnel.applications.eu-west2.nebius.cloud — Serverless Endpoint `regwatch-web-6`
+(`aiendpoint-e04b0en65bkr3g0rrp`, cpu-d3 2vcpu-8gb, eu-west2), image `ghcr.io/moiz-lakkadkutta/regwatch:9902a15`, deployed
+2026-10-27 and kept up through judging (Dec 1–15, 2026). Why web-6: the owner revoked the old Token Factory key, and
+`endpoint restart` on web-5 failed with "This Endpoint/Devlab is outdated. Please create a new one.", so the new key could
+only reach a new endpoint. web-5 was deleted first (instance quota 2; the other slot is `warden-console-2`). Agent on
+($1 + 24 Tavily credits per day, and from this image an all-time cap of $10 + 300 credits; the counters live in the
+ephemeral DB, so a reboot starts them again). Verified through the ingress: /healthz, /month, /feed, /profile, /change/12
+200 in 0.6–0.9 s; 4 example stores 200; locked profile POST → 403; cross-origin agent POST → 403; `seeded 33 change(s)`;
+one live agent run on /change/12 asked one question and decided "doesn't apply" (2 steps, $0.010).
+
+**Previous (2026-10-19):** web-5 at port8000-fje4arxh07epk8b (image f01e14d), deleted 2026-10-27.
 
 **Decisions (owner, 2026-10-19):** host through Dec 15 · current keys and caps for the agent · no daily schedule
 (the workflow stays disabled) · report email = the owner's address. The Tavily key is shared with another
